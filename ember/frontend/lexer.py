@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import TextIO
 
 ## Constants
+WHITESPACE: tuple[str] = ('\n', '\r', '\t', ' ')
+SYMBOLS: tuple[str] = ('(', ')', '{', '}', ':', ';')
 
 
 ## Functions
@@ -20,12 +22,12 @@ def lex_file(file: Path) -> list[str]:
     src: TextIO = file.open('r')
     buffer: str = ""
     while (char := src.read(1)):
-        if char in ('\n', '\r', '\t', ' '):
+        if char in WHITESPACE:
             if buffer:
                 lexemes.append(buffer)
                 buffer = ""
             continue
-        elif char in ('(', ')', '{', '}', ':', ';'):
+        elif char in SYMBOLS:
             if buffer:
                 lexemes.append(buffer)
                 buffer = ""
