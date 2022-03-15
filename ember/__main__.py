@@ -8,6 +8,8 @@
 import sys
 from pathlib import Path
 
+from frontend.lexer import lex_file
+
 ## Constants
 # -Errors
 ERR_USAGE: int = 64
@@ -23,3 +25,5 @@ source: Path = Path(sys.argv[1])
 if not source.is_file():
     print(f"File '{source.resolve()}' does not exist or is not a file", file=sys.stderr)
     sys.exit(ERR_INPUT)
+lexemes: list[str] = lex_file(source)
+print(lexemes)
