@@ -12,7 +12,12 @@ from typing import TextIO
 
 ## Constants
 WHITESPACE: tuple[str] = ('\n', '\r', '\t', ' ')
-SYMBOLS: tuple[str] = ('(', ')', '{', '}', ':', ';')
+SYMBOLS: tuple[str] = (
+    # -MATH
+    '+', '-', '*', '/', '%',
+    # -OTHER
+    '(', ')',
+)
 
 
 ## Functions
