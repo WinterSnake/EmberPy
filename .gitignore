@@ -1,5 +1,8 @@
 # Python: Cache
 __pycache__
 
+# Editor: Vim
+*.swp
+
 # Editor: Sublime Text 3
 *.sublime-*
