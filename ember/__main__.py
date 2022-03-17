@@ -9,9 +9,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
 from frontend.lexer import lex_file
 from frontend.parser import parse_lexemes
+from backend.simulate import simulate_ast
 from plugins.graph import graph_ast
 
 ## Constants
@@ -32,3 +32,5 @@ lexemes: list[str] = lex_file(source)
 ast: Any = parse_lexemes(lexemes)
 graph = graph_ast(ast, format="png")
 graph.render('out', view=True)
+result: int = simulate_ast(ast)
+print(f"Result: {result}")
