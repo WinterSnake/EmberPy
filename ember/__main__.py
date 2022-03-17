@@ -7,15 +7,15 @@
 ## Imports
 import sys
 from pathlib import Path
+from typing import Any
 
 from frontend.lexer import lex_file
+from frontend.parser import parse_lexemes
 
 ## Constants
 # -Errors
 ERR_USAGE: int = 64
 ERR_INPUT: int = 66
-
-## Functions
 
 ## Body
 if len(sys.argv) == 1 or len(sys.argv) > 2:
@@ -26,4 +26,5 @@ if not source.is_file():
     print(f"File '{source.resolve()}' does not exist or is not a file", file=sys.stderr)
     sys.exit(ERR_INPUT)
 lexemes: list[str] = lex_file(source)
-print(lexemes)
+ast: Any = parse_lexemes(lexemes)
+print(ast)
