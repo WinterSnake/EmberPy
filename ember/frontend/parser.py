@@ -19,10 +19,23 @@ def parse_lexemes(lexemes: list[str]) -> Any | None:
 
 
 def _parse_expression_pm(lexemes: list[str]) -> None:
-    """Return a parse tree of +/- expressions"""
-    expr, i = _parse_literal_primary(lexemes)
+    """Return a parse tree of +|- expressions"""
+    expr, i = _parse_expression_mdm(lexemes)
     lexemes = lexemes[i:]
     while lexemes and lexemes[0] in ('+', '-'):
+        operator: str = lexemes[0]
+        rhs, j = _parse_expression_mdm(lexemes[1:])
+        expr = {operator:{'lhs': expr, 'rhs': rhs}}
+        i += (j := j + 1)
+        lexemes = lexemes[j:]
+    return (expr, i)
+
+
+def _parse_expression_mdm(lexemes: list[str]) -> tuple[Any, int]:
+    """Return a parse tree of *|/|% expressions"""
+    expr, i = _parse_literal_primary(lexemes)
+    lexemes = lexemes[i:]
+    while lexemes and lexemes[0] in ('*', '/', '%'):
         operator: str = lexemes[0]
         rhs, j = _parse_literal_primary(lexemes[1:])
         expr = {operator:{'lhs': expr, 'rhs': rhs}}
@@ -31,7 +44,7 @@ def _parse_expression_pm(lexemes: list[str]) -> None:
     return (expr, i)
 
 
-def _parse_literal_primary(lexemes: list[str]) -> tuple[int, int]:
+def _parse_literal_primary(lexemes: list[str]) -> tuple[Any, int]:
     """Return a parse tree of a primary literal"""
     return _parse_literal_number(lexemes)
 
