@@ -9,13 +9,16 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
 from frontend.lexer import lex_file
 from frontend.parser import parse_lexemes
+from plugins.graph import graph_ast
 
 ## Constants
 # -Errors
 ERR_USAGE: int = 64
 ERR_INPUT: int = 66
+
 
 ## Body
 if len(sys.argv) == 1 or len(sys.argv) > 2:
@@ -27,4 +30,5 @@ if not source.is_file():
     sys.exit(ERR_INPUT)
 lexemes: list[str] = lex_file(source)
 ast: Any = parse_lexemes(lexemes)
-print(ast)
+graph = graph_ast(ast, format="png")
+graph.render('out', view=True)
