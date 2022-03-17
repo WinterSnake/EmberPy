@@ -12,8 +12,7 @@ from typing import Any
 
 ## Functions
 def parse_lexemes(lexemes: list[str]) -> Any | None:
-    """"""
-    #print(lexemes)
+    """Return a parse tree from lexemes"""
     tree, i = _parse_expression_pm(lexemes)
     return tree
 
@@ -46,6 +45,9 @@ def _parse_expression_mdm(lexemes: list[str]) -> tuple[Any, int]:
 
 def _parse_literal_primary(lexemes: list[str]) -> tuple[Any, int]:
     """Return a parse tree of a primary literal"""
+    if lexemes[0] == '(':
+        expr, i = _parse_expression_pm(lexemes[1:])
+        return (expr, i + 2)  # 2: ( and )
     return _parse_literal_number(lexemes)
 
 
