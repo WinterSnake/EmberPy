@@ -16,8 +16,9 @@ from plugins.graph import graph_ast
 
 ## Constants
 # -CLI Parameters
-dump_ast_graph: bool = False
 source: Path | None = None
+run_mode: int | None = None
+dump_ast_graph: bool = False
 # -Errors
 ERR_USAGE: int = 64
 ERR_INPUT: int = 66
@@ -28,7 +29,11 @@ if len(sys.argv) == 1:
     print("No input file", file=sys.stderr)
     sys.exit(ERR_USAGE)
 for arg in sys.argv[1:]:
-    if arg in ("-g", "--graph-ast"):
+    if arg in ("-c", "--compile") and run_mode is None:
+        run_mode = 0
+    elif arg in ("-s", "--simulate") and run_mode is None:
+        run_mode = 1
+    elif arg in ("-g", "--graph-ast"):
         dump_ast_graph = True
     else:
         source = Path(sys.argv[1])
@@ -40,5 +45,11 @@ ast: Any = parse_lexemes(lexemes)
 if dump_ast_graph:
     graph = graph_ast(ast, format="png")
     graph.render('out', view=True)
-result: int = simulate_ast(ast)
-print(f"Result: {result}")
+if run_mode is not None:
+    if run_mode == 0:
+        raise NotImplementedError("Ember compiling backend")
+    elif run_mode == 1:
+        exit_code: int = simulate_ast(ast)
+        print(f"Exit code: {exit_code}")
+    else:
+        raise ValueError(f"Run mode '{run_mode}' unknown.")
