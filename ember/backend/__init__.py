@@ -6,7 +6,7 @@
 
 ## Imports
 from .compile import compile_ast
-from .simulate import simulate_ast
+from .interpret import interpret_ast
 
 ## Constants
-__all__ = [compile_ast, simulate_ast]
+__all__ = [compile_ast, interpret_ast]
