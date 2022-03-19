@@ -11,7 +11,7 @@ from typing import Any
 
 from frontend.lexer import lex_file
 from frontend.parser import parse_lexemes
-from backend.simulate import simulate_ast
+from backend import compile_ast, simulate_ast
 from plugins.graph import graph_ast
 
 ## Constants
@@ -22,7 +22,6 @@ dump_ast_graph: bool = False
 # -Errors
 ERR_USAGE: int = 64
 ERR_INPUT: int = 66
-
 
 ## Body
 if len(sys.argv) == 1:
@@ -47,7 +46,7 @@ if dump_ast_graph:
     graph.render('out', view=True)
 if run_mode is not None:
     if run_mode == 0:
-        raise NotImplementedError("Ember compiling backend")
+        file: Path = compile_ast(ast, 'main.asm')
     elif run_mode == 1:
         exit_code: int = simulate_ast(ast)
         print(f"Exit code: {exit_code}")
