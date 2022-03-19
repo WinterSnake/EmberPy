@@ -11,7 +11,7 @@ from typing import Any
 
 from frontend.lexer import lex_file
 from frontend.parser import parse_lexemes
-from backend import compile_ast, simulate_ast
+from backend import compile_ast, interpret_ast
 from plugins.graph import graph_ast
 
 ## Constants
@@ -40,15 +40,15 @@ if not source.is_file():
     print(f"File '{source.resolve()}' does not exist or is not a file", file=sys.stderr)
     sys.exit(ERR_INPUT)
 lexemes: list[str] = lex_file(source)
-ast: Any = parse_lexemes(lexemes)
+ast: list[Any] = parse_lexemes(lexemes)
 if dump_ast_graph:
     graph = graph_ast(ast, format="png")
-    graph.render('out', view=True)
+    graph.render('out.dot', view=False)
 if run_mode is not None:
     if run_mode == 0:
         file: Path = compile_ast(ast, 'main.asm')
     elif run_mode == 1:
-        exit_code: int = simulate_ast(ast)
+        exit_code: int = interpret_ast(ast)
         print(f"Exit code: {exit_code}")
     else:
         raise ValueError(f"Run mode '{run_mode}' unknown.")
