@@ -13,7 +13,7 @@ import graphviz
 
 
 ## Functions
-def graph_ast(ast: Any, *args, **kwargs) -> graphviz.Digraph:
+def graph_ast(nodes: list[Any], *args, **kwargs) -> graphviz.Digraph:
     """Dump an ast for graphviz"""
     # -Internal Variables
     graph: graphviz.Diagraph = graphviz.Digraph(*args, **kwargs)
@@ -37,5 +37,6 @@ def graph_ast(ast: Any, *args, **kwargs) -> graphviz.Digraph:
             graph.edge(f"id{id__}", f"id{rhs}")
         return id__
     # -Body
-    dump_node(ast)
+    for node in nodes:
+        dump_node(node)
     return graph
