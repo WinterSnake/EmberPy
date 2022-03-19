@@ -5,6 +5,7 @@
 ##-------------------------------##
 
 ## Imports
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -47,6 +48,8 @@ if dump_ast_graph:
 if run_mode is not None:
     if run_mode == 0:
         file: Path = compile_ast(ast, 'main.asm')
+        subprocess.run("as main.asm -o main.o", shell=True)
+        subprocess.run("ld main.o -e __start__ -o main", shell=True)
     elif run_mode == 1:
         exit_code: int = interpret_ast(ast)
         print(f"Exit code: {exit_code}")
