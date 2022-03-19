@@ -36,7 +36,7 @@ for arg in sys.argv[1:]:
     elif arg in ("-g", "--graph-ast"):
         dump_ast_graph = True
     else:
-        source = Path(sys.argv[1])
+        source = Path(arg)
 if not source.is_file():
     print(f"File '{source.resolve()}' does not exist or is not a file", file=sys.stderr)
     sys.exit(ERR_INPUT)
