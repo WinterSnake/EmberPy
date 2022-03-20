@@ -22,11 +22,9 @@ def compile_ast(nodes: list[Any], file_name: str) -> Path:
     f.write("__start__:\n")
     for node in nodes:
         _compile_node(node, f)
-    f.write("\tpop %rdi\n")
-    f.write("\tcall DEBUG__PRINTU__\n")
-    f.write("# -- EXIT -- #\n")
-    f.write("\tmov $60, %rax\n")
-    f.write("\tmov $0, %rdi\n")
+    f.write("# -- exit -- #\n")
+    f.write("\tmovq $60, %rax\n")
+    f.write("\txor %rdi, %rdi\n")
     f.write("\tsyscall\n")
     f.close()
     return file
@@ -76,37 +74,43 @@ def _compile_node(node: Any, file: TextIO) -> None:
         file.write(f"\tpush ${node}\n")
     elif isinstance(node, dict):
         op: str = list(node.keys())[0]
-        _compile_node(node[op]['lhs'], file)
-        _compile_node(node[op]['rhs'], file)
-        if op == '+':
-            file.write("# -- add -- #\n")
-            file.write("\tpop %rbx\n")
-            file.write("\tpop %rax\n")
-            file.write("\taddq %rbx, %rax\n")
-            file.write("\tpush %rax\n")
-        elif op == '-':
-            file.write("# -- sub -- #\n")
-            file.write("\tpop %rbx\n")
-            file.write("\tpop %rax\n")
-            file.write("\tsubq %rbx, %rax\n")
-            file.write("\tpush %rax\n")
-        elif op == '*':
-            file.write("# -- mul -- #\n")
-            file.write("\tpop %rbx\n")
-            file.write("\tpop %rax\n")
-            file.write("\timulq %rbx, %rax\n")
-            file.write("\tpush %rax\n")
-        elif op == '/':
-            file.write("# -- div -- #\n")
-            file.write("\tpop %rbx\n")
-            file.write("\tpop %rax\n")
-            file.write("\tcqto\n")
-            file.write("\tidivq %rbx\n")
-            file.write("\tpush %rax\n")
-        elif op == '%':
-            file.write("# -- mod -- #\n")
-            file.write("\tpop %rbx\n")
-            file.write("\tpop %rax\n")
-            file.write("\tcqto\n")
-            file.write("\tidivq %rbx\n")
-            file.write("\tpush %rdx\n")
+        if op in ('+', '-', '*', '/', '%'):
+            _compile_node(node[op]['lhs'], file)
+            _compile_node(node[op]['rhs'], file)
+            if op == '+':
+                file.write("# -- add -- #\n")
+                file.write("\tpop %rbx\n")
+                file.write("\tpop %rax\n")
+                file.write("\taddq %rbx, %rax\n")
+                file.write("\tpush %rax\n")
+            elif op == '-':
+                file.write("# -- sub -- #\n")
+                file.write("\tpop %rbx\n")
+                file.write("\tpop %rax\n")
+                file.write("\tsubq %rbx, %rax\n")
+                file.write("\tpush %rax\n")
+            elif op == '*':
+                file.write("# -- mul -- #\n")
+                file.write("\tpop %rbx\n")
+                file.write("\tpop %rax\n")
+                file.write("\timulq %rbx, %rax\n")
+                file.write("\tpush %rax\n")
+            elif op == '/':
+                file.write("# -- div -- #\n")
+                file.write("\tpop %rbx\n")
+                file.write("\tpop %rax\n")
+                file.write("\tcqto\n")
+                file.write("\tidivq %rbx\n")
+                file.write("\tpush %rax\n")
+            elif op == '%':
+                file.write("# -- mod -- #\n")
+                file.write("\tpop %rbx\n")
+                file.write("\tpop %rax\n")
+                file.write("\tcqto\n")
+                file.write("\tidivq %rbx\n")
+                file.write("\tpush %rdx\n")
+        elif op == "DEBUG_PRINTU":
+            _compile_node(node[op], file)
+            file.write("# -- debug print -- #\n")
+            file.write("\tpop %rdi\n")
+            file.write("\tcall DEBUG__PRINTU__\n")

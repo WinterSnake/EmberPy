@@ -26,7 +26,12 @@ def parse_lexemes(lexemes: list[tuple[Path, int, int, str]]) -> Any:
 
 def _parse_expression(lexemes: list[str]) -> tuple[Any, int]:
     """Return a parse tree of an expression"""
-    expr, i = _parse_expression_pm(lexemes)
+    if lexemes[0] == "DEBUG__PRINTU__":
+        expr, i = _parse_expression_pm(lexemes[2:])  # -Handles 'DEBUG__PRINTU__' and '('
+        i += 3  # -Handles 'DEBUG__PRINTU__', '(', and ')'
+        expr = {"DEBUG_PRINTU": expr}
+    else:
+        expr, i = _parse_expression_pm(lexemes)
     return (expr, i + 1)  # -Handles ';'
 
 
