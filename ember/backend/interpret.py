@@ -32,11 +32,12 @@ def _interpret_node(node: Any) -> Any:
         ):
             lhs: Any = _interpret_node(node[op]['lhs'])
             rhs: Any = _interpret_node(node[op]['rhs'])
+            print(f"{lhs} {op.name} {rhs}")
             if op == Token.TYPE.ADD:
                 return lhs + rhs
             elif op == Token.TYPE.SUB:
                 return lhs - rhs
-            elif op == Token.TYPE.MOD:
+            elif op == Token.TYPE.MUL:
                 return lhs * rhs
             elif op == Token.TYPE.DIV:
                 return lhs // rhs
