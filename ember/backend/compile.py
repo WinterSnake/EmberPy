@@ -24,56 +24,62 @@ def compile_ast(nodes: list[Any], file_name: str) -> Path:
     f.write("__start__:\n")
     for node in nodes:
         _compile_node(node, f)
-    f.write("# -- exit -- #\n")
-    f.write("\tmovq $60, %rax\n")
-    f.write("\txor %rdi, %rdi\n")
-    f.write("\tsyscall\n")
+    f.writelines([
+        "# -- exit -- #\n",
+        "\tmovq $60, %rax\n",
+        "\txor %rdi, %rdi\n",
+        "\tsyscall\n",
+    ])
     f.close()
     return file
 
 
 def _compile_debug(file: TextIO) -> None:
     """Compile debug functions"""
-    file.write(".globl  DEBUG__PRINTI__\n")
-    file.write("DEBUG__PRINTU__:\n")
-    file.write("\tmovabsq $-3689348814741910323, %r9\n")
-    file.write("\tsubq $40, %rsp\n")
-    file.write("\tmovb $10, 31(%rsp)\n")
-    file.write("\tleaq 30(%rsp), %rcx\n")
-    file.write(".L2:\n")
-    file.write("\tmovq %rdi, %rax\n")
-    file.write("\tleaq 32(%rsp), %r8\n")
-    file.write("\tmulq %r9\n")
-    file.write("\tmovq %rdi, %rax\n")
-    file.write("\tsubq %rcx, %r8\n")
-    file.write("\tshrq $3, %rdx\n")
-    file.write("\tleaq (%rdx,%rdx,4), %rsi\n")
-    file.write("\taddq %rsi, %rsi\n")
-    file.write("\tsubq %rsi, %rax\n")
-    file.write("\taddl $48, %eax\n")
-    file.write("\tmovb %al, (%rcx)\n")
-    file.write("\tmovq %rdi, %rax\n")
-    file.write("\tmovq %rdx, %rdi\n")
-    file.write("\tmovq %rcx, %rdx\n")
-    file.write("\tsubq $1, %rcx\n")
-    file.write("\tcmpq $9, %rax\n")
-    file.write("\tja .L2\n")
-    file.write("\tleaq 32(%rsp), %rax\n")
-    file.write("\tmovl $1, %edi\n")
-    file.write("\tsubq %rax, %rdx\n")
-    file.write("\tleaq 32(%rsp,%rdx), %rsi\n")
-    file.write("\tmovq %r8, %rdx\n")
-    file.write("\tmovq $1, %rax\n")
-    file.write("\tsyscall\n")
-    file.write("\taddq $40, %rsp\n")
-    file.write("\tret\n")
+    file.writelines([
+        ".globl  DEBUG__PRINTI__\n",
+        "DEBUG__PRINTU__:\n",
+        "\tmovabsq $-3689348814741910323, %r9\n",
+        "\tsubq $40, %rsp\n",
+        "\tmovb $10, 31(%rsp)\n",
+        "\tleaq 30(%rsp), %rcx\n",
+        ".L2:\n",
+        "\tmovq %rdi, %rax\n",
+        "\tleaq 32(%rsp), %r8\n",
+        "\tmulq %r9\n",
+        "\tmovq %rdi, %rax\n",
+        "\tsubq %rcx, %r8\n",
+        "\tshrq $3, %rdx\n",
+        "\tleaq (%rdx,%rdx,4), %rsi\n",
+        "\taddq %rsi, %rsi\n",
+        "\tsubq %rsi, %rax\n",
+        "\taddl $48, %eax\n",
+        "\tmovb %al, (%rcx)\n",
+        "\tmovq %rdi, %rax\n",
+        "\tmovq %rdx, %rdi\n",
+        "\tmovq %rcx, %rdx\n",
+        "\tsubq $1, %rcx\n",
+        "\tcmpq $9, %rax\n",
+        "\tja .L2\n",
+        "\tleaq 32(%rsp), %rax\n",
+        "\tmovl $1, %edi\n",
+        "\tsubq %rax, %rdx\n",
+        "\tleaq 32(%rsp,%rdx), %rsi\n",
+        "\tmovq %r8, %rdx\n",
+        "\tmovq $1, %rax\n",
+        "\tsyscall\n",
+        "\taddq $40, %rsp\n",
+        "\tret\n",
+    ])
 
 
 def _compile_node(node: Any, file: TextIO) -> None:
     """Compile a single node"""
     if isinstance(node, int):
-        file.write(f"# -- push {node} -- #\n")
-        file.write(f"\tpush ${node}\n")
+        file.writelines([
+            f"# -- push {node} -- #\n",
+            f"\tpush ${node}\n",
+        ])
     elif isinstance(node, dict):
         op: str = list(node.keys())[0]
         if op in (
@@ -83,39 +89,51 @@ def _compile_node(node: Any, file: TextIO) -> None:
             _compile_node(node[op]['lhs'], file)
             _compile_node(node[op]['rhs'], file)
             if op == Token.TYPE.ADD:
-                file.write("# -- add -- #\n")
-                file.write("\tpop %rbx\n")
-                file.write("\tpop %rax\n")
-                file.write("\taddq %rbx, %rax\n")
-                file.write("\tpush %rax\n")
+                file.writelines([
+                    "# -- add -- #\n",
+                    "\tpop %rbx\n",
+                    "\tpop %rax\n",
+                    "\taddq %rbx, %rax\n",
+                    "\tpush %rax\n",
+                ])
             elif op == Token.TYPE.SUB:
-                file.write("# -- sub -- #\n")
-                file.write("\tpop %rbx\n")
-                file.write("\tpop %rax\n")
-                file.write("\tsubq %rbx, %rax\n")
-                file.write("\tpush %rax\n")
+                file.writelines([
+                    "# -- sub -- #\n",
+                    "\tpop %rbx\n",
+                    "\tpop %rax\n",
+                    "\tsubq %rbx, %rax\n",
+                    "\tpush %rax\n",
+                ])
             elif op == Token.TYPE.MUL:
-                file.write("# -- mul -- #\n")
-                file.write("\tpop %rbx\n")
-                file.write("\tpop %rax\n")
-                file.write("\timulq %rbx, %rax\n")
-                file.write("\tpush %rax\n")
+                file.writelines([
+                    "# -- mul -- #\n",
+                    "\tpop %rbx\n",
+                    "\tpop %rax\n",
+                    "\timulq %rbx, %rax\n",
+                    "\tpush %rax\n",
+                ])
             elif op == Token.TYPE.DIV:
-                file.write("# -- div -- #\n")
-                file.write("\tpop %rbx\n")
-                file.write("\tpop %rax\n")
-                file.write("\tcqto\n")
-                file.write("\tidivq %rbx\n")
-                file.write("\tpush %rax\n")
+                file.writelines([
+                    "# -- div -- #\n",
+                    "\tpop %rbx\n",
+                    "\tpop %rax\n",
+                    "\tcqto\n",
+                    "\tidivq %rbx\n",
+                    "\tpush %rax\n",
+                ])
             elif op == Token.TYPE.MOD:
-                file.write("# -- mod -- #\n")
-                file.write("\tpop %rbx\n")
-                file.write("\tpop %rax\n")
-                file.write("\tcqto\n")
-                file.write("\tidivq %rbx\n")
-                file.write("\tpush %rdx\n")
+                file.writelines([
+                    "# -- mod -- #\n",
+                    "\tpop %rbx\n",
+                    "\tpop %rax\n",
+                    "\tcqto\n",
+                    "\tidivq %rbx\n",
+                    "\tpush %rdx\n",
+                ])
         elif op == "DEBUG_PRINTU":
             _compile_node(node[op], file)
-            file.write("# -- debug print -- #\n")
-            file.write("\tpop %rdi\n")
-            file.write("\tcall DEBUG__PRINTU__\n")
+            file.writelines([
+                "# -- debug print -- #\n",
+                "\tpop %rdi\n",
+                "\tcall DEBUG__PRINTU__\n",
+            ])
