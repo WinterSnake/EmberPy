@@ -15,8 +15,9 @@ def interpret_ast(nodes: list[Any]) -> int:
     """Interpret an ast"""
     for node in nodes:
         result: int = _interpret_node(node)
-    return result
-
+    print(result)
+    return 0
+ 
 
 def _interpret_node(node: Any) -> Any:
     """Interpret a single node"""
