@@ -6,6 +6,7 @@ __pycache__
 
 # Editor: Vim
 *.swp
+.tmux-session
 
 # Editor: Sublime Text 3
 *.sublime-*
