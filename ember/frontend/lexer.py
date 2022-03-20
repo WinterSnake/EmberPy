@@ -89,7 +89,7 @@ class Token:
         cls, file_path: Path, position: tuple[int, int], value: str
     ) -> Token:
         '''Create Token from lexeme lookup'''
-        LOOKUP: dict[str, tuple[Token.TYPE | None, None]] = {
+        type_, value_ = {
             # -SYMBOL
             '+': (Token.TYPE.ADD, None),
             '-': (Token.TYPE.SUB, None),
@@ -99,8 +99,7 @@ class Token:
             ';': (Token.TYPE.SEMICOLON, None),
             '(': (Token.TYPE.LPAREN, None),
             ')': (Token.TYPE.RPAREN, None),
-        }
-        type_, value_ = LOOKUP.get(value, (None, value))
+        }.get(value, (None, value))
         if type_ is None:
             if value.isdigit():
                 type_ = Token.TYPE.NUMBER
