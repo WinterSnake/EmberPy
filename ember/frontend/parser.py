@@ -16,7 +16,7 @@ from .lexer import Token
 
 ## Functions
 def parse_tokens(tokens: list[Token]) -> list[Any] | None:
-    """Return a parse tree from lexemes"""
+    """Return a parse tree from list of tokens"""
     if not tokens:
         return None
     nodes: list[Any] = []
