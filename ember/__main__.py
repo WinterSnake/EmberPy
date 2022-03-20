@@ -13,7 +13,6 @@ from typing import Any
 from frontend.lexer import lex_file
 from frontend.parser import parse_lexemes
 from backend import compile_ast, interpret_ast
-from plugins.graph import graph_ast
 
 ## Constants
 # -CLI Parameters
@@ -34,13 +33,14 @@ for arg in sys.argv[1:]:
     elif arg in ("-s", "--simulate") and run_mode is None:
         run_mode = 1
     elif arg in ("-g", "--graph-ast"):
+        from plugins.graph import graph_ast
         dump_ast_graph = True
     else:
         source = Path(arg)
 if not source.is_file():
     print(f"File '{source.resolve()}' does not exist or is not a file", file=sys.stderr)
     sys.exit(ERR_INPUT)
-lexemes: list[str] = lex_file(source)
+lexemes: list[tuple[Path, int, int, str]] = lex_file(source)
 ast: list[Any] = parse_lexemes(lexemes)
 if dump_ast_graph:
     graph = graph_ast(ast, format="png")
