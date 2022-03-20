@@ -7,6 +7,8 @@
 ##-------------------------------##
 
 ## Imports
+from __future__ import annotations
+from enum import IntEnum, auto
 from pathlib import Path
 from typing import TextIO
 
@@ -20,7 +22,7 @@ SYMBOLS: tuple[str] = (
 
 
 ## Functions
-def lex_file(file_path: Path) -> list[str]:
+def lex_file(file_path: Path) -> list[Token]:
     """Parse file and return list of strings"""
     lexemes: list[str] = []
     src: TextIO = file_path.open('r')
@@ -32,7 +34,7 @@ def lex_file(file_path: Path) -> list[str]:
         col += 1
         if char.isspace():
             if buffer:
-                token = (file_path, row, tcol, buffer)
+                token = Token.from_lexeme(file_path, (row, tcol), buffer)
                 lexemes.append(token)
                 buffer = ""
             if char == '\n':
@@ -41,10 +43,10 @@ def lex_file(file_path: Path) -> list[str]:
             continue
         elif char in SYMBOLS:
             if buffer:
-                token = (file_path, row, tcol, buffer)
+                token = Token.from_lexeme(file_path, (row, tcol), buffer)
                 lexemes.append(token)
                 buffer = ""
-            token = (file_path, row, col, char)
+            token = Token.from_lexeme(file_path, (row, col), char)
             lexemes.append(token)
             continue
         if not buffer:
@@ -52,3 +54,81 @@ def lex_file(file_path: Path) -> list[str]:
         buffer += char
     src.close()
     return lexemes
+
+
+## Classes
+class Token:
+    """Ember Language Token"""
+
+    # -Constructor
+    def __init__(
+        self, file_path: Path, position: tuple[int, int],
+        type_: Token.TYPE, value: str | None = None
+    ) -> None:
+        self.file_path: Path = file_path
+        self.position: tuple[int, int] = position
+        self.type: Token.TYPE = type_
+        self.value: str | None = value
+
+    # -Dunder Methods
+    def __repr__(self) -> str:
+        str_: str = f"Token(file_path={self.file_path}, position={self.position}, type={repr(self.type)}"
+        if self.value is not None:
+            str_ += f", value={self.value}"
+        return str_ + ')'
+
+    def __str__(self) -> str:
+        str_: str = f"{self.type.name}"
+        if self.value is not None:
+            str_ += f":{self.value}"
+        return str_
+
+    # -Class Methods
+    @classmethod
+    def from_lexeme(
+        cls, file_path: Path, position: tuple[int, int], value: str
+    ) -> Token:
+        '''Create Token from lexeme lookup'''
+        LOOKUP: dict[str, tuple[Token.TYPE | None, None]] = {
+            # -SYMBOL
+            '+': (Token.TYPE.ADD, None),
+            '-': (Token.TYPE.SUB, None),
+            '*': (Token.TYPE.MUL, None),
+            '/': (Token.TYPE.DIV, None),
+            '%': (Token.TYPE.MOD, None),
+            ';': (Token.TYPE.SEMICOLON, None),
+            '(': (Token.TYPE.LPAREN, None),
+            ')': (Token.TYPE.RPAREN, None),
+        }
+        type_, value_ = LOOKUP.get(value, (None, value))
+        if type_ is None:
+            if value.isdigit():
+                type_ = Token.TYPE.NUMBER
+            else:
+                type_ = Token.TYPE.IDENTIFIER
+        return cls(file_path, position, type_, value_)
+
+    # -Properties
+    @property
+    def row(self) -> int:
+        return self.position[0]
+
+    @property
+    def column(self) -> int:
+        return self.position[1]
+
+    # -Sub-classes
+    class TYPE(IntEnum):
+        '''Token Type'''
+        # -LITERAL
+        IDENTIFIER = auto()
+        NUMBER = auto()
+        # -SYMBOL
+        ADD = auto()
+        SUB = auto()
+        MUL = auto()
+        DIV = auto()
+        MOD = auto()
+        SEMICOLON = auto()
+        LPAREN = auto()
+        RPAREN = auto()
