@@ -16,14 +16,17 @@ from typing import TextIO
 SYMBOLS: tuple[str] = (
     # -MATH
     '+', '-', '*', '/', '%',
+    # -COMPARISONS
+    "==",
     # -OTHER
-    '(', ')', ';',
+    '(', ')', '{', '}', ';',
 )
 
 
 ## Functions
 def lex_file(file_path: Path) -> list[Token]:
     """Parse file and return list of strings"""
+    _lexer_check()
     lexemes: list[str] = []
     src: TextIO = file_path.open('r')
     row: int = 1
@@ -54,6 +57,37 @@ def lex_file(file_path: Path) -> list[Token]:
         buffer += char
     src.close()
     return lexemes
+
+
+def _lexer_check():
+    """Checks if all current token types are handled by the lexer"""
+    unhandled_token_types: tuple[Token.TYPE] = tuple(
+        type_
+        for type_ in Token.TYPE
+        if type_ not in (
+            # -KEYWORD
+            # -LITERAL
+            Token.TYPE.IDENTIFIER,
+            Token.TYPE.NUMBER,
+            # -COMPARISON
+            # -SYMBOL
+            Token.TYPE.ADD,
+            Token.TYPE.SUB,
+            Token.TYPE.MUL,
+            Token.TYPE.DIV,
+            Token.TYPE.MOD,
+            Token.TYPE.SEMICOLON,
+            Token.TYPE.LPAREN,
+            Token.TYPE.RPAREN,
+        )
+    )
+    if not unhandled_token_types:
+        return None
+    raise NotImplementedError(
+        "Lexer unable to handle the following tokens: {}".format(
+            ", ".join(f"'{type_.name}'" for type_ in unhandled_token_types)
+        )
+    )
 
 
 ## Classes
@@ -93,6 +127,8 @@ class Token:
     ) -> Token:
         '''Create Token from lexeme lookup'''
         type_, value_ = {
+            # -KEYWORD
+            # -COMPARISON
             # -SYMBOL
             '+': (Token.TYPE.ADD, None),
             '-': (Token.TYPE.SUB, None),
@@ -122,9 +158,11 @@ class Token:
     # -Sub-classes
     class TYPE(IntEnum):
         '''Token Type'''
+        # -KEYWORD
         # -LITERAL
         IDENTIFIER = auto()
         NUMBER = auto()
+        # -COMPARISON
         # -SYMBOL
         ADD = auto()
         SUB = auto()

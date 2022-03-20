@@ -17,6 +17,7 @@ from .lexer import Token
 ## Functions
 def parse_tokens(tokens: list[Token]) -> list[Any] | None:
     """Return a parse tree from list of tokens"""
+    _parser_check()
     if not tokens:
         return None
     nodes: list[Any] = []
@@ -26,6 +27,37 @@ def parse_tokens(tokens: list[Token]) -> list[Any] | None:
         nodes.append(node)
         index += j
     return nodes
+
+
+def _parser_check() -> None:
+    """Checks if all current token types are handled by the parser"""
+    unhandled_token_types: tuple[Token.TYPE] = tuple(
+        type_
+        for type_ in Token.TYPE
+        if type_ not in (
+            # -KEYWORD
+            # -LITERAL
+            Token.TYPE.IDENTIFIER,
+            Token.TYPE.NUMBER,
+            # -COMPARISON
+            # -SYMBOL
+            Token.TYPE.ADD,
+            Token.TYPE.SUB,
+            Token.TYPE.MUL,
+            Token.TYPE.DIV,
+            Token.TYPE.MOD,
+            Token.TYPE.SEMICOLON,
+            Token.TYPE.LPAREN,
+            Token.TYPE.RPAREN,
+        )
+    )
+    if not unhandled_token_types:
+        return None
+    raise NotImplementedError(
+        "Parser unable to handle the following tokens: {}".format(
+            ", ".join(f"'{type_.name}'" for type_ in unhandled_token_types)
+        )
+    )
 
 
 def _parse_expression(tokens: list[Token]) -> tuple[Any, int]:
