@@ -72,7 +72,10 @@ class Token:
 
     # -Dunder Methods
     def __repr__(self) -> str:
-        str_: str = f"Token(file_path={self.file_path}, position={self.position}, type={repr(self.type)}"
+        str_: str = (
+            f"Token(file_path={self.file_path}, "
+            f"position={self.position}, type={repr(self.type)}"
+        )
         if self.value is not None:
             str_ += f", value={self.value}"
         return str_ + ')'
