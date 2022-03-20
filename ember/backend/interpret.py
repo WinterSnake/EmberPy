@@ -15,7 +15,6 @@ def interpret_ast(nodes: list[Any]) -> int:
     """Interpret an ast"""
     for node in nodes:
         result: int = _interpret_node(node)
-    print(result)
     return 0
  
 
@@ -25,15 +24,20 @@ def _interpret_node(node: Any) -> Any:
         return node
     elif isinstance(node, dict):
         op: str = list(node.keys())[0]
-        lhs: Any = _interpret_node(node[op]['lhs'])
-        rhs: Any = _interpret_node(node[op]['rhs'])
-        if op == '+':
-            return lhs + rhs
-        elif op == '-':
-            return lhs - rhs
-        elif op == '*':
-            return lhs * rhs
-        elif op == '/':
-            return lhs // rhs
-        elif op == '%':
-            return lhs % rhs
+        if op in ('+', '-', '*', '/', '%'):
+            lhs: Any = _interpret_node(node[op]['lhs'])
+            rhs: Any = _interpret_node(node[op]['rhs'])
+            if op == '+':
+                return lhs + rhs
+            elif op == '-':
+                return lhs - rhs
+            elif op == '*':
+                return lhs * rhs
+            elif op == '/':
+                return lhs // rhs
+            elif op == '%':
+                return lhs % rhs
+        elif op == "DEBUG_PRINTU":
+            result = _interpret_node(node[op])
+            print(result)
+            return None
