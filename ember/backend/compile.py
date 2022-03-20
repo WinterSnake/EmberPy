@@ -10,6 +10,8 @@
 from pathlib import Path
 from typing import Any, TextIO
 
+from frontend.lexer import Token
+
 
 ## Functions
 def compile_ast(nodes: list[Any], file_name: str) -> Path:
@@ -74,35 +76,38 @@ def _compile_node(node: Any, file: TextIO) -> None:
         file.write(f"\tpush ${node}\n")
     elif isinstance(node, dict):
         op: str = list(node.keys())[0]
-        if op in ('+', '-', '*', '/', '%'):
+        if op in (
+            Token.TYPE.ADD, Token.TYPE.SUB, Token.TYPE.MUL,
+            Token.TYPE.DIV, Token.TYPE.MOD
+        ):
             _compile_node(node[op]['lhs'], file)
             _compile_node(node[op]['rhs'], file)
-            if op == '+':
+            if op == Token.TYPE.ADD:
                 file.write("# -- add -- #\n")
                 file.write("\tpop %rbx\n")
                 file.write("\tpop %rax\n")
                 file.write("\taddq %rbx, %rax\n")
                 file.write("\tpush %rax\n")
-            elif op == '-':
+            elif op == Token.TYPE.SUB:
                 file.write("# -- sub -- #\n")
                 file.write("\tpop %rbx\n")
                 file.write("\tpop %rax\n")
                 file.write("\tsubq %rbx, %rax\n")
                 file.write("\tpush %rax\n")
-            elif op == '*':
+            elif op == Token.TYPE.MUL:
                 file.write("# -- mul -- #\n")
                 file.write("\tpop %rbx\n")
                 file.write("\tpop %rax\n")
                 file.write("\timulq %rbx, %rax\n")
                 file.write("\tpush %rax\n")
-            elif op == '/':
+            elif op == Token.TYPE.DIV:
                 file.write("# -- div -- #\n")
                 file.write("\tpop %rbx\n")
                 file.write("\tpop %rax\n")
                 file.write("\tcqto\n")
                 file.write("\tidivq %rbx\n")
                 file.write("\tpush %rax\n")
-            elif op == '%':
+            elif op == Token.TYPE.MOD:
                 file.write("# -- mod -- #\n")
                 file.write("\tpop %rbx\n")
                 file.write("\tpop %rax\n")
