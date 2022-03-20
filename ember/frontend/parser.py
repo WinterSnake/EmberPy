@@ -7,12 +7,14 @@
 ##-------------------------------##
 
 ## Imports
+from pathlib import Path
 from typing import Any
 
 
 ## Functions
-def parse_lexemes(lexemes: list[str]) -> Any:
+def parse_lexemes(lexemes: list[tuple[Path, int, int, str]]) -> Any:
     """Return a parse tree from lexemes"""
+    lexemes: list[str] = [token[3] for token in lexemes]
     total: int = 0
     nodes: list[Any] = []
     while total < len(lexemes):
