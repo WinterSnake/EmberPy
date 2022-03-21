@@ -27,12 +27,14 @@ def _interpret_node(node: Any) -> Any:
     elif isinstance(node, dict):
         op: str = list(node.keys())[0]
         if op in (
+            # -Math
             Token.TYPE.ADD, Token.TYPE.SUB, Token.TYPE.MUL,
-            Token.TYPE.DIV, Token.TYPE.MOD
+            Token.TYPE.DIV, Token.TYPE.MOD,
+            # -Comparison
+            Token.TYPE.EQUEQU,
         ):
             lhs: Any = _interpret_node(node[op]['lhs'])
             rhs: Any = _interpret_node(node[op]['rhs'])
-            print(f"{lhs} {op.name} {rhs}")
             if op == Token.TYPE.ADD:
                 return lhs + rhs
             elif op == Token.TYPE.SUB:
@@ -43,6 +45,8 @@ def _interpret_node(node: Any) -> Any:
                 return lhs // rhs
             elif op == Token.TYPE.MOD:
                 return lhs % rhs
+            elif op == Token.TYPE.EQUEQU:
+                return lhs == rhs
         elif op == "DEBUG_PRINTU":
             result = _interpret_node(node[op])
             print(result)

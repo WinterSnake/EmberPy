@@ -40,6 +40,7 @@ def _parser_check() -> None:
             Token.TYPE.IDENTIFIER,
             Token.TYPE.NUMBER,
             # -COMPARISON
+            Token.TYPE.EQUEQU,
             # -SYMBOL
             Token.TYPE.ADD,
             Token.TYPE.SUB,
@@ -63,11 +64,11 @@ def _parser_check() -> None:
 def _parse_expression(tokens: list[Token]) -> tuple[Any, int]:
     """Return a parse tree of an expression"""
     if tokens[0].type == Token.TYPE.IDENTIFIER and tokens[0].value == "DEBUG__PRINTU__":
-        expr, index = _parse_expression_as(tokens[2:])
+        expr, index = _parse_comparison_equality(tokens[2:])
         index += 3  # -Handles: 'DEBUG__PRINTU__', '(', and ')'
         expr = {"DEBUG_PRINTU": expr}
     else:
-        expr, index = _parse_expression_as(tokens)
+        expr, index = _parse_comparison_equality(tokens)
     # -Handle: Unexpected end of token stream
     if index >= len(tokens):
         token: Token = tokens[-1]
@@ -81,6 +82,20 @@ def _parse_expression(tokens: list[Token]) -> tuple[Any, int]:
     return (expr, index + 1)  # -Handles ';'
 
 
+def _parse_comparison_equality(tokens: list[Token]) -> tuple[Any, int]:
+    """Return a parse tree of ==|!= comparisons"""
+    expr, index = _parse_expression_as(tokens)
+    while (
+        index < len(tokens) and
+        tokens[index].type in (Token.TYPE.EQUEQU,)
+    ):
+        comparison: str = tokens[index].type
+        rhs, j = _parse_expression_as(tokens[index + 1:])
+        index += j + 1  # -Handles op and rhs
+        expr = {comparison: {'lhs': expr, 'rhs': rhs}}
+    return (expr, index)
+
+
 def _parse_expression_as(tokens: list[Token]) -> tuple[Any, int]:
     """Return a parse tree of +|- expressions"""
     expr, index = _parse_expression_mdm(tokens)
@@ -89,9 +104,9 @@ def _parse_expression_as(tokens: list[Token]) -> tuple[Any, int]:
         tokens[index].type in (Token.TYPE.ADD, Token.TYPE.SUB)
     ):
         operator: str = tokens[index].type
-        rhs, index_ = _parse_expression_mdm(tokens[index + 1:])
+        rhs, j = _parse_expression_mdm(tokens[index + 1:])
         expr = {operator:{'lhs': expr, 'rhs': rhs}}
-        index += index_ + 1  # -Handles op and rhs
+        index += j + 1  # -Handles op and rhs
     return (expr, index)
 
 
@@ -103,16 +118,16 @@ def _parse_expression_mdm(tokens: list[Token]) -> tuple[Any, int]:
         tokens[index].type in (Token.TYPE.MUL, Token.TYPE.DIV, Token.TYPE.MOD)
     ):
         operator: str = tokens[index].type
-        rhs, index_ = _parse_literal_primary(tokens[index + 1:])
+        rhs, j = _parse_literal_primary(tokens[index + 1:])
         expr = {operator:{'lhs': expr, 'rhs': rhs}}
-        index += index_ + 1  # -Handles op and rhs
+        index += j + 1  # -Handles op and rhs
     return (expr, index)
 
 
 def _parse_literal_primary(tokens: list[Token]) -> tuple[Any, int]:
     """Return a parse tree of a primary literal"""
     if tokens[0].type == Token.TYPE.LPAREN:
-        expr, index = _parse_expression_as(tokens[1:])
+        expr, index = _parse_comparison_equality(tokens[1:])
         # -Handle: Unexpected token in stream
         if tokens[index + 1].type != Token.TYPE.RPAREN:
             token: Token = tokens[index]
