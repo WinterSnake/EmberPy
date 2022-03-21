@@ -70,6 +70,7 @@ def _lexer_check():
             Token.TYPE.IDENTIFIER,
             Token.TYPE.NUMBER,
             # -COMPARISON
+            Token.TYPE.EQUEQU,
             # -SYMBOL
             Token.TYPE.ADD,
             Token.TYPE.SUB,
@@ -129,6 +130,7 @@ class Token:
         type_, value_ = {
             # -KEYWORD
             # -COMPARISON
+            "==": (Token.TYPE.EQUEQU, None),
             # -SYMBOL
             '+': (Token.TYPE.ADD, None),
             '-': (Token.TYPE.SUB, None),
@@ -163,6 +165,7 @@ class Token:
         IDENTIFIER = auto()
         NUMBER = auto()
         # -COMPARISON
+        EQUEQU = auto()
         # -SYMBOL
         ADD = auto()
         SUB = auto()
