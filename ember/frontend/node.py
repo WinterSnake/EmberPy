@@ -7,9 +7,10 @@
 ##-------------------------------##
 
 ## Imports
+from __future__ import annotations
 from abc import ABC, abstractmethod
 from enum import IntEnum, auto
-from typing import TextIO
+from typing import Any, TextIO
 
 
 ## Classes
@@ -28,7 +29,7 @@ class NodeBase(ABC):
         pass
 
 
-class NodeExpression(Node):
+class NodeExpression(NodeBase):
     """AST Expression Node"""
 
     # -Constructor
@@ -54,9 +55,10 @@ class NodeExpression(Node):
         MUL = auto()
         DIV = auto()
         MOD = auto()
+        EQUEQU = auto()
 
 
-class NodeLiteral(Node):
+class NodeLiteral(NodeBase):
     """AST Literal Node"""
 
     # -Constructor
