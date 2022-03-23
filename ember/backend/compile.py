@@ -10,7 +10,7 @@
 from pathlib import Path
 from typing import Any, TextIO
 
-from frontend.lexer import Token
+from frontend.token import Token
 
 
 ## Functions
@@ -129,6 +129,15 @@ def _compile_node(node: Any, file: TextIO) -> None:
                     "\tcqto\n",
                     "\tidivq %rbx\n",
                     "\tpush %rdx\n",
+                ])
+            elif op == Token.TYPE.EQUEQU:
+                file.writelines([
+                    "# -- comparison: equal -- #\n",
+                    "\tpop %rbx\n",
+                    "\tpop %rax\n",
+                    "\tcmpq %rbx, %rax\n",
+                    "\tsete %al\n",
+                    "\t"
                 ])
         elif op == "DEBUG_PRINTU":
             _compile_node(node[op], file)

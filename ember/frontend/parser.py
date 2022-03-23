@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from .lexer import Token
+from .token import Token
 
 
 ## Functions

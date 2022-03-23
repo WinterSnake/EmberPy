@@ -9,7 +9,7 @@
 ## Imports
 from typing import Any
 
-from frontend.lexer import Token
+from frontend.token import Token
 
 
 ## Functions
@@ -46,7 +46,7 @@ def _interpret_node(node: Any) -> Any:
             elif op == Token.TYPE.MOD:
                 return lhs % rhs
             elif op == Token.TYPE.EQUEQU:
-                return lhs == rhs
+                return int(lhs == rhs)
         elif op == "DEBUG_PRINTU":
             result = _interpret_node(node[op])
             print(result)
