@@ -8,7 +8,6 @@
 
 ## Imports
 from __future__ import annotations
-from enum import IntEnum, auto
 from pathlib import Path
 from typing import TextIO
 
