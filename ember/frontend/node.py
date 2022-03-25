@@ -29,6 +29,22 @@ class NodeBase(ABC):
         pass
 
 
+class NodeStatement(NodeBase):
+    """AST Statement Node"""
+
+    # -Constructor
+    def __init__(self, expression: NodeExpression) -> None:
+        self.expression = expression
+
+    # -Instance Methods
+    def compile(self, file: TextIO) -> None:
+        pass
+
+    def interpret(self) -> None:
+        expr = self.expression.interpret()
+        print(expr)
+
+
 class NodeExpression(NodeBase):
     """AST Expression Node"""
 
@@ -44,8 +60,21 @@ class NodeExpression(NodeBase):
     def compile(self, file: TextIO) -> None:
         pass
 
-    def interpret(self) -> Any:
-        pass
+    def interpret(self) -> int:
+        lhs: Any = self.lhs.interpret()
+        rhs: Any = self.rhs.interpret()
+        if self.operator == NodeExpression.OPERATOR.ADD:
+            return lhs + rhs
+        elif self.operator == NodeExpression.OPERATOR.SUB:
+            return lhs - rhs
+        elif self.operator == NodeExpression.OPERATOR.MUL:
+            return lhs * rhs
+        elif self.operator == NodeExpression.OPERATOR.DIV:
+            return lhs // rhs
+        elif self.operator == NodeExpression.OPERATOR.MOD:
+            return lhs % rhs
+        elif self.operator == NodeExpression.OPERATOR.EQUEQU:
+            return int(lhs == rhs)
 
     # -Sub-Classes
     class OPERATOR(IntEnum):
@@ -69,5 +98,5 @@ class NodeLiteral(NodeBase):
     def compile(self, file: TextIO) -> None:
         pass
 
-    def interpret(self) -> Any:
-        pass
+    def interpret(self) -> int:
+        return self.value
