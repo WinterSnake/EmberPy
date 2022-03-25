@@ -12,10 +12,21 @@ from pathlib import Path
 from typing import Any
 
 from .token import Token
+from .node import NodeBase, NodeStatement, NodeExpression, NodeLiteral
+
+## Constants
+LOOKUP: dict[Token.TYPE, NodeExpression.OPERATOR] = {
+    Token.TYPE.ADD: NodeExpression.OPERATOR.ADD,
+    Token.TYPE.SUB: NodeExpression.OPERATOR.SUB,
+    Token.TYPE.MUL: NodeExpression.OPERATOR.MUL,
+    Token.TYPE.DIV: NodeExpression.OPERATOR.DIV,
+    Token.TYPE.MOD: NodeExpression.OPERATOR.MOD,
+    Token.TYPE.EQUEQU: NodeExpression.OPERATOR.EQUEQU,
+}
 
 
 ## Functions
-def parse_tokens(tokens: list[Token]) -> list[Any] | None:
+def parse_tokens(tokens: list[Token]) -> list[NodeBase] | None:
     """Return a parse tree from list of tokens"""
     _parser_check()
     if not tokens:
@@ -61,12 +72,12 @@ def _parser_check() -> None:
     )
 
 
-def _parse_expression(tokens: list[Token]) -> tuple[Any, int]:
+def _parse_expression(tokens: list[Token]) -> tuple[NodeBase, int]:
     """Return a parse tree of an expression"""
     if tokens[0].type == Token.TYPE.IDENTIFIER and tokens[0].value == "DEBUG__PRINTU__":
         expr, index = _parse_comparison_equality(tokens[2:])
         index += 3  # -Handles: 'DEBUG__PRINTU__', '(', and ')'
-        expr = {"DEBUG_PRINTU": expr}
+        expr = NodeStatement(expr)
     else:
         expr, index = _parse_comparison_equality(tokens)
     # -Handle: Unexpected end of token stream
@@ -82,67 +93,66 @@ def _parse_expression(tokens: list[Token]) -> tuple[Any, int]:
     return (expr, index + 1)  # -Handles ';'
 
 
-def _parse_comparison_equality(tokens: list[Token]) -> tuple[Any, int]:
+def _parse_comparison_equality(tokens: list[Token]) -> tuple[NodeBase, int]:
     """Return a parse tree of ==|!= comparisons"""
     expr, index = _parse_expression_as(tokens)
     while (
         index < len(tokens) and
         tokens[index].type in (Token.TYPE.EQUEQU,)
     ):
-        comparison: str = tokens[index].type
+        operator: NodeExpression.TYPE = LOOKUP[tokens[index].type]
         rhs, j = _parse_expression_as(tokens[index + 1:])
+        expr = NodeExpression(operator, lhs=expr, rhs=rhs)
         index += j + 1  # -Handles op and rhs
-        expr = {comparison: {'lhs': expr, 'rhs': rhs}}
     return (expr, index)
 
 
-def _parse_expression_as(tokens: list[Token]) -> tuple[Any, int]:
+def _parse_expression_as(tokens: list[Token]) -> tuple[NodeBase, int]:
     """Return a parse tree of +|- expressions"""
     expr, index = _parse_expression_mdm(tokens)
     while (
         index < len(tokens) and
         tokens[index].type in (Token.TYPE.ADD, Token.TYPE.SUB)
     ):
-        operator: str = tokens[index].type
+        operator: NodeExpression.TYPE = LOOKUP[tokens[index].type]
         rhs, j = _parse_expression_mdm(tokens[index + 1:])
-        expr = {operator:{'lhs': expr, 'rhs': rhs}}
+        expr = NodeExpression(operator, lhs=expr, rhs=rhs)
         index += j + 1  # -Handles op and rhs
     return (expr, index)
 
 
-def _parse_expression_mdm(tokens: list[Token]) -> tuple[Any, int]:
+def _parse_expression_mdm(tokens: list[Token]) -> tuple[NodeBase, int]:
     """Return a parse tree of *|/|% expressions"""
     expr, index = _parse_literal_primary(tokens)
     while (
         index < len(tokens) and
         tokens[index].type in (Token.TYPE.MUL, Token.TYPE.DIV, Token.TYPE.MOD)
     ):
-        operator: str = tokens[index].type
+        operator: NodeExpression.TYPE = LOOKUP[tokens[index].type]
         rhs, j = _parse_literal_primary(tokens[index + 1:])
-        expr = {operator:{'lhs': expr, 'rhs': rhs}}
+        expr = NodeExpression(operator, lhs=expr, rhs=rhs)
         index += j + 1  # -Handles op and rhs
     return (expr, index)
 
 
-def _parse_literal_primary(tokens: list[Token]) -> tuple[Any, int]:
+def _parse_literal_primary(tokens: list[Token]) -> tuple[NodeBase, int]:
     """Return a parse tree of a primary literal"""
     if tokens[0].type == Token.TYPE.LPAREN:
         expr, index = _parse_comparison_equality(tokens[1:])
         # -Handle: Unexpected token in stream
         if tokens[index + 1].type != Token.TYPE.RPAREN:
-            token: Token = tokens[index]
+            token: Token = tokens[index + 1]
             print(f"{token.file_path.resolve()}:{token.row}:{token.column} Unexpected token '{token}', expected ')'", file=sys.stderr)
             sys.exit(1)
         return (expr, index + 2)  # -Handles '(' and ')'
     return _parse_literal_number(tokens)
 
 
-def _parse_literal_number(tokens: list[Token]) -> tuple[int, int]:
+def _parse_literal_number(tokens: list[Token]) -> tuple[NodeLiteral, int]:
     """Return a parse tree of a number literal"""
     # -Handle: Unexpected token in stream
     if tokens[0].type != Token.TYPE.NUMBER:
         token: Token = tokens[0]
         print(f"{token.file_path.resolve()}:{token.row}:{token.column} Unexpected token '{token}', expected 'NUMBER'", file=sys.stderr)
         sys.exit(1)
-    value: int = int(tokens[0].value)
-    return (value, 1)
+    return (NodeLiteral(value=int(tokens[0].value)), 1)
