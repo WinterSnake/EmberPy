@@ -38,7 +38,12 @@ class NodeStatement(NodeBase):
 
     # -Instance Methods
     def compile(self, file: TextIO) -> None:
-        pass
+        self.expression.compile(file)
+        file.writelines([
+            "# -- DEBUG PRINTU -- #\n",
+            "\tpop %rdi\n",
+            "\t call DEBUG__PRINTU__\n",
+        ])
 
     def interpret(self) -> None:
         expr = self.expression.interpret()
@@ -58,7 +63,45 @@ class NodeExpression(NodeBase):
     
     # -Instance Methods
     def compile(self, file: TextIO) -> None:
-        pass
+        self.lhs.compile(file)
+        self.rhs.compile(file)
+        file.writelines([
+           f"# -- {self.operator.name} -- #\n"
+            "\tpop %rbx\n",
+            "\tpop %rax\n",
+        ])
+        if self.operator == NodeExpression.OPERATOR.ADD:
+            file.writelines([
+                "\taddq %rbx, %rax\n",
+                "\tpush %rax\n",
+            ])
+        elif self.operator == NodeExpression.OPERATOR.SUB:
+            file.writelines([
+                "\tsubq %rbx, %rax\n",
+                "\tpush %rax\n",
+            ])
+        elif self.operator == NodeExpression.OPERATOR.MUL:
+            file.writelines([
+                "\timulq %rbx, %rax\n",
+                "\tpush %rax\n",
+            ])
+        elif self.operator == NodeExpression.OPERATOR.DIV:
+            file.writelines([
+                "\tcqto\n",
+                "\tidivq %rbx\n",
+                "\tpush %rax\n",
+            ])
+        elif self.operator == NodeExpression.OPERATOR.MOD:
+            file.writelines([
+                "\tcqto\n",
+                "\tidivq %rbx\n",
+                "\tpush %rdx\n",
+            ])
+        elif self.operator == NodeExpression.OPERATOR.EQUEQU:
+            file.writelines([
+                "\tcmpq %rbx, %rax\n",
+                "\tsete %al\n",
+            ])
 
     def interpret(self) -> int:
         lhs: Any = self.lhs.interpret()
@@ -96,7 +139,10 @@ class NodeLiteral(NodeBase):
 
     # -Instance Methods
     def compile(self, file: TextIO) -> None:
-        pass
+        file.writelines([
+            "# -- push (uint64) -- #\n",
+           f"\tpush ${self.value}\n",
+        ])
 
     def interpret(self) -> int:
         return self.value

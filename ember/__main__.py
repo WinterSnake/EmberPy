@@ -47,7 +47,8 @@ if dump_ast_graph:
     graph.render('out.dot', view=False)
 if run_mode is not None:
     if run_mode == 0:
-        file: Path = compile_ast(ast, 'main.asm')
+        file = Path("main.asm")
+        compile_ast(ast, file)
         subprocess.run(["as", "main.asm", "-o", "main.o"])
         subprocess.run(["ld", "main.o", "-e", "__start__", "-o", "main"])
     elif run_mode == 1:
