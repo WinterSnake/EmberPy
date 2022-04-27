@@ -20,7 +20,7 @@ def compile_ast(nodes: list[Any], file: Path) -> None:
         f.writelines([
             ".text\n",
             ".globl __start__\n",
-            ".globl  DEBUG__PRINTI__\n",
+            ".globl  DEBUG__PRINTU__\n",
             "DEBUG__PRINTU__:\n",
             "\tmovabsq $-3689348814741910323, %r9\n",
             "\tsubq $40, %rsp\n",
