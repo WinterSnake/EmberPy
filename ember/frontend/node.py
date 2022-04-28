@@ -89,6 +89,8 @@ class NodeExpression(NodeBase):
             file.writelines([
                 "\tcqto\n",
                 "\tidivq %rbx\n",
+                "\tmovzbl %al, %eax\n"
+                "\tpush %rax\n"
                 "\tpush %rax\n",
             ])
         elif self.operator == NodeExpression.OPERATOR.MOD:
@@ -101,6 +103,15 @@ class NodeExpression(NodeBase):
             file.writelines([
                 "\tcmpq %rbx, %rax\n",
                 "\tsete %al\n",
+                "\tmovzbl %al, %eax\n"
+                "\tpush %rax\n"
+            ])
+        elif self.operator == NodeExpression.OPERATOR.NOTEQU:
+            file.writelines([
+                "\tcmpq %rbx, %rax\n",
+                "\tsetne %al\n",
+                "\tmovzbl %al, %eax\n"
+                "\tpush %rax\n"
             ])
 
     def interpret(self) -> int:
@@ -118,6 +129,8 @@ class NodeExpression(NodeBase):
             return lhs % rhs
         elif self.operator == NodeExpression.OPERATOR.EQUEQU:
             return int(lhs == rhs)
+        elif self.operator == NodeExpression.OPERATOR.NOTEQU:
+            return int(lhs != rhs)
 
     # -Sub-Classes
     class OPERATOR(IntEnum):
@@ -128,6 +141,7 @@ class NodeExpression(NodeBase):
         DIV = auto()
         MOD = auto()
         EQUEQU = auto()
+        NOTEQU = auto()
 
 
 class NodeLiteral(NodeBase):
