@@ -150,9 +150,17 @@ def _parse_literal_primary(tokens: list[Token]) -> tuple[NodeBase, int]:
 
 def _parse_literal_number(tokens: list[Token]) -> tuple[NodeLiteral, int]:
     """Return a parse tree of a number literal"""
+    # -Handle negatives
+    negate: bool = False
+    if tokens[0].type == Token.TYPE.SUB:
+        tokens = tokens[1:]
+        negate = True
     # -Handle: Unexpected token in stream
     if tokens[0].type != Token.TYPE.NUMBER:
         token: Token = tokens[0]
         print(f"{token.file_path.resolve()}:{token.row}:{token.column} Unexpected token '{token}', expected 'NUMBER'", file=sys.stderr)
         sys.exit(1)
-    return (NodeLiteral(value=int(tokens[0].value)), 1)
+    value: int = int(tokens[0].value)
+    if negate:
+        value *= -1
+    return (NodeLiteral(value=value), 1 + int(negate))
