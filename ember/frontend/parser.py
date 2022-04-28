@@ -22,6 +22,7 @@ LOOKUP: dict[Token.TYPE, NodeExpression.OPERATOR] = {
     Token.TYPE.DIV: NodeExpression.OPERATOR.DIV,
     Token.TYPE.MOD: NodeExpression.OPERATOR.MOD,
     Token.TYPE.EQUEQU: NodeExpression.OPERATOR.EQUEQU,
+    Token.TYPE.NOTEQU: NodeExpression.OPERATOR.NOTEQU,
 }
 
 
@@ -52,6 +53,7 @@ def _parser_check() -> None:
             Token.TYPE.NUMBER,
             # -COMPARISON
             Token.TYPE.EQUEQU,
+            Token.TYPE.NOTEQU,
             # -SYMBOL
             Token.TYPE.ADD,
             Token.TYPE.SUB,
@@ -98,7 +100,7 @@ def _parse_comparison_equality(tokens: list[Token]) -> tuple[NodeBase, int]:
     expr, index = _parse_expression_as(tokens)
     while (
         index < len(tokens) and
-        tokens[index].type in (Token.TYPE.EQUEQU,)
+        tokens[index].type in (Token.TYPE.EQUEQU, Token.TYPE.NOTEQU)
     ):
         operator: NodeExpression.TYPE = LOOKUP[tokens[index].type]
         rhs, j = _parse_expression_as(tokens[index + 1:])

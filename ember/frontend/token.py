@@ -52,6 +52,7 @@ class Token:
             # -KEYWORD
             # -COMPARISON
             "==": (Token.TYPE.EQUEQU, None),
+            "!=": (Token.TYPE.NOTEQU, None),
             # -SYMBOL
             '+': (Token.TYPE.ADD, None),
             '-': (Token.TYPE.SUB, None),
@@ -87,6 +88,7 @@ class Token:
         NUMBER = auto()
         # -COMPARISON
         EQUEQU = auto()
+        NOTEQU = auto()
         # -SYMBOL
         ADD = auto()
         SUB = auto()

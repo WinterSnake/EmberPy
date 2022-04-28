@@ -18,7 +18,7 @@ SYMBOLS: tuple[str] = (
     # -MATH
     '+', '-', '*', '/', '%',
     # -COMPARISONS
-    "==",
+    "==", "!=",
     # -OTHER
     '(', ')', '{', '}', ';',
 )
@@ -72,6 +72,7 @@ def _lexer_check():
             Token.TYPE.NUMBER,
             # -COMPARISON
             Token.TYPE.EQUEQU,
+            Token.TYPE.NOTEQU,
             # -SYMBOL
             Token.TYPE.ADD,
             Token.TYPE.SUB,
