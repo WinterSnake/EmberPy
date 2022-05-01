@@ -1,0 +1,19 @@
+## Program
+program: expression*;
+
+## Statements
+statement: "DEBUG__PRINTU__"? expression;
+
+## Expressions
+expression: expr_equality;
+expr_equality: expr_sum (("==" | "!=") expr_sum)*;
+expr_sum: expr_factor (('+' | '-') expr_factor)*;
+expr_factor: expr_unary (('*' | '/' | '%') expr_unary)*;
+expr_unary: ('-') unary | expr_primary;
+expr_primary: LITERAL | '(' expression ')';
+
+## Terminal
+LITERAL: NUMBER | IDENTIFIER;
+NUMBER: INTEGER;
+INTEGER: 0 | [1-9][0-9]*;
+IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
