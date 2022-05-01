@@ -27,7 +27,7 @@ LOOKUP: dict[Token.TYPE, NodeExpression.OPERATOR] = {
 
 
 ## Functions
-def parse_tokens(tokens: list[Token]) -> list[NodeBase] | None:
+def parse_program(tokens: list[Token]) -> list[NodeBase] | None:
     """Return a parse tree from list of tokens"""
     _parser_check()
     if not tokens:
@@ -35,7 +35,7 @@ def parse_tokens(tokens: list[Token]) -> list[NodeBase] | None:
     nodes: list[Any] = []
     index: int = 0
     while index < len(tokens):
-        node, j = _parse_expression(tokens[index:])
+        node, j = _parse_statement(tokens[index:])
         nodes.append(node)
         index += j
     return nodes
@@ -74,28 +74,33 @@ def _parser_check() -> None:
     )
 
 
-def _parse_expression(tokens: list[Token]) -> tuple[NodeBase, int]:
+def _parse_statement(tokens: list[Token]) -> tuple[NodeBase, int]:
     """Return a parse tree of an expression"""
+    nindex: int = 0;
     if tokens[0].type == Token.TYPE.IDENTIFIER and tokens[0].value == "DEBUG__PRINTU__":
-        expr, index = _parse_comparison_equality(tokens[2:])
-        index += 3  # -Handles: 'DEBUG__PRINTU__', '(', and ')'
+        tokens = tokens[2:]  # -Handles: 'DEBUG__PRINTU__', and '('
+        nindex = 3
+    expr, index = _parse_expression(tokens)
+    if nindex:
+        index += 1  # -Handles ')'
         expr = NodeStatement(expr)
-    else:
-        expr, index = _parse_comparison_equality(tokens)
     # -Handle: Unexpected end of token stream
     if index >= len(tokens):
         token: Token = tokens[-1]
-        print(f"{token.file_path.resolve()}:{token.row}:{token.column} Unexpected end of steam, expected ';'")
-        sys.exit(1)
     # -Handle: Unexpected token in stream
     elif tokens[index].type != Token.TYPE.SEMICOLON:
         token: Token = tokens[index]
         print(f"{token.file_path.resolve()}:{token.row}:{token.column} Unexpected token '{token}', expected ';'", file=sys.stderr)
         sys.exit(1)
-    return (expr, index + 1)  # -Handles ';'
+    return (expr, index + nindex + 1)  # -Handles ';'
 
 
-def _parse_comparison_equality(tokens: list[Token]) -> tuple[NodeBase, int]:
+def _parse_expression(tokens: list[Token]) -> tuple[NodeBase, int]:
+    """Return an expression parse tree"""
+    return _parse_expression_equality(tokens)
+
+
+def _parse_expression_equality(tokens: list[Token]) -> tuple[NodeBase, int]:
     """Return a parse tree of ==|!= comparisons"""
     expr, index = _parse_expression_as(tokens)
     while (
@@ -140,7 +145,7 @@ def _parse_expression_mdm(tokens: list[Token]) -> tuple[NodeBase, int]:
 def _parse_literal_primary(tokens: list[Token]) -> tuple[NodeBase, int]:
     """Return a parse tree of a primary literal"""
     if tokens[0].type == Token.TYPE.LPAREN:
-        expr, index = _parse_comparison_equality(tokens[1:])
+        expr, index = _parse_expression(tokens[1:])
         # -Handle: Unexpected token in stream
         if tokens[index + 1].type != Token.TYPE.RPAREN:
             token: Token = tokens[index + 1]
