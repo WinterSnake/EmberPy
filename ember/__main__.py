@@ -10,8 +10,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from frontend.lexer import Token, lex_file
-from frontend.parser import parse_tokens
+from frontend.token import Token
+from frontend.lexer import Lexer
+from frontend.parser import parse_program
 from backend import compile_ast, interpret_ast
 
 ## Constants
@@ -40,8 +41,9 @@ for arg in sys.argv[1:]:
 if not source.is_file():
     print(f"File '{source.resolve()}' does not exist or is not a file", file=sys.stderr)
     sys.exit(ERR_INPUT)
-tokens: list[Token] = lex_file(source)
-ast: list[Any] | None = parse_tokens(tokens)
+lexer = Lexer(source)
+tokens: list[Token] = [token for token in lexer]
+ast: list[Any] | None = parse_program(tokens)
 if dump_ast_graph:
     graph = graph_ast(ast, format="png")
     graph.render('out.dot', view=False)
