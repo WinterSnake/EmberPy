@@ -14,7 +14,7 @@ from typing import TextIO
 from .token import Token
 
 ## Constants
-SYMBOLS: tuple[str] = (
+SYMBOLS: tuple[str, ...] = (
     # -MATH
     '+', '-', '*', '/', '%', '=',
     # -OTHER
@@ -31,7 +31,7 @@ class Lexer:
     # -Constructor
     def __init__(self, file_path: Path, line: int = 1, column: int = 0) -> None:
         self.file_path: Path = file_path
-        self.fp: TextIO | None = None
+        self.fp: TextIO = None  #type: ignore
         self.line: int = line
         self.column: int = column
 
@@ -39,7 +39,7 @@ class Lexer:
     def __iter__(self) -> Lexer:
         return self
 
-    def __next__(self) -> Token:
+    def __next__(self) -> Token | None:
         if token := self.get_next_token():
             return token
         raise StopIteration()
@@ -47,9 +47,9 @@ class Lexer:
     # -Instance Methods: Private
     def _next(self) -> str | None:
         '''Internal character reader'''
-        assert self.fp is not None
         if not self.fp.closed and (char := self.fp.read(1)):
             return char
+        return None
 
     def _peek(self) -> str | None:
         '''Returns next character without advancing lexer position'''
@@ -62,6 +62,7 @@ class Lexer:
 
     def _advance(self) -> str | None:
         '''Returns next character and advances lexer position'''
+        assert self.fp is not None
         char = self._next()
         if char == '\n':
             self.line += 1
@@ -88,33 +89,36 @@ class Lexer:
             # -[ERROR]
             else:
                 raise SyntaxError(f"Unhandled char '{char}' in lexer.lex")
+        return None
 
     def _lex_identifier(self, char: str) -> Token:
         '''Internal IDENTIFIER lexer state'''
+        nchar: str | None
         pos: tuple[int, int] = self.position
         buffer: str = char
-        while char := self._peek():
-            if char.isalpha() or char.isdigit() or char in ('_', ):
-                buffer += char
+        while nchar := self._peek():
+            if nchar.isalpha() or nchar.isdigit() or nchar in ('_', ):
+                buffer += nchar
                 self._advance()
-            elif char.isspace() or char in SYMBOLS:
+            elif nchar.isspace() or nchar in SYMBOLS:
                 break
             else:
-                raise SyntaxError(f"Unhandled char '{char}' in lexer.identifier")
+                raise SyntaxError(f"Unhandled char '{nchar}' in lexer.identifier")
         return Token(self.file_path, pos, Token.TYPE.IDENTIFIER, buffer)
 
     def _lex_number(self, char: str) -> Token:
         '''Internal NUMBER lexer state'''
+        nchar: str | None
         pos: tuple[int, int] = self.position
         buffer: str = char
-        while char := self._peek():
-            if char.isdigit():
-                buffer += char
+        while nchar := self._peek():
+            if nchar.isdigit():
+                buffer += nchar
                 self._advance()
-            elif char.isspace() or char in SYMBOLS:
+            elif nchar.isspace() or nchar in SYMBOLS:
                 break
             else:
-                raise SyntaxError(f"Unhandled char '{char}' in lexer.number")
+                raise SyntaxError(f"Unhandled char '{nchar}' in lexer.number")
         return Token(self.file_path, pos, Token.TYPE.NUMBER, buffer)
 
     def _lex_symbol(self, char: str) -> Token | None:
@@ -165,12 +169,13 @@ class Lexer:
         if token := self._lex():
             return token
         self.fp.close()
+        return None
 
     # -Static Methods
     @staticmethod
     def check_unhandled_tokens() -> None:
         '''Checks all unhandled token types in lexer amd throws error if any found'''
-        unhandled_token_types: tuple[Token.TYPE] = tuple(
+        unhandled_token_types: tuple[Token.TYPE, ...] = tuple(
             type_
             for type_ in Token.TYPE
             if type_ not in (
