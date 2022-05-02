@@ -55,9 +55,9 @@ class NodeExpression(NodeBase):
 
     # -Constructor
     def __init__(
-        self, operator: NodeExpression.Operator, lhs: NodeBase, rhs: NodeBase
+        self, operator: NodeExpression.OPERATOR, lhs: NodeBase, rhs: NodeBase
     ) -> None:
-        self.operator: NodeExpression.Operator = operator
+        self.operator: NodeExpression.OPERATOR = operator
         self.lhs: NodeBase = lhs
         self.rhs: NodeBase = rhs
     
@@ -115,8 +115,8 @@ class NodeExpression(NodeBase):
             ])
 
     def interpret(self) -> int:
-        lhs: Any = self.lhs.interpret()
-        rhs: Any = self.rhs.interpret()
+        lhs: int = self.lhs.interpret()
+        rhs: int = self.rhs.interpret()
         if self.operator == NodeExpression.OPERATOR.ADD:
             return lhs + rhs
         elif self.operator == NodeExpression.OPERATOR.SUB:
@@ -131,6 +131,8 @@ class NodeExpression(NodeBase):
             return int(lhs == rhs)
         elif self.operator == NodeExpression.OPERATOR.NOTEQU:
             return int(lhs != rhs)
+        else:
+            raise ValueError("Unhandled operation")
 
     # -Sub-Classes
     class OPERATOR(IntEnum):

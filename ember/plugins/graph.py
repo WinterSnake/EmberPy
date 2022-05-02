@@ -9,11 +9,11 @@
 ## Imports
 from typing import Any
 
-import graphviz
+import graphviz  #type: ignore
 
 
 ## Functions
-def graph_ast(nodes: list[Any], *args, **kwargs) -> graphviz.Digraph:
+def graph_ast(nodes: list[Any], *args: Any, **kwargs: Any) -> graphviz.Digraph:
     """Dump an ast for graphviz"""
     # -Internal Variables
     graph: graphviz.Diagraph = graphviz.Digraph(*args, **kwargs)
