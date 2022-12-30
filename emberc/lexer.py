@@ -8,6 +8,7 @@
 
 ## Imports
 from __future__ import annotations
+from collections.abc import Generator
 from pathlib import Path
 from typing import TextIO
 
@@ -53,6 +54,7 @@ class Lexer:
         ''''''
         if self.fp and not self.fp.closed:
             return self.fp.read(1)
+        return None
 
     def _peek(self) -> str | None:
         ''''''
@@ -63,7 +65,7 @@ class Lexer:
         return char
 
     # -Instance Methods: Lexing
-    def _lex(self) -> Token:
+    def _lex(self) -> Token | None:
         ''''''
         while char := self._advance():
             # -Handle [WHITESPACE]
@@ -81,6 +83,7 @@ class Lexer:
             # -Unknown
             else:
                 print(f"Unknown character '{char}' in _lex")
+        return None
 
     def _lex_symbol(self, char: str) -> Token:
         ''''''
@@ -89,43 +92,48 @@ class Lexer:
     def _lex_numeric(self, char: str) -> Token:
         ''''''
         position: tuple[int, int] = self.position
-        value = char
-        while char := self._peek():
-            if char.isspace():
+        value: str = char
+        while _char := self._peek():
+            if not _char:
                 break
-            elif char in SYMBOLS:
+            elif _char.isspace():
                 break
-            elif not char.isdigit():
+            elif _char in SYMBOLS:
+                break
+            elif not _char.isdigit():
                 break
             else:
-                value += char
+                value += _char
                 self._advance()
         return Token(self.file, position, Token.Type.NUMERIC, value)
 
     def _lex_identifier(self, char: str) -> Token:
         ''''''
         position: tuple[int, int] = self.position
-        value = char
-        while char := self._peek():
-            if char.isspace():
+        value: str = char
+        while _char := self._peek():
+            if not _char:
                 break
-            elif char in SYMBOLS:
+            elif _char.isspace():
+                break
+            elif _char in SYMBOLS:
                 break
             else:
-                value += char
+                value += _char
                 self._advance()
         return Token(self.file, position, Token.Type.IDENTIFIER, value)
 
     # -Instance Methods: Public
-    def get_next_token(self) -> Token:
+    def get_next_token(self) -> Generator[Token, None, None]:
         ''''''
         if not self.fp:
             self.fp = self.file.open('r')
         while token := self._lex():
             yield token
         self.fp.close()
+        return None
 
-    def get_tokens(self) -> list[Token, ...]:
+    def get_tokens(self) -> list[Token]:
         return list(token for token in self.get_next_token())
 
     # -Class Methods

@@ -9,6 +9,7 @@
 ## Imports
 from __future__ import annotations
 from enum import Enum, auto
+from pathlib import Path
 
 
 ## Classes
@@ -17,20 +18,20 @@ class Token:
 
     # -Constructor
     def __init__(
-        self, file_name: str, position: tuple[int, int],
-        _type: Type, value: str | None = None
+        self, file: Path, position: tuple[int, int],
+        _type: Token.Type, value: str | None = None
     ) -> None:
-        self.file_name: str = file_name
+        self.file: Path = file
         self.position: tuple[int, int] = position
-        self.type: Type = _type
-        self.value: str = value
+        self.type: Token.Type = _type
+        self.value: str | None = value
 
     # -Dunder Methods
     def __repr__(self) -> str:
-        return f"Token({self.file_name}, {self.position}, {self.type}, {self.value})"
+        return f"Token({self.file}, {self.position}, {self.type}, {self.value})"
 
     def __str__(self) -> str:
-        return f"[{self.file_name}:{self.row}:{self.column}]{self.type.name}" + (
+        return f"[{self.file}:{self.row}:{self.column}]{self.type.name}" + (
             f": \'{self.value}\'" if self.value else ""
         )
 
