@@ -12,7 +12,7 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import TextIO
 
-from token import Token
+from .token import Token
 
 ## Constants
 SYMBOLS = {

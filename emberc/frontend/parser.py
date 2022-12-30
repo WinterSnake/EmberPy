@@ -9,7 +9,7 @@
 ## Imports
 from typing import Any
 
-from token import Token
+from .token import Token
 
 
 ## Constants
