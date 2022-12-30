@@ -17,8 +17,8 @@ def main() -> None:
     lexer: Lexer = Lexer.from_file_path("tests/test-00.ember")
     tokens = lexer.get_tokens()
     ast = parse_program(tokens)
-    #simulate_program(ast)
-    #compile_program(ast)
+    simulate_program(ast)  # type: ignore
+    compile_program(ast)  # type: ignore
 
 
 ## Body
