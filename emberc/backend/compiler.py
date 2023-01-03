@@ -12,10 +12,9 @@ from typing import Any, TextIO
 
 
 ## Functions
-def compile_program(program: list[dict[str, Any]]) -> Path:
+def compile_program(program: list[dict[str, Any]], file: Path) -> None:
     """"""
     # -Internal Variables
-    file: Path = Path("output.asm")
     fp: TextIO = file.open('w')
     # -Internal Functions
     def pop_expression() -> None:
@@ -137,4 +136,3 @@ def compile_program(program: list[dict[str, Any]]) -> Path:
         "\tsyscall\n"
     ))
     fp.close()
-    return file

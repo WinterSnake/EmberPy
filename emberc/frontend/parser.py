@@ -126,7 +126,7 @@ class Parser:
     # -Class Methods
     @classmethod
     def from_lexer(cls, lexer: Lexer) -> Parser:
-        return cls(lexer.get_next_token())
+        return cls(lexer.next_token())
 
     @classmethod
     def from_list(cls, tokens: list[Token]) -> Parser:

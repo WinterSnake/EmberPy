@@ -33,11 +33,11 @@ class Lexer:
     """"""
 
     # -Constructor
-    def __init__(self, file: Path) -> None:
+    def __init__(self, file: Path, row: int = 1, column: int = 0) -> None:
         self.file: Path = file
         self.fp: TextIO = None  # type: ignore
-        self.row: int = 1
-        self.column: int = 0
+        self.row: int = row
+        self.column: int = column
 
     # -Instance Methods: Private
     def _advance(self) -> str | None:
@@ -124,7 +124,7 @@ class Lexer:
         return Token(self.file, position, Token.Type.IDENTIFIER, value)
 
     # -Instance Methods: Public
-    def get_next_token(self) -> Generator[Token, None, None]:
+    def next_token(self) -> Generator[Token, None, None]:
         ''''''
         if not self.fp:
             self.fp = self.file.open('r')
@@ -133,14 +133,11 @@ class Lexer:
         self.fp.close()
         return None
 
-    def get_all_tokens(self) -> list[Token]:
-        return list(token for token in self.get_next_token())
-
     # -Class Methods
     @classmethod
-    def from_file_path(cls, file: str) -> Lexer:
+    def from_file_path(cls, file: str, row: int = 1, column: int = 0) -> Lexer:
         ''''''
-        return cls(Path(file))
+        return cls(Path(file), row, column)
 
     # -Properties
     @property
@@ -152,3 +149,7 @@ class Lexer:
     @property
     def position(self) -> tuple[int, int]:
         return (self.row, self.column)
+
+    @property
+    def tokens(self) -> list[Token]:
+        return list(token for token in self.next_token())
