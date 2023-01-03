@@ -133,7 +133,7 @@ class Lexer:
         self.fp.close()
         return None
 
-    def get_tokens(self) -> list[Token]:
+    def get_all_tokens(self) -> list[Token]:
         return list(token for token in self.get_next_token())
 
     # -Class Methods
@@ -143,6 +143,12 @@ class Lexer:
         return cls(Path(file))
 
     # -Properties
+    @property
+    def closed(self) -> bool:
+        if self.fp is None:
+            return False
+        return self.fp.closed
+
     @property
     def position(self) -> tuple[int, int]:
         return (self.row, self.column)
