@@ -1,6 +1,6 @@
-DEBUG__PRINTU__(10);
-DEBUG__PRINTU__(10 + 20);
-DEBUG__PRINTU__(60 - 32);
-DEBUG__PRINTU__(40 / 4);
-DEBUG__PRINTU__(30 % 7);
-DEBUG__PRINTU__(10 + 20 * 2 - 8 / 2 % 13);
+10;
+10 + 20;
+60 - 32;
+40 / 4;
+30 % 7;
+(10 + 20 * 2 - 8 / 2) % 13;

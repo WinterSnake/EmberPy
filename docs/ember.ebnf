@@ -1,7 +1,9 @@
-program: expression*;
-expression: 'DEBUG__PRINTU__' '(' expression_add_or_sub ')' ';';
-expression_add_or_sub: expression_mul_or_div_or_mod (('+' | '-') expression_mul_or_div_or_mod)*;
-expression_mul_or_div_or_mod: DIGIT (('*' | '/' | '%') DIGIT)*;
+file: statement*;
+statement: expression ';';
+expression: expression_term;
+expression_term: expression_factor (('+' | '-') expression_factor)*;
+expression_factor: expression_primary (('*' | '/' | '%') expression_primary)*;
+expression_primary: DIGIT | '(' expression ')';
 
 DIGIT: '-'? \d+;
 IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;

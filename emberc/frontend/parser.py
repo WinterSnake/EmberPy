@@ -7,8 +7,11 @@
 ##-------------------------------##
 
 ## Imports
-from typing import Any
+from __future__ import annotations
+from collections.abc import Iterator
+from typing import Any, cast
 
+from .lexer import Lexer
 from .token import Token
 
 
@@ -22,72 +25,109 @@ EXPRESSIONS = {
 }
 
 
-## Functions
-def consume_token(
-    tokens: list[Token], _type: Token.Type, value: str | None = None
-) -> Token | None:
+## Classes
+class Parser:
     """"""
-    token: Token = tokens.pop(0)
-    if not token.type == _type:
-        print(f"Invalid token. Expected: '{_type.name}', got: '{token.type.name}'")
-        token = None  # type: ignore
-    elif value is not None and token.value != value:
-        print(f"Invalid value. Expected: '{value}', got: '{token.value}'")
-        token = None  # type: ignore
-    return token
 
+    # -Constructor
+    def __init__(self, token_generator: Iterator[Token]) -> None:
+        self._token_generator: Iterator[Token] = token_generator
+        self._token_buffer: Token | None = None
 
-def check_next_token(tokens: list[Token], types: tuple[Token.Type, ...]) -> bool:
-    """"""
-    return tokens[0].type in types
+    # -Instance Methods: Private
+    def _advance(self, _type: Token.Type) -> Token | None:
+        ''''''
+        token: Token | None = self._next()
+        # -TODO: Error handling on invalid token type
+        if token is None:
+            print(f"Unexpected end of stream, expected '{_type}'")
+        elif token.type != _type:
+            print(f"Unexpected token '{token.type}', expected '{_type}'")
+        return token
 
+    def _check(self, _type: Token.Type) -> bool:
+        ''''''
+        token: Token | None = self._next()
+        if token is None or token.type != _type:
+            self._token_buffer = token
+            return False
+        return True
 
-def parse_program(tokens: list[Token]) -> list[dict[str, Any]] | None:
-    """"""
-    if not tokens:
-        return None
-    nodes = []
-    while tokens:
-        node = parse_expression(tokens)
-        nodes.append(node)
-    return nodes
+    def _next(self) -> Token | None:
+        ''''''
+        if self._token_buffer:
+            token: Token | None = self._token_buffer
+            self._token_buffer = None
+            return token
+        return next(self._token_generator, None)
 
+    def _peek(self) -> Token | None:
+        ''''''
+        token: Token | None = self._next()
+        self._token_buffer = token
+        return token
 
-def parse_expression(tokens: list[Token]) -> dict[str, Any]:
-    """"""
-    consume_token(tokens, Token.Type.IDENTIFIER, value="DEBUG__PRINTU__")
-    consume_token(tokens, Token.Type.LPAREN)
-    node = parse_expression_add_or_sub(tokens)
-    consume_token(tokens, Token.Type.RPAREN)
-    consume_token(tokens, Token.Type.SEMICOLON)
-    node = {'call': "DEBUG__PRINTU__", 'arguments': [node]}
-    return node
+    # -Instance Methods: Parsing
+    def _parse_statement(self) -> dict[str, Any]:
+        ''''''
+        statement: dict[str, Any] = self._parse_expression()
+        self._advance(Token.Type.SEMICOLON)
+        return statement
 
+    def _parse_expression(self) -> dict[str, Any]:
+        ''''''
+        return self._parse_expression_term()
 
-def parse_expression_add_or_sub(tokens: list[Token]) -> dict[str, Any]:
-    """"""
-    node = parse_expression_mul_or_div_or_mod(tokens)
-    while check_next_token(tokens, (Token.Type.ADD, Token.Type.SUB)):
-        expr = EXPRESSIONS[tokens.pop(0).type]
-        rhs = parse_expression_mul_or_div_or_mod(tokens)
-        node = {expr: {'lhs': node, 'rhs': rhs}}
-    return node
+    def _parse_expression_term(self) -> dict[str, Any]:
+        ''''''
+        expr = self._parse_expression_factor()
+        while cast(Token, self._peek()).type in (
+            Token.Type.ADD, Token.Type.SUB
+        ):
+            token: Token = cast(Token, self._next())
+            rhs = self._parse_expression_factor()
+            expr = {EXPRESSIONS[token.type]: {'lhs': expr, 'rhs': rhs}}
+        return expr
 
+    def _parse_expression_factor(self) -> dict[str, Any]:
+        ''''''
+        expr = self._parse_expression_primary()
+        while cast(Token, self._peek()).type in (
+            Token.Type.MUL, Token.Type.DIV, Token.Type.MOD
+        ):
+            token: Token = cast(Token, self._next())
+            rhs = self._parse_literal_numeric()
+            expr = {EXPRESSIONS[token.type]: {'lhs': expr, 'rhs': rhs}}
+        return expr
 
-def parse_expression_mul_or_div_or_mod(tokens: list[Token]) -> dict[str, Any]:
-    """"""
-    node = parse_digit(tokens)
-    while check_next_token(tokens, (Token.Type.MUL, Token.Type.DIV, Token.Type.MOD)):
-        expr = EXPRESSIONS[tokens.pop(0).type]
-        rhs = parse_digit(tokens)
-        node = {expr: {'lhs': node, 'rhs': rhs}}  # type: ignore
-    return node
+    def _parse_expression_primary(self) -> dict[str, Any]:
+        ''''''
+        if self._check(Token.Type.LPAREN):
+            expr: dict[str, Any] = self._parse_expression()
+            self._advance(Token.Type.RPAREN)
+            return expr
+        return self._parse_literal_numeric()
 
+    def _parse_literal_numeric(self) -> dict[str, Any]:
+        ''''''
+        negate: bool = self._check(Token.Type.SUB)
+        token: Token = cast(Token, self._advance(Token.Type.NUMERIC))
+        return {'value': ('-' if negate else '') + cast(str, token.value)}
 
-def parse_digit(tokens: list[Token]) -> dict[str, str]:
-    """"""
-    negate = check_next_token(tokens, (Token.Type.SUB, ))
-    if negate:
-        tokens.pop(0)
-    token = consume_token(tokens, Token.Type.NUMERIC)
-    return {"value": ('-' if negate else '') + token.value}  # type: ignore
+    # -Instance Methods: Public
+    def parse(self) -> list[dict[str, Any]]:
+        ''''''
+        nodes: list[dict[str, Any]] = []
+        while self._peek():
+            node: dict[str, Any] = self._parse_statement()
+            nodes.append(node)
+        return nodes
+
+    # -Class Methods
+    @classmethod
+    def from_lexer(cls, lexer: Lexer) -> Parser:
+        return cls(lexer.get_next_token())
+
+    @classmethod
+    def from_list(cls, tokens: list[Token]) -> Parser:
+        return cls(iter(tokens))
