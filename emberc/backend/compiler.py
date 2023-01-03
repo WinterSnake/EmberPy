@@ -12,7 +12,7 @@ from typing import Any, TextIO
 
 
 ## Functions
-def compile_program(program: dict[str, Any]) -> Path:
+def compile_program(program: list[dict[str, Any]]) -> Path:
     """"""
     # -Internal Variables
     file: Path = Path("output.asm")
@@ -123,8 +123,7 @@ def compile_program(program: dict[str, Any]) -> Path:
         "_start:\n"
     ))
     for node in program:
-        func: str = node['call']  # type: ignore
-        compile_node(node['arguments'][0])  # type: ignore
+        compile_node(node)
         fp.writelines((
             "\t# -- DEBUG__PRINTU__ -- #\n",
             "\tpop %rdi\n",

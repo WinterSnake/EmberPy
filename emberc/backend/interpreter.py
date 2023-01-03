@@ -11,7 +11,7 @@ from typing import Any
 
 
 ## Functions
-def interpret_program(program: dict[str, Any]) -> None:
+def interpret_program(program: list[dict[str, Any]]) -> None:
     """"""
     # -Internal Functions
     def parse_node(node: dict[str, Any]) -> int:
@@ -44,7 +44,4 @@ def interpret_program(program: dict[str, Any]) -> None:
 
     # -Body
     for node in program:
-        func: str = node['call']  # type: ignore
-        arg0: int = parse_node(node['arguments'][0])  # type: ignore
-        # -Simulate Function Call
-        print(arg0)
+        print(parse_node(node))
