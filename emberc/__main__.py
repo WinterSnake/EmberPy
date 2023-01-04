@@ -13,6 +13,7 @@ from typing import Any
 from frontend.lexer import Lexer
 from frontend.parser import Parser
 from backend import compile_program, interpret_program
+from plugins import graph_ast
 
 ## Constants
 DUMP_TOKENS: bool = False
@@ -66,6 +67,8 @@ def main() -> int:
     # -Parsing
     parser: Parser = Parser.from_lexer(lexer) if not DUMP_TOKENS else Parser.from_list(tokens)
     ast: list[dict[str, Any]] = parser.parse()
+    if DUMP_AST:
+        graph_ast(ast, FILE.with_suffix(".dot"))
     # -Interpret
     if mode == 2:
         interpret_program(ast)
