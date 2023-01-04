@@ -12,5 +12,5 @@ from .interpreter import interpret_program
 
 ## Constants
 __all__: tuple[str, ...] = (
-    "compile_program", "interpret_program"
+    "compile_program", "interpret_program",
 )

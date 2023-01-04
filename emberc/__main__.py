@@ -10,8 +10,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from frontend.lexer import Lexer
-from frontend.parser import Parser
+from frontend import Lexer, Parser, Token
 from backend import compile_program, interpret_program
 from plugins import graph_ast
 
