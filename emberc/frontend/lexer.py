@@ -3,7 +3,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Lexer                         ##
+## Frontend: Lexer               ##
 ##-------------------------------##
 
 ## Imports

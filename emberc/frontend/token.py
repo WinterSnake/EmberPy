@@ -3,7 +3,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Token                         ##
+## Frontend: Token               ##
 ##-------------------------------##
 
 ## Imports
