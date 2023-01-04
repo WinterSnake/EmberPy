@@ -10,78 +10,14 @@
 from pathlib import Path
 from typing import Any, TextIO
 
+from frontend import Node, ExpressionNode, ValueNode
+
 
 ## Functions
-def compile_program(program: list[dict[str, Any]], file: Path) -> None:
+def compile_program(program: list[Node], file: Path) -> None:
     """"""
-    # -Internal Variables
     fp: TextIO = file.open('w')
-    # -Internal Functions
-    def pop_expression() -> None:
-        ''''''
-        fp.writelines((
-            "\tpop %rbx\n",
-            "\tpop %rax\n"
-        ))
-
-    def compile_node(node: dict[str, Any]) -> None:
-        ''''''
-        if 'value' in node:
-            fp.writelines((
-                f"\t# -- Push Literal \'{node['value']}\' -- #\n",
-                f"\tpush {node['value']}\n"
-            ))
-        elif 'add' in node:
-            compile_node(node['add']['lhs'])
-            compile_node(node['add']['rhs'])
-            fp.write("\t# -- Add -- #\n")
-            pop_expression()
-            fp.writelines((
-                "\tadd %rax, %rbx\n",
-                "\tpush %rax\n",
-            ))
-        elif 'sub' in node:
-            compile_node(node['sub']['lhs'])
-            compile_node(node['sub']['rhs'])
-            fp.write("\t# -- Sub -- #\n")
-            pop_expression()
-            fp.writelines((
-                "\tsub %rax, %rbx\n",
-                "\tpush %rax\n",
-            ))
-        elif 'mul' in node:
-            compile_node(node['mul']['lhs'])
-            compile_node(node['mul']['rhs'])
-            fp.write("\t# -- Mul -- #\n")
-            pop_expression()
-            fp.writelines((
-                "\timul %rax, %rbx\n",
-                "\tpush %rax\n",
-            ))
-        elif 'div' in node:
-            compile_node(node['div']['lhs'])
-            compile_node(node['div']['rhs'])
-            fp.write("\t# -- Sub -- #\n")
-            pop_expression()
-            fp.writelines((
-                "\tcqto\n",
-                "\tidiv %rbx\n",
-                "\tpush %rax\n",
-            ))
-        elif 'mod' in node:
-            compile_node(node['mod']['lhs'])
-            compile_node(node['mod']['rhs'])
-            fp.write("\t# -- Mod -- #\n")
-            pop_expression()
-            fp.writelines((
-                "\tcqto\n",
-                "\tidiv %rbx\n",
-                "\tpush %rdx\n",
-            ))
-        else:
-            print(f"Unhandled node '{node}' in compile_node")
-
-    # -Body
+    compiler: CompilerVisitor = CompilerVisitor()
     fp.writelines((
         ".intel_syntax\n",
         ".text\n",
@@ -122,7 +58,7 @@ def compile_program(program: list[dict[str, Any]], file: Path) -> None:
         "_start:\n"
     ))
     for node in program:
-        compile_node(node)
+        node.visit(compiler, fp)
         fp.writelines((
             "\t# -- DEBUG__PRINTU__ -- #\n",
             "\tpop %rdi\n",
@@ -136,3 +72,59 @@ def compile_program(program: list[dict[str, Any]], file: Path) -> None:
         "\tsyscall\n"
     ))
     fp.close()
+
+
+## Classes
+class CompilerVisitor(Node.Visitor):
+    """"""
+
+    # -Instance Methods
+    def visit_expression_node(self, node: ExpressionNode, fp: TextIO) -> None:
+        node.lhs.visit(self, fp)
+        node.rhs.visit(self, fp)
+        fp.writelines((
+            "\tpop %rbx\n",
+            "\tpop %rax\n"
+        ))
+        match node.operator:
+            case ExpressionNode.Type.ADD:
+                fp.write("\t# -- Add -- #\n")
+                fp.writelines((
+                    "\tadd %rax, %rbx\n",
+                    "\tpush %rax\n",
+                ))
+            case ExpressionNode.Type.SUB:
+                fp.write("\t# -- Sub -- #\n")
+                fp.writelines((
+                    "\tsub %rax, %rbx\n",
+                    "\tpush %rax\n",
+                ))
+            case ExpressionNode.Type.MUL:
+                fp.write("\t# -- Mul -- #\n")
+                fp.writelines((
+                    "\timul %rax, %rbx\n",
+                    "\tpush %rax\n",
+                ))
+            case ExpressionNode.Type.DIV:
+                fp.write("\t# -- Div -- #\n")
+                fp.writelines((
+                    "\tcqto\n",
+                    "\tidiv %rbx\n",
+                    "\tpush %rax\n",
+                ))
+            case ExpressionNode.Type.MOD:
+                fp.write("\t# -- Mod -- #\n")
+                fp.writelines((
+                    "\tcqto\n",
+                    "\tidiv %rbx\n",
+                    "\tpush %rdx\n",
+                ))
+            case _:
+                # -TODO: Throw error
+                pass
+
+    def visit_value_node(self, node: ValueNode, fp: TextIO) -> None:
+        fp.writelines((
+            f"\t# -- Push Literal \'{node.value}\' -- #\n",
+            f"\tpush {node.value}\n"
+        ))

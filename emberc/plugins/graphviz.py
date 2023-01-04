@@ -11,72 +11,68 @@ import subprocess
 from pathlib import Path
 from typing import Any, TextIO
 
+from frontend import Node, ExpressionNode, ValueNode
+
 
 ## Functions
-def graph_ast(ast: list[dict[str, Any]], file: Path) -> None:
+def graph_ast(nodes: list[Node], file: Path) -> None:
     """"""
-    # -Internal Variables
+    graph = GraphvizVisitor()
     fp: TextIO = file.open('w')
-    node_counter: int = 0
-    # -Internal Functions
-    def dump_node(node: dict[str, Any]) -> int:
-        ''''''
-        nonlocal node_counter
-        id_: int = node_counter
-        node_counter += 1
-        if 'value' in node:
-            fp.write(f"\t\tnode{id_}[label=\"{node['value']}\"]\n")
-        elif 'add' in node:
-            lhs: int = dump_node(node['add']['lhs'])
-            rhs: int = dump_node(node['add']['rhs'])
-            fp.writelines((
-                f"\t\tnode{id_}[label=\"+\"]\n",
-                f"\t\tnode{id_} -> node{lhs}\n"
-                f"\t\tnode{id_} -> node{rhs}\n"
-            ))
-        elif 'sub' in node:
-            lhs = dump_node(node['sub']['lhs'])
-            rhs = dump_node(node['sub']['rhs'])
-            fp.writelines((
-                f"\t\tnode{id_}[label=\"-\"]\n",
-                f"\t\tnode{id_} -> node{lhs}\n"
-                f"\t\tnode{id_} -> node{rhs}\n"
-            ))
-        elif 'mul' in node:
-            lhs = dump_node(node['mul']['lhs'])
-            rhs = dump_node(node['mul']['rhs'])
-            fp.writelines((
-                f"\t\tnode{id_}[label=\"*\"]\n",
-                f"\t\tnode{id_} -> node{lhs}\n"
-                f"\t\tnode{id_} -> node{rhs}\n"
-            ))
-        elif 'div' in node:
-            lhs = dump_node(node['div']['lhs'])
-            rhs = dump_node(node['div']['rhs'])
-            fp.writelines((
-                f"\t\tnode{id_}[label=\"/\"]\n",
-                f"\t\tnode{id_} -> node{lhs}\n"
-                f"\t\tnode{id_} -> node{rhs}\n"
-            ))
-        elif 'mod' in node:
-            lhs = dump_node(node['mod']['lhs'])
-            rhs = dump_node(node['mod']['rhs'])
-            fp.writelines((
-                f"\t\tnode{id_}[label=\"%\"]\n",
-                f"\t\tnode{id_} -> node{lhs}\n"
-                f"\t\tnode{id_} -> node{rhs}\n"
-            ))
-        else:
-            # -TODO: Handle Error
-            print(f"Unhandled node: {node}")
-            return None  # type: ignore
-        return id_
-
-    # -Body
     fp.write("digraph {\n")
-    for node in ast:
-        dump_node(node)
+    for node in nodes:
+        node.visit(graph, fp)
     fp.write("}\n")
     fp.close()
-    with file.with_suffix(".png").open('w') as f:
+    with file.with_suffix('.png').open('w') as f:
         subprocess.run(["dot", str(file), "-Tpng"], stdout=f)
+
+
+## Classes
+class GraphvizVisitor(Node.Visitor):
+    """"""
+
+    # -Constructor
+    def __init__(self, _current_id: int = 0) -> None:
+        self._current_id: int = _current_id
+
+    # -Instance Methods
+    def visit_expression_node(self, node: ExpressionNode, fp: TextIO) -> int:
+        ''''''
+        _id: int = self.id
+        lhs: int = node.lhs.visit(self, fp)
+        rhs: int = node.rhs.visit(self, fp)
+        match node.operator:
+            case ExpressionNode.Type.ADD:
+                fp.write(f"\tnode{_id}[label=\"+\"]\n")
+            case ExpressionNode.Type.SUB:
+                fp.write(f"\tnode{_id}[label=\"-\"]\n")
+            case ExpressionNode.Type.MUL:
+                fp.write(f"\tnode{_id}[label=\"*\"]\n")
+            case ExpressionNode.Type.DIV:
+                fp.write(f"\tnode{_id}[label=\"/\"]\n")
+            case ExpressionNode.Type.MOD:
+                fp.write(f"\tnode{_id}[label=\"%\"]\n")
+            case _:
+                # -TODO: Throw error
+                pass
+        fp.writelines((
+            f"\tnode{_id} -> node{lhs}\n"
+            f"\tnode{_id} -> node{rhs}\n"
+        ))
+        return _id
+
+
+    def visit_value_node(self, node: ValueNode, fp: TextIO) -> int:
+        ''''''
+        _id: int = self.id
+        fp.write(f"\tnode{_id}[label=\"{node.value}\"]\n")
+        return _id
+        
+
+    # -Properties
+    @property
+    def id(self) -> int:
+        _id: int = self._current_id
+        self._current_id += 1
+        return _id

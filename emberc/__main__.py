@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from frontend import Lexer, Parser, Token
+from frontend import Lexer, Node, Parser, Token
 from backend import compile_program, interpret_program
 from plugins import graph_ast
 
@@ -62,7 +62,7 @@ def main() -> int:
             f.writelines(str(token) + "\n" for token in tokens)
     # -Parsing
     parser: Parser = Parser.from_lexer(lexer) if not DUMP_TOKENS else Parser.from_list(tokens)
-    ast: list[dict[str, Any]] = parser.parse()
+    ast: list[Node] = parser.parse()
     if DUMP_AST:
         graph_ast(ast, FILE.with_suffix(".dot"))
     if mode is None:

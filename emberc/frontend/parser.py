@@ -12,16 +12,17 @@ from collections.abc import Iterator
 from typing import Any, cast
 
 from .lexer import Lexer
+from .node import Node, ExpressionNode, ValueNode
 from .token import Token
 
 
 ## Constants
 EXPRESSIONS = {
-    Token.Type.ADD: "add",
-    Token.Type.SUB: "sub",
-    Token.Type.MUL: "mul",
-    Token.Type.DIV: "div",
-    Token.Type.MOD: "mod",
+    Token.Type.ADD: ExpressionNode.Type.ADD,
+    Token.Type.SUB: ExpressionNode.Type.SUB,
+    Token.Type.MUL: ExpressionNode.Type.MUL,
+    Token.Type.DIV: ExpressionNode.Type.DIV,
+    Token.Type.MOD: ExpressionNode.Type.MOD,
 }
 
 
@@ -74,21 +75,21 @@ class Parser:
         return token
 
     # -Instance Methods: Parsing
-    def _parse_statement(self) -> dict[str, Any]:
+    def _parse_statement(self) -> Node:
         '''PARSE: STATEMENT
         statement: expression ';'
         '''
-        statement: dict[str, Any] = self._parse_expression()
+        statement: Node = self._parse_expression()
         self._advance(Token.Type.SEMICOLON)
         return statement
 
-    def _parse_expression(self) -> dict[str, Any]:
+    def _parse_expression(self) -> Node:
         '''PARSE: EXPRESSION
         expression: expression_term
         '''
         return self._parse_expression_term()
 
-    def _parse_expression_term(self) -> dict[str, Any]:
+    def _parse_expression_term(self) -> Node:
         '''PARSE: EXPRESSION TERM
         expression_term: expression_factor (('+' | '-') expression_factor)*
         '''
@@ -98,10 +99,10 @@ class Parser:
         ):
             token: Token = cast(Token, self._next())
             rhs = self._parse_expression_factor()
-            expr = {EXPRESSIONS[token.type]: {'lhs': expr, 'rhs': rhs}}
+            expr = ExpressionNode(EXPRESSIONS[token.type], expr, rhs)
         return expr
 
-    def _parse_expression_factor(self) -> dict[str, Any]:
+    def _parse_expression_factor(self) -> Node:
         '''PARSE: EXPRESSION FACTOR
         expression_factor: expression_primary (('*' | '/' | '%') expression_primary)*
         '''
@@ -111,31 +112,33 @@ class Parser:
         ):
             token: Token = cast(Token, self._next())
             rhs = self._parse_literal_numeric()
-            expr = {EXPRESSIONS[token.type]: {'lhs': expr, 'rhs': rhs}}
+            expr = ExpressionNode(EXPRESSIONS[token.type], expr, rhs)
         return expr
 
-    def _parse_expression_primary(self) -> dict[str, Any]:
+    def _parse_expression_primary(self) -> Node:
         '''PARSE: EXRESSION PRIMARY
         expression_primary: LITERAL_NUMERIC | '(' expression ')'
         '''
         if self._check(Token.Type.LPAREN):
-            expr: dict[str, Any] = self._parse_expression()
+            expr: Node = self._parse_expression()
             self._advance(Token.Type.RPAREN)
             return expr
         return self._parse_literal_numeric()
 
-    def _parse_literal_numeric(self) -> dict[str, Any]:
+    def _parse_literal_numeric(self) -> ValueNode:
         '''PARSE: LITERAL NUMERIC'''
         negate: bool = self._check(Token.Type.SUB)
         token: Token = cast(Token, self._advance(Token.Type.NUMERIC))
-        return {'value': ('-' if negate else '') + cast(str, token.value)}
+        return ValueNode(
+            ValueNode.Type.NUMERIC, ('-' if negate else '') + token.value
+        )
 
     # -Instance Methods: Public
-    def parse(self) -> list[dict[str, Any]]:
+    def parse(self) -> list[Node]:
         '''Return abstract-syntax tree from token generator assigned to parser on creation'''
         nodes: list[dict[str, Any]] = []
         while self._peek():
-            node: dict[str, Any] = self._parse_statement()
+            node: Node = self._parse_statement()
             nodes.append(node)
         return nodes
 

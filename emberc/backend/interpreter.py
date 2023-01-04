@@ -9,40 +9,39 @@
 ## Imports
 from typing import Any
 
+from frontend import Node, ExpressionNode, ValueNode
+
 
 ## Functions
-def interpret_program(program: list[dict[str, Any]]) -> None:
+def interpret_program(program: list[Node]) -> None:
     """"""
-    # -Internal Functions
-    def parse_node(node: dict[str, Any]) -> int:
-        ''''''
-        if 'value' in node:
-            return int(node['value'])
-        elif 'add' in node:
-            lhs: int = parse_node(node['add']['lhs'])
-            rhs: int = parse_node(node['add']['rhs'])
-            return lhs + rhs
-        elif 'sub' in node:
-            lhs = parse_node(node['sub']['lhs'])
-            rhs = parse_node(node['sub']['rhs'])
-            return lhs - rhs
-        elif 'mul' in node:
-            lhs = parse_node(node['mul']['lhs'])
-            rhs = parse_node(node['mul']['rhs'])
-            return lhs * rhs
-        elif 'div' in node:
-            lhs = parse_node(node['div']['lhs'])
-            rhs = parse_node(node['div']['rhs'])
-            return lhs // rhs
-        elif 'mod' in node:
-            lhs = parse_node(node['mod']['lhs'])
-            rhs = parse_node(node['mod']['rhs'])
-            return lhs % rhs
-        else:
-            # -TODO: Handle Error
-            print(f"Unhandled node: {node}")
-            return None  # type: ignore
-
-    # -Body
+    interpreter: InterpreterVisitor = InterpreterVisitor()
     for node in program:
-        print(parse_node(node))
+        print(node.visit(interpreter))
+
+
+## Classes
+class InterpreterVisitor(Node.Visitor):
+    """"""
+
+    # -Instance Methods
+    def visit_expression_node(self, node: ExpressionNode) -> int:
+        lhs: int = node.lhs.visit(self)
+        rhs: int = node.rhs.visit(self)
+        match node.operator:
+            case ExpressionNode.Type.ADD:
+                return lhs + rhs
+            case ExpressionNode.Type.SUB:
+                return lhs - rhs
+            case ExpressionNode.Type.MUL:
+                return lhs * rhs
+            case ExpressionNode.Type.DIV:
+                return lhs // rhs
+            case ExpressionNode.Type.MOD:
+                return lhs % rhs
+            case _:
+                # -TODO: Throw error
+                pass
+
+    def visit_value_node(self, node: ValueNode) -> int:
+        return int(node.value)
