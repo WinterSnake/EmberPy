@@ -60,7 +60,11 @@ def main() -> int:
         with FILE.with_suffix(".tokens").open('w') as f:
             f.writelines(str(token) + "\n" for token in tokens)
     # -Parsing
-    parser: Parser = Parser.from_lexer(lexer) if not DUMP_TOKENS else Parser.from_list(tokens)
+    parser: Parser
+    if not DUMP_TOKENS:
+        parser = Parser.from_lexer(lexer)
+    else:
+        parser = Parser.from_list(tokens)
     ast: list[Node] = parser.parse()
     if DUMP_AST:
         graph_ast(ast, FILE)

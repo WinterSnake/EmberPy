@@ -9,13 +9,12 @@
 ## Imports
 from __future__ import annotations
 import re
-from abc import ABC, abstractmethod
 from enum import Enum, auto
 from typing import Any, Protocol
 
 
 ## Classes
-class Node(ABC):
+class Node:
     """AST Base Node Class"""
 
     # -Instance Methods
@@ -30,8 +29,7 @@ class Node(ABC):
 
     # -Sub-classes
     class Visitor(Protocol):
-        '''Node Visitor Pattern Base Class'''
-
+        '''Node Visitor Pattern Protocol'''
         # -Instance Methods
         def visit_expression_node(self, node: ExpressionNode) -> Any: ...
         def visit_value_node(self, node: ValueNode) -> Any: ...
