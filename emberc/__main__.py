@@ -27,7 +27,7 @@ MODES: tuple[str, ...] = (
 ## Functions
 def usage() -> None:
     """"""
-    print(f"Invalid usage: '{sys.argv[0]} <mode> <file.ember>'")
+    print(f"Invalid usage: '{sys.argv[0]} <file.ember> [options]'")
 
 
 def main() -> int:
@@ -35,28 +35,25 @@ def main() -> int:
     if len(sys.argv) <= 2:
         usage()
         return 1
-    elif sys.argv[1] not in MODES:
-        usage()
-        return 1
-    mode: int = 1 if sys.argv[1] in MODE_COMPILE else 2
+    mode: int = None  # type: ignore
     # -Handle arguments
-    for arg in sys.argv[2:]:
+    for arg in sys.argv[1:]:
         # -Dump tokens
         if arg in ("-t", "--dump-tokens"):
             DUMP_TOKENS = True
         # -Dump AST
         elif arg in ("-a", "--dump-ast"):
             DUMP_AST = True
+        # -Run mode
+        elif arg in MODES:
+            mode = 1 if arg in MODE_COMPILE else 2
         # -File
         else:
             FILE = Path(arg)
     # -File checking
-    if FILE is None:
+    if FILE is None or not FILE.exists() or FILE.is_dir():
         usage()
-        print("Must have a valid file")
-    elif not FILE.exists() or FILE.is_dir():
-        usage()
-        print(f"Invalid file '{FILE}'")
+        print(f"Invalid file '{FILE}'. Must be a valid file and exist")
     # -Lexing
     lexer: Lexer = Lexer(FILE)
     if DUMP_TOKENS:
@@ -68,16 +65,23 @@ def main() -> int:
     ast: list[dict[str, Any]] = parser.parse()
     if DUMP_AST:
         graph_ast(ast, FILE.with_suffix(".dot"))
-    # -Interpret
-    if mode == 2:
-        interpret_program(ast)
+    if mode is None:
         return 0
     # -Compile
-    output = FILE.with_suffix(".s")
-    compile_program(ast, output)
-    subprocess.run(["as", str(output), "-o", str(output.with_suffix('.o'))])
-    subprocess.run(["ld", str(output.with_suffix('.o')), "-o", str(output.with_suffix(''))])
-    return 0
+    if mode == 1:
+        output = FILE.with_suffix(".s")
+        compile_program(ast, output)
+        subprocess.run(["as", str(output), "-o", str(output.with_suffix('.o'))])
+        subprocess.run(["ld", str(output.with_suffix('.o')), "-o", str(output.with_suffix(''))])
+        return 0
+    # -Interpret
+    elif mode == 2:
+        interpret_program(ast)
+        return 0
+    # -Unknown
+    usage()
+    print(f"Unknown mode '{mode}' - aborting.")
+    return 1
 
 
 ## Body
