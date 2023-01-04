@@ -8,6 +8,7 @@
 
 ## Imports
 from __future__ import annotations
+import re
 from abc import ABC, abstractmethod
 from enum import Enum, auto
 from typing import Any
@@ -15,33 +16,37 @@ from typing import Any
 
 ## Classes
 class Node(ABC):
-    """"""
+    """AST Base Node Class"""
 
     # -Instance Methods
-    @abstractmethod
-    def visit(self, visitor: Node.Visitor, *args) -> Any:
-        ''''''
-        pass
+    def visit(self, visitor: Node.Visitor, *args: Any) -> Any:
+        '''Calls visitor function based on node class name'''
+        node: str = "visit" + re.sub(
+            r"([A-Z])", lambda pattern: '_' + str(pattern.group(1).lower()),
+            self.__class__.__name__
+        )
+        visit_method = getattr(visitor, node)
+        return visit_method(self, *args)
 
     # -Sub-classes
     class Visitor(ABC):
-        ''''''
+        '''Node Visitor Pattern Base Class'''
 
         # -Instance Methods
         @abstractmethod
-        def visit_expression_node(self, node: ExpressionNode, *args) -> Any:
-            ''''''
+        def visit_expression_node(self, node: ExpressionNode) -> Any:
+            '''Visit expression ast node'''
             pass
 
         @abstractmethod
-        def visit_value_node(self, node: ValueNode, *args) -> Any:
-            ''''''
+        def visit_value_node(self, node: ValueNode) -> Any:
+            '''Visit value ast node'''
             pass
 
 
 
 class ExpressionNode(Node):
-    """"""
+    """AST Expression Node"""
 
     # -Constructor
     def __init__(self, operator: ExpressionNode.Type, lhs: Node, rhs: Node) -> None:
@@ -65,13 +70,9 @@ class ExpressionNode(Node):
             case ExpressionNode.Type.MOD:
                 return f"({lhs} % {rhs})"
 
-    # -Instance Methods
-    def visit(self, visitor: Node.Visitor, *args) -> Any:
-        return visitor.visit_expression_node(self, *args)
-
     # -Sub-Classes
     class Type(Enum):
-        ''''''
+        '''Binary Expression Node Type'''
         ADD = auto()
         SUB = auto()
         MUL = auto()
@@ -80,7 +81,7 @@ class ExpressionNode(Node):
 
 
 class ValueNode(Node):
-    """"""
+    """AST Value Node"""
 
     # -Constructor
     def __init__(self, _type: ValueNode.Type, value: str) -> None:
@@ -91,11 +92,7 @@ class ValueNode(Node):
     def __str__(self) -> str:
         return self.value
 
-    # -Instance Methods
-    def visit(self, visitor: Node.Visitor, *args) -> Any:
-        return visitor.visit_value_node(self, *args)
-
     # -Sub-Classes
     class Type(Enum):
-        ''''''
+        '''Value Node Type'''
         NUMERIC = auto()
