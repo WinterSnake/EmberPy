@@ -77,8 +77,8 @@ def main() -> int:
         return 0
     # -Interpret
     elif mode == 2:
-        interpret_ast(ast)
-        return 0
+        exit_code: int = interpret_ast(ast)
+        return exit_code
     # -Unknown
     usage()
     print(f"Unknown mode '{mode}' - aborting.")
