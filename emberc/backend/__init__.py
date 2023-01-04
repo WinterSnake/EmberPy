@@ -7,10 +7,10 @@
 ##-------------------------------##
 
 ## Imports
-from .compiler import compile_program
-from .interpreter import interpret_program
+from .compiler import compile_ast
+from .interpreter import interpret_ast
 
 ## Constants
 __all__: tuple[str, ...] = (
-    "compile_program", "interpret_program",
+    "compile_ast", "interpret_ast",
 )

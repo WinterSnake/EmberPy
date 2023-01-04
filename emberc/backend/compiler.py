@@ -7,17 +7,25 @@
 ##-------------------------------##
 
 ## Imports
+import subprocess
 from pathlib import Path
-from typing import Any, TextIO
+from typing import Any, TextIO, overload
 
 from frontend import Node, ExpressionNode, ValueNode
 
 
 ## Functions
-def compile_program(program: list[Node], file: Path) -> None:
-    """"""
+def compile_ast(
+    nodes: list[Node], file: Path, assembler_format: str = 's', assemble: bool = True,
+    assembly_format: str = 'o', link: bool = True, link_format: str | None = None
+) -> Path:
+    """Use Compiler Visitor to output AST to an assembly file
+    Will return the assembly file if assemble and link are false
+    Will return the assembled file if assemble is true and link is false
+    Will return the linked file if assemble and link are true"""
+    file: Path = file.with_suffix('.' + assembler_format)
     fp: TextIO = file.open('w')
-    compiler: CompilerVisitor = CompilerVisitor()
+    visitor: Node.Visitor = CompilerVisitor()
     fp.writelines((
         ".intel_syntax\n",
         ".text\n",
@@ -57,9 +65,10 @@ def compile_program(program: list[Node], file: Path) -> None:
         "\tret\n\n",
         "_start:\n"
     ))
-    for node in program:
-        node.visit(compiler, fp)
+    for node in nodes:
+        text = node.visit(visitor)
         fp.writelines((
+            *text,
             "\t# -- DEBUG__PRINTU__ -- #\n",
             "\tpop %rdi\n",
             "\tcall __PRINTU__\n"
@@ -72,59 +81,72 @@ def compile_program(program: list[Node], file: Path) -> None:
         "\tsyscall\n"
     ))
     fp.close()
+    # -Generate output file/s
+    if not assemble:
+        return file
+    assembled_file: Path = file.with_suffix('.' + assembly_format)
+    subprocess.run(["as", str(file), "-o", str(assembled_file)])
+    if not link:
+        return assembled_file
+    linked_file: Path = file.with_suffix('' if link_format is None else ('.' + link_format))
+    subprocess.run(["ld", str(assembled_file), "-o", str(linked_file)])
+    return linked_file
 
 
 ## Classes
-class CompilerVisitor(Node.Visitor):
-    """"""
+class CompilerVisitor:
+    """
+    Compiler AST Visitor
+    Writes assembly instructions based on node visited
+    """
 
     # -Instance Methods
-    def visit_expression_node(self, node: ExpressionNode, fp: TextIO) -> None:
-        node.lhs.visit(self, fp)
-        node.rhs.visit(self, fp)
-        fp.writelines((
+    def visit_expression_node(self, node: ExpressionNode) -> tuple[str, ...]:
+        '''Pops from stack and writes binary expression from lhs and rhs'''
+        text: list[str] = []
+        text.extend([
+            *node.lhs.visit(self),
+            *node.rhs.visit(self),
+            f"\t# -- {node.operator.name} -- #\n"
             "\tpop %rbx\n",
             "\tpop %rax\n"
-        ))
+        ])
         match node.operator:
             case ExpressionNode.Type.ADD:
-                fp.write("\t# -- Add -- #\n")
-                fp.writelines((
+                text.extend([
                     "\tadd %rax, %rbx\n",
                     "\tpush %rax\n",
-                ))
+                ])
             case ExpressionNode.Type.SUB:
-                fp.write("\t# -- Sub -- #\n")
-                fp.writelines((
+                text.extend([
                     "\tsub %rax, %rbx\n",
                     "\tpush %rax\n",
-                ))
+                ])
             case ExpressionNode.Type.MUL:
-                fp.write("\t# -- Mul -- #\n")
-                fp.writelines((
+                text.extend([
                     "\timul %rax, %rbx\n",
                     "\tpush %rax\n",
-                ))
+                ])
             case ExpressionNode.Type.DIV:
-                fp.write("\t# -- Div -- #\n")
-                fp.writelines((
+                text.extend([
                     "\tcqto\n",
                     "\tidiv %rbx\n",
                     "\tpush %rax\n",
-                ))
+                ])
             case ExpressionNode.Type.MOD:
-                fp.write("\t# -- Mod -- #\n")
-                fp.writelines((
+                text.extend([
                     "\tcqto\n",
                     "\tidiv %rbx\n",
                     "\tpush %rdx\n",
-                ))
+                ])
             case _:
                 # -TODO: Throw error
                 pass
+        return tuple(text)
 
-    def visit_value_node(self, node: ValueNode, fp: TextIO) -> None:
-        fp.writelines((
+    def visit_value_node(self, node: ValueNode) -> tuple[str, ...]:
+        '''Pushes basic node to stack with numeric literal value'''
+        return (
             f"\t# -- Push Literal \'{node.value}\' -- #\n",
             f"\tpush {node.value}\n"
-        ))
+        )

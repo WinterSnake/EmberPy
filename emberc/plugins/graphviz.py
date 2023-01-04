@@ -9,70 +9,89 @@
 ## Imports
 import subprocess
 from pathlib import Path
-from typing import Any, TextIO
+from typing import ClassVar, TextIO
 
 from frontend import Node, ExpressionNode, ValueNode
 
 
 ## Functions
-def graph_ast(nodes: list[Node], file: Path) -> None:
-    """"""
-    graph = GraphvizVisitor()
+def graph_ast(
+    nodes: list[Node], file: Path, dot_format: str = 'dot',
+    generate_image: bool = True, image_format: str = 'png'
+) -> Path:
+    """Use Graphviz Visitor to output AST to a DOT file
+    Will return the dot file if generate_image is false
+    Will return the image file if generate_image is true"""
+    file: Path = file.with_suffix('.' + dot_format)
+    graph_visitor: Node.Visitor = GraphvizVisitor()
     fp: TextIO = file.open('w')
     fp.write("digraph {\n")
     for node in nodes:
-        node.visit(graph, fp)
+        _, text = node.visit(graph_visitor)
+        fp.writelines(text)
     fp.write("}\n")
     fp.close()
-    with file.with_suffix('.png').open('w') as f:
-        subprocess.run(["dot", str(file), "-Tpng"], stdout=f)
+    # -Generate output file/s
+    if not generate_image:
+        return file
+    image_file: Path = file.with_suffix('.' + image_format)
+    with image_file.open('w') as f:
+        subprocess.run(["dot", str(file), f"-T{image_format}"], stdout=f)
+    return image_file
 
 
 ## Classes
-class GraphvizVisitor(Node.Visitor):
-    """"""
-
-    # -Constructor
-    def __init__(self, _current_id: int = 0) -> None:
-        self._current_id: int = _current_id
+class GraphvizVisitor:
+    """
+    Graphviz AST Visitor
+    Writes Graphviz DOT instructions based on node visited
+    """
 
     # -Instance Methods
-    def visit_expression_node(self, node: ExpressionNode, fp: TextIO) -> int:
-        ''''''
+    def visit_expression_node(
+        self, node: ExpressionNode
+    ) -> tuple[int, tuple[str, ...]]:
+        '''Creates node with binary expression as label
+        and recursively descends down lhs and rhs nodes'''
         _id: int = self.id
-        lhs: int = node.lhs.visit(self, fp)
-        rhs: int = node.rhs.visit(self, fp)
+        text: list[str] = []
+        lhs: tuple[int, tuple[str]] = node.lhs.visit(self)
+        rhs: tuple[int, tuple[str]] = node.rhs.visit(self)
         match node.operator:
             case ExpressionNode.Type.ADD:
-                fp.write(f"\tnode{_id}[label=\"+\"]\n")
+                text.append(f"\tnode{_id}[label=\"+\"]\n")
             case ExpressionNode.Type.SUB:
-                fp.write(f"\tnode{_id}[label=\"-\"]\n")
+                text.append(f"\tnode{_id}[label=\"-\"]\n")
             case ExpressionNode.Type.MUL:
-                fp.write(f"\tnode{_id}[label=\"*\"]\n")
+                text.append(f"\tnode{_id}[label=\"*\"]\n")
             case ExpressionNode.Type.DIV:
-                fp.write(f"\tnode{_id}[label=\"/\"]\n")
+                text.append(f"\tnode{_id}[label=\"/\"]\n")
             case ExpressionNode.Type.MOD:
-                fp.write(f"\tnode{_id}[label=\"%\"]\n")
+                text.append(f"\tnode{_id}[label=\"%\"]\n")
             case _:
                 # -TODO: Throw error
                 pass
-        fp.writelines((
-            f"\tnode{_id} -> node{lhs}\n"
-            f"\tnode{_id} -> node{rhs}\n"
-        ))
-        return _id
+        text.extend([
+            *lhs[1],
+            *rhs[1],
+            f"\tnode{_id} -> node{lhs[0]}\n"
+            f"\tnode{_id} -> node{rhs[0]}\n"
+        ])
+        return (_id, tuple(text))
 
-
-    def visit_value_node(self, node: ValueNode, fp: TextIO) -> int:
-        ''''''
+    def visit_value_node(self, node: ValueNode) -> tuple[int, tuple[str, ...]]:
+        '''Creates basic node with numeric literal value as label'''
         _id: int = self.id
-        fp.write(f"\tnode{_id}[label=\"{node.value}\"]\n")
-        return _id
+        text: str = f"\tnode{_id}[label=\"{node.value}\"]\n"
+        return (_id, (text, ))
         
 
     # -Properties
     @property
     def id(self) -> int:
-        _id: int = self._current_id
-        self._current_id += 1
+        _id: int = GraphvizVisitor.ID
+        GraphvizVisitor.ID += 1
         return _id
+
+    # -Class Properties
+    ID: ClassVar[int] = 0

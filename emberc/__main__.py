@@ -5,13 +5,12 @@
 ##-------------------------------##
 
 ## Imports
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
 from frontend import Lexer, Node, Parser, Token
-from backend import compile_program, interpret_program
+from backend import compile_ast, interpret_ast
 from plugins import graph_ast
 
 ## Constants
@@ -58,25 +57,23 @@ def main() -> int:
     lexer: Lexer = Lexer(FILE)
     if DUMP_TOKENS:
         tokens: list[Token] = lexer.tokens
-        with lexer.file.with_suffix(".tokens.txt").open('w') as f:
+        with FILE.with_suffix(".tokens").open('w') as f:
             f.writelines(str(token) + "\n" for token in tokens)
     # -Parsing
     parser: Parser = Parser.from_lexer(lexer) if not DUMP_TOKENS else Parser.from_list(tokens)
     ast: list[Node] = parser.parse()
     if DUMP_AST:
-        graph_ast(ast, FILE.with_suffix(".dot"))
+        graph_ast(ast, FILE)
     if mode is None:
         return 0
     # -Compile
     if mode == 1:
-        output = FILE.with_suffix(".s")
-        compile_program(ast, output)
-        subprocess.run(["as", str(output), "-o", str(output.with_suffix('.o'))])
-        subprocess.run(["ld", str(output.with_suffix('.o')), "-o", str(output.with_suffix(''))])
+        output = FILE
+        compile_ast(ast, output)
         return 0
     # -Interpret
     elif mode == 2:
-        interpret_program(ast)
+        interpret_ast(ast)
         return 0
     # -Unknown
     usage()

@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from abc import ABC, abstractmethod
 from enum import Enum, auto
-from typing import Any
+from typing import Any, Protocol
 
 
 ## Classes
@@ -19,29 +19,22 @@ class Node(ABC):
     """AST Base Node Class"""
 
     # -Instance Methods
-    def visit(self, visitor: Node.Visitor, *args: Any) -> Any:
+    def visit(self, visitor: Node.Visitor) -> Any:
         '''Calls visitor function based on node class name'''
         node: str = "visit" + re.sub(
             r"([A-Z])", lambda pattern: '_' + str(pattern.group(1).lower()),
             self.__class__.__name__
         )
         visit_method = getattr(visitor, node)
-        return visit_method(self, *args)
+        return visit_method(self)
 
     # -Sub-classes
-    class Visitor(ABC):
+    class Visitor(Protocol):
         '''Node Visitor Pattern Base Class'''
 
         # -Instance Methods
-        @abstractmethod
-        def visit_expression_node(self, node: ExpressionNode) -> Any:
-            '''Visit expression ast node'''
-            pass
-
-        @abstractmethod
-        def visit_value_node(self, node: ValueNode) -> Any:
-            '''Visit value ast node'''
-            pass
+        def visit_expression_node(self, node: ExpressionNode) -> Any: ...
+        def visit_value_node(self, node: ValueNode) -> Any: ...
 
 
 

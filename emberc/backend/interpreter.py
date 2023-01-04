@@ -13,19 +13,27 @@ from frontend import Node, ExpressionNode, ValueNode
 
 
 ## Functions
-def interpret_program(program: list[Node]) -> None:
-    """"""
-    interpreter: InterpreterVisitor = InterpreterVisitor()
-    for node in program:
-        print(node.visit(interpreter))
+def interpret_ast(nodes: list[Node]) -> int:
+    """Use Interpreter Visitor to run AST through Python
+    Will return exit code of AST"""
+    exit_code: int = 0
+    visitor: Node.Visitor = InterpreterVisitor()
+    for node in nodes:
+        value: int = node.visit(visitor)
+        print(value)
+    return exit_code
 
 
 ## Classes
-class InterpreterVisitor(Node.Visitor):
-    """"""
+class InterpreterVisitor:
+    """
+    Interpreter AST Visitor
+    Interprets and runs python code based on node visited
+    """
 
     # -Instance Methods
     def visit_expression_node(self, node: ExpressionNode) -> int:
+        '''Returns binary operation of lhs and rhs numeric values'''
         lhs: int = node.lhs.visit(self)
         rhs: int = node.rhs.visit(self)
         match node.operator:
@@ -44,4 +52,5 @@ class InterpreterVisitor(Node.Visitor):
                 pass
 
     def visit_value_node(self, node: ValueNode) -> int:
+        '''Returns basic node to as numeric literal value'''
         return int(node.value)

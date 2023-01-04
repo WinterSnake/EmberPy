@@ -130,13 +130,13 @@ class Parser:
         negate: bool = self._check(Token.Type.SUB)
         token: Token = cast(Token, self._advance(Token.Type.NUMERIC))
         return ValueNode(
-            ValueNode.Type.NUMERIC, ('-' if negate else '') + token.value
+            ValueNode.Type.NUMERIC, ('-' if negate else '') + cast(str, token.value)
         )
 
     # -Instance Methods: Public
     def parse(self) -> list[Node]:
         '''Return abstract-syntax tree from token generator assigned to parser on creation'''
-        nodes: list[dict[str, Any]] = []
+        nodes: list[Node] = []
         while self._peek():
             node: Node = self._parse_statement()
             nodes.append(node)
