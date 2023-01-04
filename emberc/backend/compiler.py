@@ -23,7 +23,7 @@ def compile_ast(
     Will return the assembly file if assemble and link are false
     Will return the assembled file if assemble is true and link is false
     Will return the linked file if assemble and link are true"""
-    file: Path = file.with_suffix('.' + assembler_format)
+    file = file.with_suffix('.' + assembler_format)
     fp: TextIO = file.open('w')
     visitor: Node.Visitor = CompilerVisitor()
     fp.writelines((

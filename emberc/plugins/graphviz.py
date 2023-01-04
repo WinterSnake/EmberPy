@@ -22,7 +22,7 @@ def graph_ast(
     """Use Graphviz Visitor to output AST to a DOT file
     Will return the dot file if generate_image is false
     Will return the image file if generate_image is true"""
-    file: Path = file.with_suffix('.' + dot_format)
+    file = file.with_suffix('.' + dot_format)
     graph_visitor: Node.Visitor = GraphvizVisitor()
     fp: TextIO = file.open('w')
     fp.write("digraph {\n")
