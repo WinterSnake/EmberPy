@@ -9,7 +9,7 @@
 ## Imports
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, TextIO
 
 
 ## Functions
@@ -35,32 +35,32 @@ def graph_ast(ast: list[dict[str, Any]], file: Path) -> None:
                 f"\t\tnode{id_} -> node{rhs}\n"
             ))
         elif 'sub' in node:
-            lhs: int = dump_node(node['sub']['lhs'])
-            rhs: int = dump_node(node['sub']['rhs'])
+            lhs = dump_node(node['sub']['lhs'])
+            rhs = dump_node(node['sub']['rhs'])
             fp.writelines((
                 f"\t\tnode{id_}[label=\"-\"]\n",
                 f"\t\tnode{id_} -> node{lhs}\n"
                 f"\t\tnode{id_} -> node{rhs}\n"
             ))
         elif 'mul' in node:
-            lhs: int = dump_node(node['mul']['lhs'])
-            rhs: int = dump_node(node['mul']['rhs'])
+            lhs = dump_node(node['mul']['lhs'])
+            rhs = dump_node(node['mul']['rhs'])
             fp.writelines((
                 f"\t\tnode{id_}[label=\"*\"]\n",
                 f"\t\tnode{id_} -> node{lhs}\n"
                 f"\t\tnode{id_} -> node{rhs}\n"
             ))
         elif 'div' in node:
-            lhs: int = dump_node(node['div']['lhs'])
-            rhs: int = dump_node(node['div']['rhs'])
+            lhs = dump_node(node['div']['lhs'])
+            rhs = dump_node(node['div']['rhs'])
             fp.writelines((
                 f"\t\tnode{id_}[label=\"/\"]\n",
                 f"\t\tnode{id_} -> node{lhs}\n"
                 f"\t\tnode{id_} -> node{rhs}\n"
             ))
         elif 'mod' in node:
-            lhs: int = dump_node(node['mod']['lhs'])
-            rhs: int = dump_node(node['mod']['rhs'])
+            lhs = dump_node(node['mod']['lhs'])
+            rhs = dump_node(node['mod']['rhs'])
             fp.writelines((
                 f"\t\tnode{id_}[label=\"%\"]\n",
                 f"\t\tnode{id_} -> node{lhs}\n"
