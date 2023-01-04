@@ -30,7 +30,11 @@ SYMBOLS = {
 
 ## Classes
 class Lexer:
-    """"""
+    """
+    Ember Finite-State Lexer
+    Each internal lexing method represents a state of the lexer
+    Lookahead(1) operation
+    """
 
     # -Constructor
     def __init__(self, file: Path, row: int = 1, column: int = 0) -> None:
@@ -41,7 +45,8 @@ class Lexer:
 
     # -Instance Methods: Private
     def _advance(self) -> str | None:
-        ''''''
+        '''Get the next character from file and advance the lexer
+        while incrementing file position'''
         char = self._next()
         if char == '\n':
             self.row += 1
@@ -51,13 +56,13 @@ class Lexer:
         return char
 
     def _next(self) -> str | None:
-        ''''''
+        '''Read the next character from file'''
         if self.fp and not self.fp.closed:
             return self.fp.read(1)
         return None
 
     def _peek(self) -> str | None:
-        ''''''
+        '''Get the next character from file without advancing the lexer'''
         position: int = self.fp.tell()
         char = self._next()
         if char:
@@ -66,7 +71,8 @@ class Lexer:
 
     # -Instance Methods: Lexing
     def _lex(self) -> Token | None:
-        ''''''
+        '''Internal lexing entry. Handles passing the lexer state to internal methods
+        based on current character and start of lexeme'''
         while char := self._advance():
             # -Handle [WHITESPACE]
             if char.isspace():
@@ -86,11 +92,12 @@ class Lexer:
         return None
 
     def _lex_symbol(self, char: str) -> Token:
-        ''''''
+        '''LEX: Create symbol token from current character'''
         return Token(self.file, self.position, SYMBOLS[char])
 
     def _lex_numeric(self, char: str) -> Token:
-        ''''''
+        '''LEX: Create literal numeric by reading from current character
+        until end of current lexeme'''
         position: tuple[int, int] = self.position
         value: str = char
         while _char := self._peek():
@@ -108,7 +115,8 @@ class Lexer:
         return Token(self.file, position, Token.Type.NUMERIC, value)
 
     def _lex_identifier(self, char: str) -> Token:
-        ''''''
+        '''LEX: Create literal identifier by reading from current character
+        until end of current lexeme'''
         position: tuple[int, int] = self.position
         value: str = char
         while _char := self._peek():
@@ -123,20 +131,10 @@ class Lexer:
                 self._advance()
         return Token(self.file, position, Token.Type.IDENTIFIER, value)
 
-    # -Instance Methods: Public
-    def next_token(self) -> Generator[Token, None, None]:
-        ''''''
-        if not self.fp:
-            self.fp = self.file.open('r')
-        while token := self._lex():
-            yield token
-        self.fp.close()
-        return None
-
     # -Class Methods
     @classmethod
     def from_file_path(cls, file: str, row: int = 1, column: int = 0) -> Lexer:
-        ''''''
+        '''Create lexer from file path and convert it into a Path object'''
         return cls(Path(file), row, column)
 
     # -Properties
@@ -151,5 +149,16 @@ class Lexer:
         return (self.row, self.column)
 
     @property
+    def token_generator(self) -> Generator[Token, None, None]:
+        '''Returns the lexer's token generator function'''
+        if not self.fp:
+            self.fp = self.file.open('r')
+        while token := self._lex():
+            yield token
+        self.fp.close()
+        return None
+
+    @property
     def tokens(self) -> list[Token]:
-        return list(token for token in self.next_token())
+        '''Returns a list of the lexer's tokens built from the token generator'''
+        return list(token for token in self.token_generator)

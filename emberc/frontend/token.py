@@ -14,7 +14,7 @@ from pathlib import Path
 
 ## Classes
 class Token:
-    """"""
+    """Ember token representation"""
 
     # -Constructor
     def __init__(
@@ -46,7 +46,7 @@ class Token:
 
     # -Sub-Classes
     class Type(Enum):
-        ''''''
+        '''Token type based on keywords or symbols'''
         IDENTIFIER = auto()
         # -Keywords
         # -Numbers
