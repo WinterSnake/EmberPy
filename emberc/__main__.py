@@ -59,6 +59,8 @@ def main() -> int:
         tokens: list[Token] = lexer.tokens
         with FILE.with_suffix(".tokens").open('w') as f:
             f.writelines(str(token) + "\n" for token in tokens)
+    if not DUMP_AST and mode is None:
+        return 0
     # -Parsing
     parser: Parser
     if not DUMP_TOKENS:
