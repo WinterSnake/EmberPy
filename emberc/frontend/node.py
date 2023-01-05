@@ -31,9 +31,18 @@ class Node:
     class Visitor(Protocol):
         '''Node Visitor Pattern Protocol'''
         # -Instance Methods
+        def visit_call_node(self, node: CallNode) -> Any: ...
         def visit_expression_node(self, node: ExpressionNode) -> Any: ...
         def visit_value_node(self, node: ValueNode) -> Any: ...
 
+
+
+class CallNode(Node):
+    """Temporary DEBUG__PRINT__ call handler Node"""
+
+    # -Constructor
+    def __init__(self, argument: Node) -> None:
+        self.argument: Node = argument
 
 
 class ExpressionNode(Node):

@@ -9,7 +9,7 @@
 ## Imports
 from typing import Any
 
-from frontend import Node, ExpressionNode, ValueNode
+from frontend import Node, CallNode, ExpressionNode, ValueNode
 
 
 ## Functions
@@ -19,8 +19,7 @@ def interpret_ast(nodes: list[Node]) -> int:
     exit_code: int = 0
     visitor: Node.Visitor = InterpreterVisitor()
     for node in nodes:
-        value: int = node.visit(visitor)
-        print(value)
+        node.visit(visitor)
     return exit_code
 
 
@@ -32,6 +31,12 @@ class InterpreterVisitor:
     """
 
     # -Instance Methods
+    def visit_call_node(self, node: CallNode) -> None:
+        '''Prints integer from node's argument'''
+        argument: int = node.argument.visit(self)
+        print(argument)
+        return None
+
     def visit_expression_node(self, node: ExpressionNode) -> int:
         '''Returns binary operation of lhs and rhs numeric values'''
         lhs: int = node.lhs.visit(self)

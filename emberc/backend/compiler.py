@@ -11,7 +11,7 @@ import subprocess
 from pathlib import Path
 from typing import Any, TextIO, overload
 
-from frontend import Node, ExpressionNode, ValueNode
+from frontend import Node, CallNode, ExpressionNode, ValueNode
 
 
 ## Functions
@@ -67,12 +67,7 @@ def compile_ast(
     ))
     for node in nodes:
         text = node.visit(visitor)
-        fp.writelines((
-            *text,
-            "\t# -- DEBUG__PRINTU__ -- #\n",
-            "\tpop %rdi\n",
-            "\tcall __PRINTU__\n"
-        ))
+        fp.writelines(text)
     # - Write Sysexit
     fp.writelines((
         "\t# -- exit -- #\n",
@@ -101,6 +96,15 @@ class CompilerVisitor:
     """
 
     # -Instance Methods
+    def visit_call_node(self, node: CallNode) -> tuple[str, ...]:
+        '''Prints integer from node's argument'''
+        return (
+            *(node.argument.visit(self)),
+            "\t# -- DEBUG__PRINTU__ -- #\n",
+            "\tpop %rdi\n",
+            "\tcall __PRINTU__\n"
+        )
+
     def visit_expression_node(self, node: ExpressionNode) -> tuple[str, ...]:
         '''Pops from stack and writes binary expression from lhs and rhs'''
         text: list[str] = []

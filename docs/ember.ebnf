@@ -1,5 +1,6 @@
 file: statement*;
-statement: expression ';';
+statement: expression | debug_expression ';';
+debug_expression: 'DEBUG__PRINT__' '(' expression ')';
 expression: expression_term;
 expression_term: expression_factor (('+' | '-') expression_factor)*;
 expression_factor: expression_primary (('*' | '/' | '%') expression_primary)*;

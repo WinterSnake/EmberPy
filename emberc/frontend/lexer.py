@@ -88,6 +88,7 @@ class Lexer:
                 return self._lex_identifier(char)
             # -Unknown
             else:
+                # -TODO: Handle error
                 print(f"Unknown character '{char}' in _lex")
         return None
 

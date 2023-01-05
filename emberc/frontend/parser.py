@@ -12,7 +12,7 @@ from collections.abc import Iterator
 from typing import Any, cast
 
 from .lexer import Lexer
-from .node import Node, ExpressionNode, ValueNode
+from .node import Node, CallNode, ExpressionNode, ValueNode
 from .token import Token
 
 
@@ -44,7 +44,7 @@ class Parser:
         '''Advanced to next token and assert its of expected type.
         End parsing on failure or end of stream and throw error'''
         token: Token | None = self._next()
-        # -TODO: Error handling on invalid token type
+        # -TODO: Handle errors
         if token is None:
             print(f"Unexpected end of stream, expected '{_type}'")
         elif token.type != _type:
@@ -79,7 +79,13 @@ class Parser:
         '''PARSE: STATEMENT
         statement: expression ';'
         '''
+        debug_print: bool = self._check(Token.Type.IDENTIFIER)
+        if debug_print:
+            self._advance(Token.Type.LPAREN)
         statement: Node = self._parse_expression()
+        if debug_print:
+            self._advance(Token.Type.RPAREN)
+            statement = CallNode(statement)
         self._advance(Token.Type.SEMICOLON)
         return statement
 

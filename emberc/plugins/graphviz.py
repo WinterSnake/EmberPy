@@ -11,7 +11,7 @@ import subprocess
 from pathlib import Path
 from typing import ClassVar, TextIO
 
-from frontend import Node, ExpressionNode, ValueNode
+from frontend import Node, CallNode, ExpressionNode, ValueNode
 
 
 ## Functions
@@ -48,6 +48,19 @@ class GraphvizVisitor:
     """
 
     # -Instance Methods
+    def visit_call_node(self, node: CallNode) -> tuple[int, tuple[str, ...]]:
+        '''Creates node cluster for debug print calling convention'''
+        _id: int = self.id
+        _, text = node.argument.visit(self)
+        return (
+            _id,
+            (f"\tsubgraph clusternode{_id}" + " {\n",
+            "\t\tlabel=\"DEBUG__PRINT__\"\n",
+            "\t\tlabelloc=\"b\"\n",
+            *('\t' + line for line in text),
+            "\t}\n"
+        ))
+
     def visit_expression_node(
         self, node: ExpressionNode
     ) -> tuple[int, tuple[str, ...]]:
