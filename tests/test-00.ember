@@ -1,6 +1,30 @@
-DEBUG__PRINT__(10);
-DEBUG__PRINT__(10 + 20);
-DEBUG__PRINT__(60 - 32);
-DEBUG__PRINT__(40 / 4);
-DEBUG__PRINT__(30 % 7);
-DEBUG__PRINT__((10 + 20 * 2 - 8 / 2) % 13);
+/*
+	Ember: Test 0
+	- int/uint prints
+	/*
+		nested multi-line comment
+	*/
+*/
+// Uint
+__PRINTU__(0);  // 0 test
+__PRINTU__(255);  // uint8 MAX
+__PRINTU__(65535);  // uint16 MAX
+__PRINTU__(4294967295);  // uint32 MAX
+__PRINTU__(18446744073709551615U);  // uint64 MAX
+// Int
+__PRINTI__(0);  // 0 test
+__PRINTI__(-128);  // int8 MIN
+__PRINTI__(127);  // int8 MAX
+__PRINTI__(-32768);  // int16 MIN
+__PRINTI__(32767);  // int16 MAX
+__PRINTI__(-2147483648);  // int32 MIN
+__PRINTI__(2147483647);  // int32 MAX
+__PRINTI__(-9223372036854775808);  // int64 MIN
+__PRINTI__(9223372036854775807);  // int64 MAX
+// Math
+__PRINTI__(10);
+__PRINTU__(10 + 20);
+__PRINTI__(31 - 76);
+__PRINTI__(-40 / 4);
+__PRINTU__(30 % 7);
+__PRINTI__((10 - 20 * (2 - 8) / 2) % 13);
