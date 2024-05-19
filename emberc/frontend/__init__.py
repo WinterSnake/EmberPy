@@ -3,16 +3,12 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
+## Frontend                      ##
+##-------------------------------##
 
 ## Imports
-import sys
-from pathlib import Path
-from .frontend import Token, lex
+from .lexer import lex
+from .token import Token
 
 ## Constants
-source = Path("./tests/lexing.ember")
-
-## Body
-tokens: list[Token] = lex(source)
-for token in tokens:
-    print(token)
+__all__: tuple[str, ...] = ("Token", "lex",)
