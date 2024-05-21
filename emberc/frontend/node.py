@@ -8,7 +8,7 @@
 
 ## Imports
 from __future__ import annotations
-from enum import Enum, auto
+from enum import IntEnum, auto
 
 ## Constants
 __all__: tuple[str] = ("Node", "NodeBinExpr", "NodeLiteral",)
@@ -49,7 +49,7 @@ class NodeBinExpr(Node):
         return f"({self.lhs}{expr}{self.rhs})"
 
     # -Sub-Classes
-    class Type(Enum):
+    class Type(IntEnum):
         ''''''
         Add = auto()
         Sub = auto()
@@ -74,6 +74,6 @@ class NodeLiteral(Node):
         return str(self.value)
 
     # -Sub-Classes
-    class Type(Enum):
+    class Type(IntEnum):
         ''''''
         Integer = auto()

@@ -22,9 +22,9 @@ MAPPEDOPERATORS: dict[Token.Type, NodeBinExpr.Type] = {
 
 
 ## Functions
-def _consume_token(tokens: list[Token], _type: Token.Type | None = None) -> Token | None:
+def _consume_token(tokens: list[Token], _type: Token.Type) -> Token | None:
     """"""
-    if not tokens or (_type is not None and tokens[0].type != _type):
+    if not tokens or tokens[0].type != _type:
         return None
     return tokens.pop(0)
 
@@ -56,28 +56,44 @@ def _parse_statement(tokens: list[Token]) -> Node | None:
     return node
 
 
-def _parse_expr(tokens: list[Token]) -> NodeBinExpr | None:
+def _parse_expr(tokens: list[Token]) -> Node | None:
     """"""
-    lhs = _parse_primary(tokens)
-    while _check_token(
-        tokens, Token.Type.SymbolPlus, Token.Type.SymbolMinus,
-        Token.Type.SymbolAsterisk, Token.Type.SymbolSlash, Token.Type.SymbolPercent
-    ):
-        operator = _consume_token(tokens)
-        rhs = _parse_expr(tokens)
+    return _parse_binexpr_term(tokens)
+
+
+def _parse_binexpr_term(tokens: list[Token]) -> NodeBinExpr | None:
+    """"""
+    node = _parse_binexpr_factor(tokens)
+    while _check_token(tokens, Token.Type.SymbolPlus, Token.Type.SymbolMinus):
+        operator = MAPPEDOPERATORS.get(tokens.pop(0).type)
+        rhs = _parse_binexpr_factor(tokens)
         if rhs is None:
             return None
-        return NodeBinExpr(MAPPEDOPERATORS.get(operator.type), lhs, rhs)
-    return lhs
+        node = NodeBinExpr(operator, node, rhs)
+    return node
+
+
+def _parse_binexpr_factor(tokens: list[Token]) -> NodeBinExpr | None:
+    """"""
+    node = _parse_primary(tokens)
+    while _check_token(
+        tokens, Token.Type.SymbolAsterisk, Token.Type.SymbolSlash, Token.Type.SymbolPercent
+    ):
+        operator = MAPPEDOPERATORS.get(tokens.pop(0).type)
+        rhs = _parse_primary(tokens)
+        if rhs is None:
+            return None
+        node = NodeBinExpr(operator, node, rhs)
+    return node
 
 
 def _parse_primary(tokens: list[Token]) -> Node | None:
     """"""
     if _consume_token(tokens, Token.Type.SymbolLParen):
-        expr = _parse_expr(tokens)
+        node = _parse_expr(tokens)
         if _consume_token(tokens, Token.Type.SymbolRParen) is None:
             return None
-        return expr
+        return node
     return _parse_literal(tokens)
 
 

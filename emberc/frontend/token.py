@@ -8,7 +8,7 @@
 
 ## Imports
 from __future__ import annotations
-from enum import Enum, auto
+from enum import IntEnum, auto
 from pathlib import Path
 
 ## Constants
@@ -51,7 +51,7 @@ class Token:
         return self.position[0]
 
     # -Subclasses
-    class Type(Enum):
+    class Type(IntEnum):
         ''''''
         # -Symbols
         SymbolPlus = auto()
