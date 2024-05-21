@@ -14,5 +14,6 @@ source = Path("./tests/operators.ember")
 
 ## Body
 tokens: list[Token] = lex(source)
-for token in tokens:
-    print(token)
+ast: Node = parse(tokens)
+for node in ast:
+    print(node)
