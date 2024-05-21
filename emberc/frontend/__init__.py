@@ -8,7 +8,9 @@
 
 ## Imports
 from .lexer import lex
+from .node import Node
+from .parser import parse
 from .token import Token
 
 ## Constants
-__all__: tuple[str, ...] = ("Token", "lex",)
+__all__: tuple[str, ...] = ("Node", "Token", "lex", "parse",)

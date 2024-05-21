@@ -16,10 +16,12 @@ SYMBOLS: tuple[str, ...] = (
     '(', ')', '{', '}',
 )
 MAPPEDSTRINGS: dict[str, Token.Type] = {
+    # -Symbols
     '(': Token.Type.SymbolLParen,
     ')': Token.Type.SymbolRParen,
     '{': Token.Type.SymbolLBracket,
     '}': Token.Type.SymbolRBracket,
+    # -Keywords
     'fn': Token.Type.KeywordFunction,
 }
 
