@@ -10,11 +10,9 @@ from pathlib import Path
 from .frontend import Node, Token, lex, parse
 
 ## Constants
-source = Path("./tests/lexing.ember")
+source = Path("./tests/operators.ember")
 
 ## Body
 tokens: list[Token] = lex(source)
 for token in tokens:
     print(token)
-node: Node = parse(tokens)
-print(node)

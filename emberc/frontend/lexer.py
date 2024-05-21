@@ -13,16 +13,18 @@ from .token import Token
 ## Constants
 __all__: tuple[str] = ("lex",)
 SYMBOLS: tuple[str, ...] = (
-    '(', ')', '{', '}',
+    '+', '-', '*', '/', '%', '(', ')', ';',
 )
 MAPPEDSTRINGS: dict[str, Token.Type] = {
     # -Symbols
+    '+': Token.Type.SymbolPlus,
+    '-': Token.Type.SymbolMinus,
+    '*': Token.Type.SymbolAsterisk,
+    '/': Token.Type.SymbolDivide,
+    '%': Token.Type.SymbolModulo,
     '(': Token.Type.SymbolLParen,
     ')': Token.Type.SymbolRParen,
-    '{': Token.Type.SymbolLBracket,
-    '}': Token.Type.SymbolRBracket,
-    # -Keywords
-    'fn': Token.Type.KeywordFunction,
+    ';': Token.Type.SymbolSemiColon,
 }
 
 ## Functions
@@ -35,41 +37,31 @@ def lex(file_path: Path) -> list[Token]:
     position: list[int, int, int] = [1, 1, 0]  # -row, column, offset
     token_position: tuple[int, int, int] | None = None
     while (c := file.read(1)):
-        # -State: Default
+        # -State[Default]
         if state == 'default':
-            # -Handle[Symbol]
             if c in SYMBOLS:
-                tokens.append(Token(file_path, tuple(position), MAPPEDSTRINGS.get(c), None))
-            # -Transition[word]
-            if c.isalpha() or c == '_':
-                token_position = tuple(position)
+                token = Token(file_path, tuple(position), MAPPEDSTRINGS.get(c), None)
+                tokens.append(token)
+            elif c.isdigit():
                 buffer += c
-                state = 'word'
-        # -State: Word
-        elif state == 'word':
-            # -Handle[Symbol]
+                state = 'number'
+                token_position = tuple(position)
+        # -State[Number]
+        elif state == 'number':
             if c in SYMBOLS:
                 state = 'default'
-                token = Token(
-                    file_path, token_position,
-                    MAPPEDSTRINGS.get(buffer, Token.Type.Identifier),
-                    None if buffer in MAPPEDSTRINGS else buffer
-                )
+                tokens.extend([
+                    Token(file_path, token_position, Token.Type.Integer, buffer),
+                    Token(file_path, tuple(position), MAPPEDSTRINGS.get(c), None)
+                ])
                 buffer = ""
                 token_position = None
-                tokens.append(token)
-                tokens.append(Token(file_path, tuple(position), MAPPEDSTRINGS.get(c), None))
-            # -Transition[Default]
-            elif not c.isalnum() and c != '_':
+            elif not c.isdigit():
                 state = 'default'
-                token = Token(
-                    file_path, token_position,
-                    MAPPEDSTRINGS.get(buffer, Token.Type.Identifier),
-                    None if buffer in MAPPEDSTRINGS else buffer
-                )
+                token = Token(file_path, token_position, Token.Type.Integer, buffer)
+                tokens.append(token)
                 buffer = ""
                 token_position = None
-                tokens.append(token)
             else:
                 buffer += c
         # -Handle positions

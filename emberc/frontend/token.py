@@ -53,12 +53,14 @@ class Token:
     # -Subclasses
     class Type(Enum):
         ''''''
-        # -Keywords
-        KeywordFunction = auto()
         # -Symbols
+        SymbolPlus = auto()
+        SymbolMinus = auto()
+        SymbolAsterisk = auto()
+        SymbolDivide = auto()
+        SymbolModulo = auto()
         SymbolLParen = auto()
         SymbolRParen = auto()
-        SymbolLBracket = auto()
-        SymbolRBracket = auto()
+        SymbolSemiColon = auto()
         # -Literals
-        Identifier = auto()
+        Integer = auto()
