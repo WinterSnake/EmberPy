@@ -41,11 +41,30 @@ class NodeAssignment(Node):
         return "NodeAssignment(name={self.name}, value={repr(self.value)})"
 
     def __str__(self) -> str:
-        return f"[]{self.name}={self.value}"
+        return f"{self.name}={self.value}"
 
     # -Instance Methods
     def visit(self, visitor: NodeVisitor) -> Node:
         return visitor.visit_assignment(self)
+
+class NodeDefinition(NodeAssignment):
+    """"""
+
+    # -Constructor
+    def __init__(self, _type, name: str, value: Node) -> None:
+        super().__init__(name, value)
+        self.type = _type
+
+    # -Dunder Methods
+    def __repr__(self) -> str:
+        return "NodeDefinition(type={}, name={self.name}, value={repr(self.value)})"
+
+    def __str__(self) -> str:
+        return f"[{self.type}]{self.name}={self.value}"
+
+    # -Instance Methods
+    def visit(self, visitor: NodeVisitor) -> Node:
+        return visitor.visit_definition(self)
 
 
 class NodeBinExpr(Node):

@@ -14,7 +14,7 @@ from .backend import NodeVisitor, FoldingOptimizationPass, interpret
 ## Constants
 source = Path("./tests/variables.ember")
 PRINT_TOKENS: bool = False
-PRINT_AST: bool = True
+PRINT_AST: bool = False
 PASSES: list[Type[NodeVisitor]] = [FoldingOptimizationPass]
 
 ## Body
@@ -24,6 +24,7 @@ if PRINT_TOKENS:
         print(token)
 ast: list[Node] | None = parse(tokens)
 if ast is None:
+    print("AST failed to generate")
     sys.exit(1)
 for _pass in PASSES:
     pass_instance = _pass()

@@ -7,7 +7,9 @@
 ##-------------------------------##
 
 ## Imports
-from ..frontend.node import Node, NodeAssignment, NodeBinExpr, NodeLiteral
+from ..frontend.node import (
+    Node, NodeDefinition, NodeAssignment, NodeBinExpr, NodeLiteral
+)
 
 ## Constants
 __all__: tuple[str] = ("interpret",)
@@ -18,7 +20,7 @@ def interpret(ast: list[Node]) -> None:
     """"""
     variables: dict[str, int] = {}
     for node in ast:
-        if isinstance(node, NodeAssignment):
+        if isinstance(node, NodeDefinition) or isinstance(node, NodeAssignment):
             name = node.name
             value = _interpret_binexpr(node.value, variables)
             variables[name] = value

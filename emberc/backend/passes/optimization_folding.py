@@ -20,6 +20,11 @@ class FoldingOptimizationPass(NodeVisitor):
     """"""
 
     # -Instance Methods
+    def visit_definition(self, node: NodeDefinition) -> Node:
+        ''''''
+        node.value = node.value.visit(self)
+        return node
+
     def visit_assignment(self, node: NodeAssignment) -> Node:
         ''''''
         node.value = node.value.visit(self)

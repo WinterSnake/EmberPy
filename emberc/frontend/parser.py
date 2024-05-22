@@ -8,7 +8,7 @@
 
 ## Imports
 from .token import Token
-from .node import Node, NodeAssignment, NodeBinExpr, NodeLiteral
+from .node import Node, NodeDefinition, NodeAssignment, NodeBinExpr, NodeLiteral
 
 ## Constants
 __all__: tuple[str] = ("parse",)
@@ -51,7 +51,7 @@ def parse(tokens: list[Token]) -> list[Node] | None:
 def _parse_statement(tokens: list[Token]) -> Node | None:
     """"""
     node: Node | None
-    # -Assignment
+    # -Definition
     if _check_token(tokens, Token.Type.TypeInt32):
         _type = tokens.pop(0)
         name = _consume_token(tokens, Token.Type.Identifier)
@@ -61,7 +61,7 @@ def _parse_statement(tokens: list[Token]) -> Node | None:
         if value is None:
             return None
         assert(isinstance(name.value, str))
-        node = NodeAssignment(name.value, value)
+        node = NodeDefinition(None, name.value, value)
     # -BinExpr
     else:
         node = _parse_expr(tokens)
@@ -122,6 +122,17 @@ def _parse_literal(tokens: list[Token]) -> NodeLiteral | None:
     token = tokens.pop(0)
     if token is None:
         return None
+    # -Assignment
+    if (
+        token.type == Token.Type.Identifier and
+        _consume_token(tokens, Token.Type.SymbolEqual)
+    ):
+        value = _parse_expr(tokens)
+        if value is None:
+            return None
+        assert(isinstance(token.value, str))
+        return NodeAssignment(token.value, value)
+    # -Literal
     assert(isinstance(token.value, str))
     match token.type:
         case Token.Type.Identifier:

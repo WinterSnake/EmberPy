@@ -12,7 +12,7 @@ from abc import ABC, abstractmethod
 from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..frontend.node import Node, NodeAssignment, NodeBinExpr, NodeLiteral
+    from ..frontend.node import Node, NodeDefinition, NodeAssignment, NodeBinExpr, NodeLiteral
 
 ## Constants
 __all__: tuple[str, ...] = ("NodeVisitor",)
@@ -23,6 +23,8 @@ class NodeVisitor(ABC):
     """"""
 
     # -Instance Methods
+    @abstractmethod
+    def visit_definition(self, node: NodeDefinition) -> Node: ...
     @abstractmethod
     def visit_assignment(self, node: NodeAssignment) -> Node: ...
     @abstractmethod
