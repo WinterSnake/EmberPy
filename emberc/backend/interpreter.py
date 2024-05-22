@@ -18,16 +18,17 @@ def interpret(ast: list[Node]) -> None:
     """"""
     for node in ast:
         if isinstance(node, NodeBinExpr):
-            value = _interpret_expr(node)
+            value = _interpret_binexpr(node)
             print(f"Value: {value}")
 
 
-def _interpret_expr(node: NodeBinExpr) -> None:
+def _interpret_binexpr(node: Node) -> int:
     """"""
     if isinstance(node, NodeLiteral):
         return node.value
-    lhs = _interpret_expr(node.lhs)
-    rhs = _interpret_expr(node.rhs)
+    assert(isinstance(node, NodeBinExpr))
+    lhs = _interpret_binexpr(node.lhs)
+    rhs = _interpret_binexpr(node.rhs)
     match node.type:
         case NodeBinExpr.Type.Add:
             return lhs + rhs
