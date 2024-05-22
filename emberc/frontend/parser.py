@@ -61,11 +61,14 @@ def _parse_expr(tokens: list[Token]) -> Node | None:
     return _parse_binexpr_term(tokens)
 
 
-def _parse_binexpr_term(tokens: list[Token]) -> NodeBinExpr | None:
+def _parse_binexpr_term(tokens: list[Token]) -> Node | None:
     """"""
     node = _parse_binexpr_factor(tokens)
+    if node is None:
+        return None
     while _check_token(tokens, Token.Type.SymbolPlus, Token.Type.SymbolMinus):
         operator = MAPPEDOPERATORS.get(tokens.pop(0).type)
+        assert(operator is not None)
         rhs = _parse_binexpr_factor(tokens)
         if rhs is None:
             return None
@@ -73,13 +76,16 @@ def _parse_binexpr_term(tokens: list[Token]) -> NodeBinExpr | None:
     return node
 
 
-def _parse_binexpr_factor(tokens: list[Token]) -> NodeBinExpr | None:
+def _parse_binexpr_factor(tokens: list[Token]) -> Node | None:
     """"""
     node = _parse_primary(tokens)
+    if node is None:
+        return None
     while _check_token(
         tokens, Token.Type.SymbolAsterisk, Token.Type.SymbolSlash, Token.Type.SymbolPercent
     ):
         operator = MAPPEDOPERATORS.get(tokens.pop(0).type)
+        assert(operator is not None)
         rhs = _parse_primary(tokens)
         if rhs is None:
             return None
@@ -102,4 +108,5 @@ def _parse_literal(tokens: list[Token]) -> NodeLiteral | None:
     token = _consume_token(tokens, Token.Type.Integer)
     if token is None:
         return None
+    assert(isinstance(token.value, str))
     return NodeLiteral(NodeLiteral.Type.Integer, int(token.value))

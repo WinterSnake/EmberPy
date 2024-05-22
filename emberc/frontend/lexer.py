@@ -8,6 +8,7 @@
 
 ## Imports
 from pathlib import Path
+from typing import cast
 from .token import Token
 
 ## Constants
@@ -34,25 +35,32 @@ def lex(file_path: Path) -> list[Token]:
     file = file_path.open('r')
     state: str = 'default'
     buffer: str = ""
-    position: list[int, int, int] = [1, 1, 0]  # -row, column, offset
+    position: list[int] = [1, 1, 0]  # -row, column, offset
     token_position: tuple[int, int, int] | None = None
     while (c := file.read(1)):
         # -State[Default]
         if state == 'default':
             if c in SYMBOLS:
-                token = Token(file_path, tuple(position), MAPPEDSTRINGS.get(c), None)
+                op = MAPPEDSTRINGS.get(c)
+                pos = cast(tuple[int, int, int], tuple(position))
+                assert(op is not None)
+                token = Token(file_path, pos, op, None)
                 tokens.append(token)
             elif c.isdigit():
                 buffer += c
                 state = 'number'
-                token_position = tuple(position)
+                token_position = cast(tuple[int, int, int], tuple(position))
         # -State[Number]
         elif state == 'number':
+            assert(token_position is not None)
             if c in SYMBOLS:
                 state = 'default'
+                op = MAPPEDSTRINGS.get(c)
+                pos = cast(tuple[int, int, int], tuple(position))
+                assert(op is not None)
                 tokens.extend([
                     Token(file_path, token_position, Token.Type.Integer, buffer),
-                    Token(file_path, tuple(position), MAPPEDSTRINGS.get(c), None)
+                    Token(file_path, pos, op, None)
                 ])
                 buffer = ""
                 token_position = None

@@ -28,7 +28,7 @@ class Token:
         self.file: Path = file
         self.position: tuple[int, int, int] = position
         self.type: Token.Type = _type
-        self.value: str = value
+        self.value: str | None = value
 
     # -Dunder Methods
     def __repr__(self) -> str:

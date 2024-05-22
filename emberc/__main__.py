@@ -14,6 +14,8 @@ source = Path("./tests/operators.ember")
 
 ## Body
 tokens: list[Token] = lex(source)
-ast: Node = parse(tokens)
+ast: list[Node] | None = parse(tokens)
+if ast is None:
+    sys.exit(1)
 for node in ast:
     print(node)

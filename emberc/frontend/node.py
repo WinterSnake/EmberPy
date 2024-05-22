@@ -8,14 +8,15 @@
 
 ## Imports
 from __future__ import annotations
+from abc import ABC, abstractmethod
 from enum import IntEnum, auto
 
 ## Constants
-__all__: tuple[str] = ("Node", "NodeBinExpr", "NodeLiteral",)
+__all__: tuple[str, ...] = ("Node", "NodeBinExpr", "NodeLiteral",)
 
 
 ## Classes
-class Node:
+class Node(ABC):
     """"""
     pass
 
