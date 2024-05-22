@@ -3,18 +3,14 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Backend                       ##
+## Backend: Visitor Passes       ##
 ##-------------------------------##
 
 ## Imports
-from .interpreter import interpret
-from .visitor import NodeVisitor
-from .passes import FoldingOptimizationPass
+from .optimization_folding import FoldingOptimizationPass
 
 ## Constants
 __all__: tuple[str, ...] = (
-    # -Passes
-    "NodeVisitor", "FoldingOptimizationPass",
-    # -Backend
-    "interpret",
+    # -Optimization
+    "FoldingOptimizationPass",
 )

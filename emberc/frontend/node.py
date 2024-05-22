@@ -10,6 +10,10 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from enum import IntEnum, auto
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..backend.visitor import NodeVisitor
 
 ## Constants
 __all__: tuple[str, ...] = ("Node", "NodeBinExpr", "NodeLiteral",)
@@ -18,7 +22,10 @@ __all__: tuple[str, ...] = ("Node", "NodeBinExpr", "NodeLiteral",)
 ## Classes
 class Node(ABC):
     """"""
-    pass
+
+    # -Instance Methods
+    @abstractmethod
+    def visit(self, visitor: NodeVisitor) -> Node: ...
 
 
 class NodeAssignment(Node):
@@ -35,6 +42,10 @@ class NodeAssignment(Node):
 
     def __str__(self) -> str:
         return f"[]{self.name}={self.value}"
+
+    # -Instance Methods
+    def visit(self, visitor: NodeVisitor) -> Node:
+        return visitor.visit_assignment(self)
 
 
 class NodeBinExpr(Node):
@@ -65,6 +76,10 @@ class NodeBinExpr(Node):
                 expr = '%'
         return f"({self.lhs}{expr}{self.rhs})"
 
+    # -Instance Methods
+    def visit(self, visitor: NodeVisitor) -> Node:
+        return visitor.visit_binexpr(self)
+
     # -Sub-Classes
     class Type(IntEnum):
         ''''''
@@ -89,6 +104,10 @@ class NodeLiteral(Node):
 
     def __str__(self) -> str:
         return str(self.value)
+
+    # -Instance Methods
+    def visit(self, visitor: NodeVisitor) -> Node:
+        return visitor.visit_literal(self)
 
     # -Sub-Classes
     class Type(IntEnum):
