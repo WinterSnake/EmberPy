@@ -118,8 +118,13 @@ def _parse_primary(tokens: list[Token]) -> Node | None:
 
 def _parse_literal(tokens: list[Token]) -> NodeLiteral | None:
     """"""
-    token = _consume_token(tokens, Token.Type.Integer)
+    token = tokens.pop(0)
     if token is None:
         return None
     assert(isinstance(token.value, str))
-    return NodeLiteral(NodeLiteral.Type.Integer, int(token.value))
+    match token.type:
+        case Token.Type.Identifier:
+            return NodeLiteral(NodeLiteral.Type.Identifier, token.value)
+        case Token.Type.Integer:
+            return NodeLiteral(NodeLiteral.Type.Integer, int(token.value))
+    

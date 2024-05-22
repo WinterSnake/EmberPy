@@ -2,3 +2,6 @@ int32 a=1274;
 int32 b= 3442;
 int32 c =420;
 int32 d = 2;
+int32 e = (a + b * d) / c;
+e;
+a + e / 2;

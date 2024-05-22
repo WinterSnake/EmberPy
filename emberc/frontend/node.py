@@ -79,9 +79,9 @@ class NodeLiteral(Node):
     """"""
     
     # -Constructor
-    def __init__(self, _type: NodeLiteral.Type, value: int) -> None:
+    def __init__(self, _type: NodeLiteral.Type, value: int | str) -> None:
         self.type: NodeLiteral.Type = _type
-        self.value: int = value
+        self.value: int | str = value
 
     # -Dunder Methods
     def __repr__(self) -> str:
@@ -93,4 +93,5 @@ class NodeLiteral(Node):
     # -Sub-Classes
     class Type(IntEnum):
         ''''''
+        Identifier = auto()
         Integer = auto()

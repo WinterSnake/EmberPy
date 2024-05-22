@@ -7,7 +7,8 @@
 ##-------------------------------##
 
 ## Imports
-from ..frontend.node import Node, NodeBinExpr, NodeLiteral
+from typing import Any
+from ..frontend.node import Node, NodeAssignment, NodeBinExpr, NodeLiteral
 
 ## Constants
 __all__: tuple[str] = ("interpret",)
@@ -16,19 +17,26 @@ __all__: tuple[str] = ("interpret",)
 ## Constants
 def interpret(ast: list[Node]) -> None:
     """"""
+    variables: dict[str, Any] = {}
     for node in ast:
-        if isinstance(node, NodeBinExpr):
-            value = _interpret_binexpr(node)
-            print(f"Value: {value}")
+        if isinstance(node, NodeAssignment):
+            name = node.name
+            value = _interpret_binexpr(node.value, variables)
+            variables[name] = value
+        elif isinstance(node, NodeBinExpr):
+            value = _interpret_binexpr(node, variables)
+            print(f"Expr: {value}")
+        elif isinstance(node, NodeLiteral):
+            value = _interpret_literal(node, variables)
+            print(f"Literal: {value}")
 
-
-def _interpret_binexpr(node: Node) -> int:
+def _interpret_binexpr(node: Node, variables: dict[str, Any]) -> int:
     """"""
     if isinstance(node, NodeLiteral):
-        return node.value
+        return _interpret_literal(node, variables)
     assert(isinstance(node, NodeBinExpr))
-    lhs = _interpret_binexpr(node.lhs)
-    rhs = _interpret_binexpr(node.rhs)
+    lhs = _interpret_binexpr(node.lhs, variables)
+    rhs = _interpret_binexpr(node.rhs, variables)
     match node.type:
         case NodeBinExpr.Type.Add:
             return lhs + rhs
@@ -40,3 +48,12 @@ def _interpret_binexpr(node: Node) -> int:
             return lhs // rhs
         case NodeBinExpr.Type.Mod:
             return lhs % rhs
+
+
+def _interpret_literal(node: Node, variables: dict[str, Any]) -> int:
+    """"""
+    match node.type:
+        case NodeLiteral.Type.Identifier:
+            return variables[node.value]
+        case NodeLiteral.Type.Integer:
+            return node.value

@@ -13,7 +13,7 @@ from .backend import interpret
 ## Constants
 source = Path("./tests/variables.ember")
 PRINT_TOKENS: bool = False
-PRINT_AST: bool = True
+PRINT_AST: bool = False
 
 ## Body
 tokens: list[Token] = lex(source)
