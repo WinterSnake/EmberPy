@@ -9,7 +9,9 @@
 ## Imports
 from __future__ import annotations
 from ..visitor import NodeVisitor
-from ...frontend.node import Node, NodeAssignment, NodeBinExpr, NodeLiteral
+from ...frontend.node import (
+    Node, NodeDefinition, NodeAssignment, NodeBinExpr, NodeLiteral
+)
 
 ## Constants
 __all__: tuple[str] = ("FoldingOptimizationPass",)

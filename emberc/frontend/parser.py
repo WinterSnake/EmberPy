@@ -8,7 +8,9 @@
 
 ## Imports
 from .token import Token
-from .node import Node, NodeDefinition, NodeAssignment, NodeBinExpr, NodeLiteral
+from .node import (
+    Node, NodeDefinition, NodeAssignment, NodeBinExpr, NodeLiteral
+)
 
 ## Constants
 __all__: tuple[str] = ("parse",)
@@ -117,16 +119,13 @@ def _parse_primary(tokens: list[Token]) -> Node | None:
     return _parse_literal(tokens)
 
 
-def _parse_literal(tokens: list[Token]) -> NodeLiteral | None:
+def _parse_literal(tokens: list[Token]) -> Node | None:
     """"""
     token = tokens.pop(0)
     if token is None:
         return None
     # -Assignment
-    if (
-        token.type == Token.Type.Identifier and
-        _consume_token(tokens, Token.Type.SymbolEqual)
-    ):
+    if _consume_token(tokens, Token.Type.SymbolEqual):
         value = _parse_expr(tokens)
         if value is None:
             return None

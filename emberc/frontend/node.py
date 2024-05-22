@@ -16,7 +16,9 @@ if TYPE_CHECKING:
     from ..backend.visitor import NodeVisitor
 
 ## Constants
-__all__: tuple[str, ...] = ("Node", "NodeBinExpr", "NodeLiteral",)
+__all__: tuple[str, ...] = (
+    "Node", "NodeDefinition", "NodeAssignment", "NodeBinExpr", "NodeLiteral",
+)
 
 
 ## Classes
