@@ -30,13 +30,15 @@ class FoldingOptimizationPass(NodeVisitor):
         lhs = node.lhs.visit(self)
         rhs = node.rhs.visit(self)
         if (
-            lhs.type == NodeLiteral.Type.Identifier or
-            rhs.type == NodeLiteral.Type.Identifier or
-            isinstance(lhs, NodeBinExpr) or isinstance(rhs, NodeBinExpr)
+            isinstance(lhs, NodeBinExpr) or isinstance(rhs, NodeBinExpr) or
+            (isinstance(lhs, NodeLiteral) and lhs.type == NodeLiteral.Type.Identifier) or
+            (isinstance(rhs, NodeLiteral) and rhs.type == NodeLiteral.Type.Identifier)
         ):
             node.lhs = lhs
             node.rhs = rhs
             return node
+        assert(isinstance(lhs, NodeLiteral) and isinstance(lhs.value, int))
+        assert(isinstance(rhs, NodeLiteral) and isinstance(rhs.value, int))
         match node.type:
             case NodeBinExpr.Type.Add:
                 value = lhs.value + rhs.value
