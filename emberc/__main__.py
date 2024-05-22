@@ -8,6 +8,7 @@
 import sys
 from pathlib import Path
 from .frontend import Node, Token, lex, parse
+from .backend import interpret
 
 ## Constants
 source = Path("./tests/operators.ember")
@@ -17,5 +18,4 @@ tokens: list[Token] = lex(source)
 ast: list[Node] | None = parse(tokens)
 if ast is None:
     sys.exit(1)
-for node in ast:
-    print(node)
+interpret(ast)

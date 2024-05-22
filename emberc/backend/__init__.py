@@ -7,6 +7,7 @@
 ##-------------------------------##
 
 ## Imports
+from .interpreter import interpret
 
 ## Constants
-__all__: tuple[str, ...] = ()
+__all__: tuple[str, ...] = ("interpret",)
