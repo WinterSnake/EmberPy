@@ -35,7 +35,7 @@ class Token:
         return f"Token(file={repr(self.file)}, position={self.position}, type={self.type}, value={self.value})"
 
     def __str__(self) -> str:
-        return f"[{self.file}:{self.row}:{self.column}]{self.type}: '{self.value}'"
+        return f"[{self.file}:{self.row}:{self.column}]{self.type.name}: '{self.value}'"
 
     # -Properties
     @property
@@ -61,6 +61,10 @@ class Token:
         SymbolPercent = auto()
         SymbolLParen = auto()
         SymbolRParen = auto()
-        SymbolSemiColon = auto()
+        SymbolSemicolon = auto()
+        SymbolEqual = auto()
+        # -Types
+        TypeInt32 = auto()
         # -Literals
         Integer = auto()
+        Identifier = auto()
