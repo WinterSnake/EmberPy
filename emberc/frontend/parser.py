@@ -8,7 +8,7 @@
 
 ## Imports
 from .token import Token
-from .node import Node, NodeBinExpr, NodeLiteral
+from .node import Node, NodeAssignment, NodeBinExpr, NodeLiteral
 
 ## Constants
 __all__: tuple[str] = ("parse",)
@@ -50,8 +50,21 @@ def parse(tokens: list[Token]) -> list[Node] | None:
 
 def _parse_statement(tokens: list[Token]) -> Node | None:
     """"""
-    node = _parse_expr(tokens)
-    if _consume_token(tokens, Token.Type.SymbolSemiColon) is None:
+    node: Node
+    # -Assignment
+    if _check_token(tokens, Token.Type.TypeInt32):
+        _type = tokens.pop(0)
+        name = _consume_token(tokens, Token.Type.Identifier).value
+        if name is None or _consume_token(tokens, Token.Type.SymbolEqual) is None:
+            return None
+        value = _parse_expr(tokens)
+        if value is None:
+            return None
+        node = NodeAssignment(name, value)
+    # -BinExpr
+    else:
+        node = _parse_expr(tokens)
+    if _consume_token(tokens, Token.Type.SymbolSemicolon) is None:
         return None
     return node
 

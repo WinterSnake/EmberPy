@@ -21,6 +21,22 @@ class Node(ABC):
     pass
 
 
+class NodeAssignment(Node):
+    """"""
+
+    # -Constructor
+    def __init__(self, name: str, value: Node) -> None:
+        self.name: str = name
+        self.value = value
+
+    # -Dunder Methods
+    def __repr__(self) -> str:
+        return "NodeAssignment(name={self.name}, value={repr(self.value)})"
+
+    def __str__(self) -> str:
+        return f"[]{self.name}={self.value}"
+
+
 class NodeBinExpr(Node):
     """"""
 
