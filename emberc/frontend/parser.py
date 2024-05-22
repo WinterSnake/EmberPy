@@ -50,17 +50,18 @@ def parse(tokens: list[Token]) -> list[Node] | None:
 
 def _parse_statement(tokens: list[Token]) -> Node | None:
     """"""
-    node: Node
+    node: Node | None
     # -Assignment
     if _check_token(tokens, Token.Type.TypeInt32):
         _type = tokens.pop(0)
-        name = _consume_token(tokens, Token.Type.Identifier).value
+        name = _consume_token(tokens, Token.Type.Identifier)
         if name is None or _consume_token(tokens, Token.Type.SymbolEqual) is None:
             return None
         value = _parse_expr(tokens)
         if value is None:
             return None
-        node = NodeAssignment(name, value)
+        assert(isinstance(name.value, str))
+        node = NodeAssignment(name.value, value)
     # -BinExpr
     else:
         node = _parse_expr(tokens)
@@ -127,4 +128,5 @@ def _parse_literal(tokens: list[Token]) -> NodeLiteral | None:
             return NodeLiteral(NodeLiteral.Type.Identifier, token.value)
         case Token.Type.Integer:
             return NodeLiteral(NodeLiteral.Type.Integer, int(token.value))
+    return None
     

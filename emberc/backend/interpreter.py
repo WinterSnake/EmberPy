@@ -7,7 +7,6 @@
 ##-------------------------------##
 
 ## Imports
-from typing import Any
 from ..frontend.node import Node, NodeAssignment, NodeBinExpr, NodeLiteral
 
 ## Constants
@@ -17,7 +16,7 @@ __all__: tuple[str] = ("interpret",)
 ## Constants
 def interpret(ast: list[Node]) -> None:
     """"""
-    variables: dict[str, Any] = {}
+    variables: dict[str, int] = {}
     for node in ast:
         if isinstance(node, NodeAssignment):
             name = node.name
@@ -30,7 +29,7 @@ def interpret(ast: list[Node]) -> None:
             value = _interpret_literal(node, variables)
             print(f"Literal: {value}")
 
-def _interpret_binexpr(node: Node, variables: dict[str, Any]) -> int:
+def _interpret_binexpr(node: Node, variables: dict[str, int]) -> int:
     """"""
     if isinstance(node, NodeLiteral):
         return _interpret_literal(node, variables)
@@ -50,10 +49,13 @@ def _interpret_binexpr(node: Node, variables: dict[str, Any]) -> int:
             return lhs % rhs
 
 
-def _interpret_literal(node: Node, variables: dict[str, Any]) -> int:
+def _interpret_literal(node: Node, variables: dict[str, int]) -> int:
     """"""
+    assert(isinstance(node, NodeLiteral))
     match node.type:
         case NodeLiteral.Type.Identifier:
+            assert(isinstance(node.value, str))
             return variables[node.value]
         case NodeLiteral.Type.Integer:
+            assert(isinstance(node.value, int))
             return node.value
