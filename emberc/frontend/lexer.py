@@ -7,110 +7,113 @@
 ##-------------------------------##
 
 ## Imports
+from collections.abc import Generator
 from pathlib import Path
-from typing import cast
+from typing import TextIO
+
 from .token import Token
 
 ## Constants
-__all__: tuple[str] = ("lex",)
+__all__: tuple[str] = ("Lexer",)
 SYMBOLS: tuple[str, ...] = (
-    '+', '-', '*', '/', '%', '(', ')', ';', '=',
+    "(", ")",
+    # -Math
+    "+", "-", "*", "/", "%",
 )
-MAPPEDSTRINGS: dict[str, Token.Type] = {
-    # -Symbols
-    '+': Token.Type.SymbolPlus,
-    '-': Token.Type.SymbolMinus,
-    '*': Token.Type.SymbolAsterisk,
-    '/': Token.Type.SymbolSlash,
-    '%': Token.Type.SymbolPercent,
-    '(': Token.Type.SymbolLParen,
-    ')': Token.Type.SymbolRParen,
-    ';': Token.Type.SymbolSemicolon,
-    '=': Token.Type.SymbolEqual,
-    # -Types
-    'int32': Token.Type.TypeInt32,
-}
 
-## Functions
-def lex(file_path: Path) -> list[Token]:
-    """Produce a list of tokens from a given source file"""
-    tokens: list[Token] = []
-    file = file_path.open('r')
-    state: str = 'default'
-    buffer: str = ""
-    position: list[int] = [1, 1, 0]  # -row, column, offset
-    token_position: tuple[int, int, int] | None = None
-    while (c := file.read(1)):
-        # -State[Default]
-        if state == 'default':
-            if c in SYMBOLS:
-                op = MAPPEDSTRINGS.get(c)
-                pos = cast(tuple[int, int, int], tuple(position))
-                assert(op is not None)
-                token = Token(file_path, pos, op, None)
-                tokens.append(token)
-            elif c.isdigit():
-                buffer += c
-                state = 'number'
-                token_position = cast(tuple[int, int, int], tuple(position))
-            elif c.isalpha() or c == '_':
-                buffer += c
-                state = 'word'
-                token_position = cast(tuple[int, int, int], tuple(position))
-        # -State[Number]
-        elif state == 'number':
-            assert(token_position is not None)
-            if c in SYMBOLS:
-                state = 'default'
-                op = MAPPEDSTRINGS.get(c)
-                pos = cast(tuple[int, int, int], tuple(position))
-                assert(op is not None)
-                tokens.extend([
-                    Token(file_path, token_position, Token.Type.Integer, buffer),
-                    Token(file_path, pos, op, None)
-                ])
-                buffer = ""
-                token_position = None
-            elif not c.isdigit():
-                state = 'default'
-                token = Token(file_path, token_position, Token.Type.Integer, buffer)
-                tokens.append(token)
-                buffer = ""
-                token_position = None
+
+## Classes
+class Lexer:
+    """
+    """
+
+    # -Constructor
+    def __init__(self, file: Path) -> None:
+        self.file: Path = file
+        self._fp: TextIO | None = None
+        self.row: int = 1
+        self.column: int = 0
+        self.offset: int = 0
+
+    # -Dunder Methods
+    def __repr__(self) -> str:
+        return f"Lexer({self.file})"
+
+    def __str__(self) -> str:
+        return f"[{self.file}]"
+
+    # -Instance Methods
+    def _next(self) -> str | None:
+        ''''''
+        assert self._fp is not None
+        if not self._fp.closed and (char := self._fp.read(1)):
+            return char
+        return None
+
+    def _advance(self) -> str | None:
+        ''''''
+        char = self._next()
+        self.offset += 1
+        if char == '\n':
+            self.row += 1
+            self.column = 0
+        elif char:
+            self.column += 1
+        return char
+
+    def _peek(self) -> str | None:
+        ''''''
+        assert self._fp is not None
+        position: int = self._fp.tell()
+        char = self._next()
+        if char:
+            self._fp.seek(position)
+        return char
+    def lex(self) -> Generator[Token, None, None]:
+        ''''''
+        if self._fp is None:
+            self._fp = self.file.open('r')
+        while char := self._advance():
+            # -[Word]
+            if char.isalpha() or char == '_':
+                yield self._lex_word(char)
+            # -[Digit]
+            elif char.isnumeric():
+                yield self._lex_number(char)
+            # -[Symbol]
+            elif char in SYMBOLS:
+                if (token := self._lex_symbol(char)) is not None:
+                    yield token
+        self._fp.close()
+
+    def _lex_number(self, char: str) -> Token:
+        ''''''
+        value: str = char
+        position: tuple[int, int, int] = self.position
+        while char := self._peek():
+            if char.isnumeric():
+                value += self._advance()
             else:
-                buffer += c
-        # -State[Word]
-        elif state == 'word':
-            assert(token_position is not None)
-            if c in SYMBOLS:
-                state = 'default'
-                _type = MAPPEDSTRINGS.get(buffer, Token.Type.Identifier)
-                _value = None if _type != Token.Type.Identifier else buffer
-                op = MAPPEDSTRINGS.get(c)
-                pos = cast(tuple[int, int, int], tuple(position))
-                assert(op is not None)
-                tokens.extend([
-                    Token(file_path, token_position, _type, _value),
-                    Token(file_path, pos, op, None)
-                ])
-                buffer = ""
-                token_position = None
-            elif not c.isalnum() and c != '_':
-                state = 'default'
-                _type = MAPPEDSTRINGS.get(buffer, Token.Type.Identifier)
-                _value = None if _type != Token.Type.Identifier else buffer
-                token = Token(file_path, token_position, _type, _value)
-                tokens.append(token)
-                buffer = ""
-                token_position = None
-            else:
-                buffer += c
-        # -Handle positions
-        if c == '\n':
-            position[0] += 1
-            position[1] = 1
-        else:
-            position[1] += 1
-        position[2] += 1
-    file.close()
-    return tokens
+                break
+        return Token(self.file, position, Token.Type.Number, value)
+
+    def _lex_symbol(self, char: str) -> Token:
+        ''''''
+        position: tuple[int, int, int] = self.position
+        match char:
+            case '+':
+                return Token(self.file, position, Token.Type.Plus)
+            case '-':
+                return Token(self.file, position, Token.Type.Minus)
+            case '*':
+                return Token(self.file, position, Token.Type.Asterisk)
+            case '/':
+                return Token(self.file, position, Token.Type.FSlash)
+            case '%':
+                return Token(self.file, position, Token.Type.Percent)
+        return None
+
+    # -Properties
+    @property
+    def position(self) -> tuple[int, int, int]:
+        return (self.row, self.column, self.offset)
