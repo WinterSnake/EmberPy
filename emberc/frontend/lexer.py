@@ -9,19 +9,19 @@
 ## Imports
 from collections.abc import Generator
 from pathlib import Path
-from typing import TextIO
+from typing import TextIO, cast
 
 from .token import Token
 
 ## Constants
-__all__: tuple[str] = ("Lexer",)
 SYMBOLS: tuple[str, ...] = (
-    '(', ')', ';',
     # -Math
     '+', '-', '*', '/', '%',
-)
-KEYWORDS: tuple[str, ...] = (
-
+    # -Assignment
+    '=',
+    # -Comparison
+    # -Misc
+    '(', ')', ';',
 )
 
 
@@ -42,126 +42,160 @@ class Lexer:
 
     # -Dunder Methods
     def __repr__(self) -> str:
-        return f"Lexer({self.file})"
-
-    def __str__(self) -> str:
-        return f"[{self.file}]"
+        _str = f"Lexer(file=\"{self.file}\", "
+        if self._fp and not self._fp.closed:
+            _str += f"position={self.position}, status=OPEN"
+        else:
+            _str += "status=CLOSED"
+        return _str + ')'
 
     # -Instance Methods
-    def _next(self) -> str | None:
-        '''Return next character from file or return None if at EOF or file is closed'''
-        assert self._fp is not None
-        if not self._fp.closed and (char := self._fp.read(1)):
-            return char
-        return None
+    def lex(self) -> Generator[Token, None, None]:
+        '''Generate next token from file'''
+        if not self._fp:
+            self._fp = self.file.open('r')
+        while char := self._advance():
+            token: Token | None = None
+            # -State[DEFAULT] > State[WORD]
+            if char.isalpha() or char == '_':
+                token = self._lex_word(char)
+            # -State[DEFAULT] > State[DIGIT]
+            elif char.isnumeric():
+                token = self._lex_digit(char)
+            # -State[DEFAULT] > State[SYMBOL]
+            elif char in SYMBOLS:
+                token = self._lex_symbol(char)
+            else:
+                continue
+            # -Return token
+            if token:
+                yield token
+        self._fp.close()
 
+    # -Instance Methods: Read
     def _advance(self) -> str | None:
-        '''Return next character from file and increment lexer position'''
+        '''Return next character and increment lexer position'''
         char = self._next()
-        self.offset += 1
+        if char is None:
+            return None
         if char == '\n':
             self.row += 1
             self.column = 0
-        elif char:
+        else:
             self.column += 1
+        self.offset += 1
         return char
 
-    def _peek(self) -> str | None:
-        '''Return next character without consuming from file'''
+    def _match(self, expected: str) -> bool:
+        '''Consumes next char and returns true if expected char matches peeked char'''
+        char = self._peek()
+        if char != expected:
+            return False
+        self._advance()
+        return True
+
+    def _next(self) -> str | None:
+        '''Return next character from file or return None if EOF or file is closed'''
         assert self._fp is not None
+        if not self._fp.closed:
+            return self._fp.read(1)
+        return None
+
+    def _peek(self) -> str | None:
+        '''Return next character without incrementing reader pointer'''
+        assert self._fp is not None
+        if self._fp.closed:
+            return None
         position: int = self._fp.tell()
         char = self._next()
         if char:
             self._fp.seek(position)
         return char
 
-    def lex(self) -> Generator[Token, None, None]:
-        '''Generate next token from lexer and close file when done'''
-        if self._fp is None:
-            self._fp = self.file.open('r')
-        while char := self._advance():
-            # -[Word]
-            if char.isalpha() or char == '_':
-                yield self._lex_word(char)
-            # -[Digit]
-            elif char.isnumeric():
-                yield self._lex_number(char)
-            # -[Symbol]
-            elif char in SYMBOLS:
-                if (token := self._lex_symbol(char)) is not None:
-                    yield token
-        self._fp.close()
-
-    def _lex_word(self, char: str) -> Token:
-        '''Lex keyword or identifier and return token'''
-        value: str = char
-        position: tuple[int, int, int] = self.position
-        while nchar := self._peek():
-            if nchar.isalnum() or nchar == '_':
-                nchar = self._advance()
-                assert nchar is not None
-                value += nchar
-            else:
-                break
-        return Token(self.file, position, Token.Type.Identifier, value)
-
-    def _lex_number(self, char: str) -> Token:
-        '''Lex numeric value and return token'''
-        value: str = char
-        position: tuple[int, int, int] = self.position
-        while nchar := self._peek():
-            if nchar.isnumeric():
-                nchar = self._advance()
-                assert nchar is not None
-                value += nchar
-            else:
-                break
-        return Token(self.file, position, Token.Type.Number, value)
-
-    def _lex_symbol(self, char: str) -> Token | None:
-        '''Lex symbol and return token or none if in comment state'''
-        match char:
-            case '+':
-                return Token(self.file, self.position, Token.Type.Plus)
-            case '-':
-                return Token(self.file, self.position, Token.Type.Minus)
-            case '*':
-                return Token(self.file, self.position, Token.Type.Asterisk)
-            case '/':
-                return self._lex_symbol_fslash()
-            case '%':
-                return Token(self.file, self.position, Token.Type.Percent)
-            case ';':
-                return Token(self.file, self.position, Token.Type.Semicolon)
-            case _:
-                return None
-
-    def _lex_symbol_fslash(self) -> Token | None:
-        '''Lex / symbol'''
-        char = self._peek()
-        match char:
-            case '/':
-                self._lex_comment_inline()
-                return None
-            case '*':
-                self._lex_comment_multiline()
-                return None
-            case _:
-                return Token(self.file, self.position, Token.Type.FSlash)
-
+    # -Instance Methods: State
     def _lex_comment_inline(self) -> None:
-        '''Lex inline comment until newline terminator found'''
-        self._advance()  # -Consume comment start
+        '''Advance lexer to new line terminator'''
         while char := self._advance():
             if char == '\n':
                 return
 
-    def _lex_comment_multiline(self) -> None:
-        '''Lex multi-line comment until end terminator found'''
-        self._advance()  # -Consume comment start
+    def _lex_comment_multi(self) -> None:
+        '''Advance lexer to multiline comment terminator'''
+        # -TODO: Nested Multiline comment
         while char := self._advance():
             if char == '*' and self._advance() == '/':
                 return
+
+    def _lex_digit(self, buffer: str) -> Token:
+        '''Return lexed numeric literal token'''
+        # -TODO: Handle float
+        # -TODO: Handle format: [binary, hex]
+        position = self.position
+        while char := self._peek():
+            # -State[DIGIT] > State[DIGIT]
+            if char.isnumeric():
+                buffer += cast(str, self._advance())
+            # -State[DIGIT] > STATE[DEFAULT]
+            else:
+                break
+        return Token(self.file, position, Token.Type.Integer, buffer)
+
+    def _lex_symbol(self, buffer: str) -> Token | None:
+        '''Return lexed symbol token or None if inline/multi-line comment'''
+        # -TODO: Handle assignment operators
+        # -TODO: Handle comparison operators
+        match buffer:
+            # -Token[LParen]
+            case '(':
+                return Token(self.file, self.position, Token.Type.LParen)
+            # -Token[RParen]
+            case ')':
+                return Token(self.file, self.position, Token.Type.RParen)
+            # -Token[Semicolon]
+            case ';':
+                return Token(self.file, self.position, Token.Type.Semicolon)
+            case '=':
+                # -Token[EQUAL]
+                return Token(self.file, self.position, Token.Type.Equal)
+            case '+':
+                # -Token[PLUS]
+                return Token(self.file, self.position, Token.Type.Plus)
+            case '-':
+                # -Token[MINUS]
+                return Token(self.file, self.position, Token.Type.Minus)
+            case '*':
+                # -Token[ASTERISK]
+                return Token(self.file, self.position, Token.Type.Asterisk)
+            case '/':
+                # -State[SYMBOL] > State[COMMENT-INLINE]
+                if self._match('/'):
+                    self._lex_comment_inline()
+                    return None
+                # -State[SYMBOL] > State[COMMENT-MULTI]
+                elif self._match('*'):
+                    self._lex_comment_multi()
+                    return None
+                # -Token[FSLASH]
+                return Token(self.file, self.position, Token.Type.FSlash)
+            case '%':
+                # -Token[PERCENT]
+                return Token(self.file, self.position, Token.Type.Percent)
+        assert False, f"Unreachable: {buffer}"
+
+    def _lex_word(self, buffer: str) -> Token:
+        '''Return lexed word token with keyword checking'''
+        position = self.position
+        while char := self._peek():
+            # -State[WORD] > State[WORD]
+            if char.isalnum() or char == '_':
+                buffer += cast(str, self._advance())
+            # -State[WORD] > State[DEFAULT]
+            else:
+                break
+        # -Keywords | Identifier
+        match buffer:
+            case _:
+                return Token(self.file, position, Token.Type.Identifier, buffer)
 
     # -Properties
     @property
