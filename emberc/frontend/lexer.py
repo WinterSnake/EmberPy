@@ -11,7 +11,7 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import TextIO, cast
 
-from .token import Token
+from .token import KEYWORD_COUNT, SINGLE_SYMBOL_COUNT, Token
 
 ## Constants
 SYMBOLS: tuple[str, ...] = (
@@ -20,9 +20,13 @@ SYMBOLS: tuple[str, ...] = (
     # -Assignment
     '=',
     # -Comparison
+    '>', '<',
     # -Misc
     '(', ')', ';',
 )
+KEYWORDS: dict[str, Token.Type] = {
+
+}
 
 
 ## Classes
@@ -88,8 +92,8 @@ class Lexer:
 
     def _match(self, expected: str) -> bool:
         '''Consumes next char and returns true if expected char matches peeked char'''
-        char = self._peek()
-        if char != expected:
+        actual = self._peek()
+        if actual != expected:
             return False
         self._advance()
         return True
@@ -157,6 +161,12 @@ class Lexer:
             case '=':
                 # -Token[EQUAL]
                 return Token(self.file, self.position, Token.Type.Equal)
+            case '>':
+                # -Token[GREATER]
+                return Token(self.file, self.position, Token.Type.Greater)
+            case '<':
+                # -Token[LESS]
+                return Token(self.file, self.position, Token.Type.Less)
             case '+':
                 # -Token[PLUS]
                 return Token(self.file, self.position, Token.Type.Plus)
@@ -193,6 +203,7 @@ class Lexer:
             else:
                 break
         # -Keywords | Identifier
+        # -TODO: Handle keywords
         match buffer:
             case _:
                 return Token(self.file, position, Token.Type.Identifier, buffer)
@@ -201,3 +212,8 @@ class Lexer:
     @property
     def position(self) -> tuple[int, int, int]:
         return (self.row, self.column, self.offset)
+
+
+## Body
+assert len(SYMBOLS) == SINGLE_SYMBOL_COUNT
+assert len(KEYWORDS) == KEYWORD_COUNT

@@ -60,7 +60,10 @@ class Token:
         Identifier = auto()
         Integer = auto()
         # -Keywords
+        KEYWORD_START = auto()
+        KEYWORD_END = auto()
         # -Symbols: Single
+        SINGLE_SYMBOL_START = auto()
         LParen = auto()     # (
         RParen = auto()     # )
         Semicolon = auto()  # ;
@@ -70,3 +73,12 @@ class Token:
         FSlash = auto()     # /
         Percent = auto()    # %
         Equal = auto()      # =
+        Greater = auto()    # >
+        Less = auto()       # <
+        SINGLE_SYMBOL_END = auto()
+        # -Symbols: Multi
+
+
+## Body
+KEYWORD_COUNT: int = Token.Type.KEYWORD_END - Token.Type.KEYWORD_START - 1
+SINGLE_SYMBOL_COUNT: int = Token.Type.SINGLE_SYMBOL_END - Token.Type.SINGLE_SYMBOL_START - 1

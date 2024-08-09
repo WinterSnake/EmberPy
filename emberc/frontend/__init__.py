@@ -7,10 +7,16 @@
 ##-------------------------------##
 
 ## Imports
-from .lexer import lex
-from .node import Node
-from .parser import parse
+from .lexer import Lexer
+from .node import (
+    Node
+)
+from .parser import Parser
 from .token import Token
 
 ## Constants
-__all__: tuple[str, ...] = ("Node", "Token", "lex", "parse",)
+__all__: tuple[str, ...] = (
+    "Lexer", "Token",
+    "Parser",
+    "Node",
+)
