@@ -73,6 +73,8 @@ class Token:
         SINGLE_SYMBOL_START = auto()
         LParen = auto()     # (
         RParen = auto()     # )
+        LBracket = auto()   # {
+        RBracket = auto()   # }
         Colon = auto()      # :
         Semicolon = auto()  # ;
         Plus = auto()       # +

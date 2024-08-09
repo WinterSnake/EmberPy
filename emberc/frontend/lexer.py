@@ -22,7 +22,7 @@ SYMBOLS: tuple[str, ...] = (
     # -Comparison
     '>', '<',
     # -Misc
-    '(', ')', ':', ';',
+    '(', ')', '{', '}', ':', ';',
 )
 KEYWORDS: dict[str, Token.Type] = {
     'if': Token.Type.KeywordIf,
@@ -162,6 +162,12 @@ class Lexer:
             # -Token[RParen]
             case ')':
                 return Token(self.file, position, Token.Type.RParen)
+            # -Token[LBracket]
+            case '{':
+                return Token(self.file, position, Token.Type.LBracket)
+            # -Token[RBracket]
+            case '}':
+                return Token(self.file, position, Token.Type.RBracket)
             # -Token[Colon]
             case ':':
                 return Token(self.file, position, Token.Type.Colon)
@@ -243,12 +249,11 @@ class Lexer:
             else:
                 break
         # -Keywords | Identifier
-        # -TODO: Handle keywords
         _type: Token.Type = KEYWORDS.get(buffer, Token.Type.Identifier)
-        return Token(
-            self.file, position, _type,
-            buffer if _type is Token.Type.Identifier else None
-        )
+        if _type != Token.Type.Identifier:
+            return Token(self.file, position, _type)
+        # -TODO: Handle Symbol Table
+        return Token(self.file, position, _type, buffer)
 
     # -Properties
     @property
