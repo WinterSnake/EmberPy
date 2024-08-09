@@ -1,0 +1,27 @@
+/*
+	Example: Fibonacci
+
+	Written By: Ryan Smith
+*/
+
+fn fibonacci(int32 n) : int32
+{
+	int32 prev = 0;
+	int32 curr = 1;
+	
+	for (int32 i = 1; i < n; ++i)
+	{
+		int32 num = prev + curr;
+		prev = curr;
+		curr = num;
+	}
+
+	return curr;
+}
+
+fn __start__() : void
+{
+	int32 i = fibonacci(11);
+	__PRINTI__(i);  // Expected: 89
+	__EXIT__(0);
+}
