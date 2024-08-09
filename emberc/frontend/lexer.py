@@ -22,10 +22,16 @@ SYMBOLS: tuple[str, ...] = (
     # -Comparison
     '>', '<',
     # -Misc
-    '(', ')', ';',
+    '(', ')', ':', ';',
 )
 KEYWORDS: dict[str, Token.Type] = {
-
+    'if': Token.Type.KeywordIf,
+    'else': Token.Type.KeywordElse,
+    'for': Token.Type.KeywordFor,
+    'while': Token.Type.KeywordWhile,
+    'do': Token.Type.KeywordDo,
+    'fn': Token.Type.KeywordFunction,
+    'return': Token.Type.KeywordReturn,
 }
 
 
@@ -148,34 +154,62 @@ class Lexer:
         '''Return lexed symbol token or None if inline/multi-line comment'''
         # -TODO: Handle assignment operators
         # -TODO: Handle comparison operators
+        position: tuple[int, int, int] = self.position
         match buffer:
             # -Token[LParen]
             case '(':
-                return Token(self.file, self.position, Token.Type.LParen)
+                return Token(self.file, position, Token.Type.LParen)
             # -Token[RParen]
             case ')':
-                return Token(self.file, self.position, Token.Type.RParen)
+                return Token(self.file, position, Token.Type.RParen)
+            # -Token[Colon]
+            case ':':
+                return Token(self.file, position, Token.Type.Colon)
             # -Token[Semicolon]
             case ';':
-                return Token(self.file, self.position, Token.Type.Semicolon)
+                return Token(self.file, position, Token.Type.Semicolon)
             case '=':
+                # -Token[EQUALEQUAL]
+                if self._match('='):
+                    return Token(self.file, position, Token.Type.EqualEqual)
                 # -Token[EQUAL]
-                return Token(self.file, self.position, Token.Type.Equal)
+                return Token(self.file, position, Token.Type.Equal)
             case '>':
+                # -Token[GREATEREQUAL]
+                if self._match('='):
+                    return Token(self.file, position, Token.Type.GreaterEqual)
                 # -Token[GREATER]
-                return Token(self.file, self.position, Token.Type.Greater)
+                return Token(self.file, position, Token.Type.Greater)
             case '<':
+                # -Token[LESSEQUAL]
+                if self._match('='):
+                    return Token(self.file, position, Token.Type.LessEqual)
                 # -Token[LESS]
-                return Token(self.file, self.position, Token.Type.Less)
+                return Token(self.file, position, Token.Type.Less)
             case '+':
+                # -Token[PLUSEQUAL]
+                if self._match('='):
+                    return Token(self.file, position, Token.Type.PlusEqual)
+                # -Token[PLUSPLUS]
+                elif self._match('+'):
+                    return Token(self.file, position, Token.Type.PlusPlus)
                 # -Token[PLUS]
-                return Token(self.file, self.position, Token.Type.Plus)
+                return Token(self.file, position, Token.Type.Plus)
             case '-':
+                # -Token[MINUSEQUAL]
+                if self._match('='):
+                    return Token(self.file, position, Token.Type.MinusEqual)
+                # -Token[MINUSMINUS]
+                elif self._match('-'):
+                    return Token(self.file, position, Token.Type.MinusMinus)
                 # -Token[MINUS]
-                return Token(self.file, self.position, Token.Type.Minus)
+                return Token(self.file, position, Token.Type.Minus)
             case '*':
+                # -Token[ASTERISKEQUAL]
+                if self._match('='):
+                    return Token(self.file, position, Token.Type.AsteriskEqual)
                 # -Token[ASTERISK]
-                return Token(self.file, self.position, Token.Type.Asterisk)
+                return Token(self.file, position, Token.Type.Asterisk)
             case '/':
                 # -State[SYMBOL] > State[COMMENT-INLINE]
                 if self._match('/'):
@@ -185,11 +219,17 @@ class Lexer:
                 elif self._match('*'):
                     self._lex_comment_multi()
                     return None
+                # -Token[FSLASHEQUAL]
+                if self._match('='):
+                    return Token(self.file, position, Token.Type.FSlashEqual)
                 # -Token[FSLASH]
-                return Token(self.file, self.position, Token.Type.FSlash)
+                return Token(self.file, position, Token.Type.FSlash)
             case '%':
+                # -Token[PERCENTEQUAL]
+                if self._match('='):
+                    return Token(self.file, position, Token.Type.PercentEqual)
                 # -Token[PERCENT]
-                return Token(self.file, self.position, Token.Type.Percent)
+                return Token(self.file, position, Token.Type.Percent)
         assert False, f"Unreachable: {buffer}"
 
     def _lex_word(self, buffer: str) -> Token:
@@ -204,9 +244,11 @@ class Lexer:
                 break
         # -Keywords | Identifier
         # -TODO: Handle keywords
-        match buffer:
-            case _:
-                return Token(self.file, position, Token.Type.Identifier, buffer)
+        _type: Token.Type = KEYWORDS.get(buffer, Token.Type.Identifier)
+        return Token(
+            self.file, position, _type,
+            buffer if _type is Token.Type.Identifier else None
+        )
 
     # -Properties
     @property

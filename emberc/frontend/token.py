@@ -61,11 +61,19 @@ class Token:
         Integer = auto()
         # -Keywords
         KEYWORD_START = auto()
+        KeywordIf = auto()
+        KeywordElse = auto()
+        KeywordFor = auto()
+        KeywordWhile = auto()
+        KeywordDo = auto()
+        KeywordFunction = auto()
+        KeywordReturn = auto()
         KEYWORD_END = auto()
         # -Symbols: Single
         SINGLE_SYMBOL_START = auto()
         LParen = auto()     # (
         RParen = auto()     # )
+        Colon = auto()      # :
         Semicolon = auto()  # ;
         Plus = auto()       # +
         Minus = auto()      # -
@@ -77,6 +85,16 @@ class Token:
         Less = auto()       # <
         SINGLE_SYMBOL_END = auto()
         # -Symbols: Multi
+        PlusEqual = auto()      # +=
+        MinusEqual = auto()     # -=
+        AsteriskEqual = auto()  # *=
+        FSlashEqual = auto()    # /=
+        PercentEqual = auto()   # %=
+        EqualEqual = auto()     # ==
+        GreaterEqual = auto()   # >=
+        LessEqual = auto()      # <=
+        PlusPlus = auto()       # ++
+        MinusMinus = auto()     # --
 
 
 ## Body
