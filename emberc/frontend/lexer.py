@@ -11,6 +11,7 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import TextIO
 from .token import Token
+from ..location import Location
 
 ## Constants
 SYMBOLS: tuple[str, ...] = (
@@ -37,6 +38,14 @@ class Lexer:
         self._lookahead: str | None = None
 
     # -Instance Methods: Control
+    def _next(self) -> str | None:
+        '''Returns character from file or inner buffer'''
+        if self._lookahead:
+            value = self._lookahead
+            self._lookahead = None
+            return value
+        return self._fd.read(1)
+
     def _advance(self) -> str | None:
         '''Retrieves next character and increments position'''
         current = self._next()
@@ -53,14 +62,6 @@ class Lexer:
         current = self._next()
         self._lookahead = current
         return current
-
-    def _next(self) -> str | None:
-        '''Returns character from file or inner buffer'''
-        if self._lookahead:
-            value = self._lookahead
-            self._lookahead = None
-            return value
-        return self._fd.read(1)
 
     # -Instance Methods: Lexing
     def lex(self) -> Generator[Token, None, None]:
@@ -90,7 +91,7 @@ class Lexer:
         Generates a symbol token
         '''
         symbol: Token.Type
-        t_pos = self.position
+        location = Location(self.file, self.position)
         match buffer:
             case '(':
                 symbol = Token.Type.LParen
@@ -98,14 +99,14 @@ class Lexer:
                 symbol = Token.Type.RParen
             case ';':
                 symbol = Token.Type.Semicolon
-        return Token(self.file, t_pos, symbol, None)
+        return Token(location, symbol, None)
 
     def _lex_word(self, buffer: str) -> Token:
         '''
         Lexer State: Word
         Generates a keyword or identifier token
         '''
-        t_pos = self.position
+        location = Location(self.file, self.position)
         while c := self._peek():
             # Word -> Word
             if c.isalnum() or c == '_':
@@ -117,7 +118,7 @@ class Lexer:
             break
         _type = KEYWORDS.get(buffer, Token.Type.Identifier)
         return Token(
-            self.file, t_pos, _type,
+            location, _type,
             buffer if _type == Token.Type.Identifier else None
         )
 
@@ -126,7 +127,7 @@ class Lexer:
         Lexer State: Number
         Generates an integer token
         '''
-        t_pos = self.position
+        location = Location(self.file, self.position)
         while c := self._peek():
             # Number -> Number
             if c.isnumeric():
@@ -137,7 +138,7 @@ class Lexer:
             # Number -> Default
             break
         return Token(
-            self.file, t_pos, Token.Type.Integer,
+            location, Token.Type.Integer,
             int(buffer)
         )
 
