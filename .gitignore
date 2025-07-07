@@ -1,0 +1,8 @@
+# Python: Cache
+__pycache__
+
+# Python: Distribution
+build/
+*.egg-info/
+.libs/
+.mypy_cache/
