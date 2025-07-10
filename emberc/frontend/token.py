@@ -1,4 +1,3 @@
-#!/usr/bin/python
 ##-------------------------------##
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
@@ -19,12 +18,11 @@ class Token:
 
     # -Constructor
     def __init__(
-        self, location: Location, _type: Token.Type,
-        value: int | float | str | None = None
+        self, location: Location, _type: Token.Type, value: str | None = None
     ) -> None:
         self.location: Location = location
         self.type: Token.Type = _type
-        self.value: int | float | str | None = value
+        self.value: str | None = value
 
     # -Dunder Methods
     def __str__(self) -> str:
@@ -41,9 +39,13 @@ class Token:
         '''
 
         # -Literals
-        Identifier = auto()
         Integer = auto()
         # -Symbols
+        Plus = auto()
+        Minus = auto()
+        Star = auto()
+        FSlash = auto()
+        Percent = auto()
         LParen = auto()
         RParen = auto()
         Semicolon = auto()

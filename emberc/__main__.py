@@ -11,7 +11,7 @@ from .frontend import Lexer, Token
 
 ## Functions
 def _entry() -> None:
-    file: Path = Path("./tests/00-exit.ember")
+    file: Path = Path("./tests/00-operators.ember")
     lexer: Lexer = Lexer(file)
     tokens: list[Token] = [token for token in lexer.lex()]
     for token in tokens:

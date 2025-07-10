@@ -1,4 +1,3 @@
-#!/usr/bin/python
 ##-------------------------------##
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
@@ -14,10 +13,18 @@ from .token import Token
 from ..location import Location
 
 ## Constants
-SYMBOLS: tuple[str, ...] = (
-    '(', ')', ';',
-)
-KEYWORDS: dict[str, Token.Type] = {}
+SYMBOLS: dict[str, Token.Type] = {
+    # -Math
+    '+': Token.Type.Plus,
+    '-': Token.Type.Minus,
+    '*': Token.Type.Star,
+    '/': Token.Type.FSlash,
+    '%': Token.Type.Percent,
+    # -Misc
+    '(': Token.Type.LParen,
+    ')': Token.Type.RParen,
+    ';': Token.Type.Semicolon,
+}
 
 
 ## Classes
@@ -75,12 +82,16 @@ class Lexer:
             # -Default -> Symbol
             if c in SYMBOLS:
                 token = self._lex_symbol(c)
-            # -Default -> Word
-            elif c.isalpha() or c == '_':
-                token = self._lex_word(c)
             # -Default -> Number
             elif c.isnumeric():
                 token = self._lex_number(c)
+            # -Default -> Default
+            elif c.isspace():
+                continue
+            # -Default -> Unknown
+            else:
+                print(f"Unexpected char '{c}'")
+                return
             if token:
                 yield token
         self._fd.close()
@@ -92,35 +103,8 @@ class Lexer:
         '''
         symbol: Token.Type
         location = Location(self.file, self.position)
-        match buffer:
-            case '(':
-                symbol = Token.Type.LParen
-            case ')':
-                symbol = Token.Type.RParen
-            case ';':
-                symbol = Token.Type.Semicolon
+        symbol = SYMBOLS[buffer]
         return Token(location, symbol, None)
-
-    def _lex_word(self, buffer: str) -> Token:
-        '''
-        Lexer State: Word
-        Generates a keyword or identifier token
-        '''
-        location = Location(self.file, self.position)
-        while c := self._peek():
-            # Word -> Word
-            if c.isalnum() or c == '_':
-                c = self._advance()
-                assert(c)
-                buffer += c
-                continue
-            # Word -> Default
-            break
-        _type = KEYWORDS.get(buffer, Token.Type.Identifier)
-        return Token(
-            location, _type,
-            buffer if _type == Token.Type.Identifier else None
-        )
 
     def _lex_number(self, buffer: str) -> Token:
         '''
@@ -137,10 +121,7 @@ class Lexer:
                 continue
             # Number -> Default
             break
-        return Token(
-            location, Token.Type.Integer,
-            int(buffer)
-        )
+        return Token(location, Token.Type.Integer, buffer)
 
     # -Properties
     @property

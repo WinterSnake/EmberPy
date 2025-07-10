@@ -1,4 +1,3 @@
-#!/usr/bin/python
 ##-------------------------------##
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
