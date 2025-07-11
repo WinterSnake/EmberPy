@@ -3,6 +3,9 @@ int8 b = 10;
 if (a == b - 1)
 	a;
 
+if (false) { }
+else { 69; }
+
 if (8 > 10)
 	100;
 else if (9 < 11)
