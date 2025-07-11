@@ -13,7 +13,7 @@ from .token import Token
 from ..middleware.nodes import (
     Node,
     NodeStatementUnit,
-    NodeExprBinary, NodeExprUnary, NodeExprLiteral
+    NodeExprBinary, NodeExprUnary, NodeExprGroup, NodeExprLiteral
 )
 
 ## Constants
@@ -41,6 +41,7 @@ class Parser:
         self.is_at_end: bool = False
         self._token_iter: Iterator[Token] = token_iter
         self._lookahead: Token | None = None
+        self._last_token: Token = None  # type: ignore
 
     # -Instance Methods: Control
     def _next(self) -> Token | None:
@@ -53,6 +54,8 @@ class Parser:
         token = next(self._token_iter, None)
         if token is None:
             self.is_at_end = True
+        else:
+            self._last_token = token
         return token
 
     def _peek(self) -> Token | None:
@@ -165,11 +168,12 @@ class Parser:
         expression_literal | '(' expression ')';
         '''
         if self._consume(Token.Type.LParen):
+            location = self._last_token.location
             node = self._parse_expression()
             # -TODO: Error Handling
             if not self._consume(Token.Type.RParen):
                 pass
-            return node
+            return NodeExprGroup(location, node)
         return self._parse_literal()
 
     def _parse_literal(self) -> Node:

@@ -2,7 +2,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Node: Literal                 ##
+## Node: Group                   ##
 ##-------------------------------##
 
 ## Imports
@@ -15,29 +15,23 @@ from ...location import Location
 
 
 ## Classes
-class NodeExprLiteral(Node):
+class NodeExprGroup(Node):
     """
-    Ember Expression Node: Literal
-    Represents a literal expression node
+    Ember Expression Node: Group
+    Represents a group expression with its inner node
     """
 
     # -Constructor
     def __init__(
-        self, location: Location, _type: NodeExprLiteral.Type, value: int
+        self, location: Location, inner_node: Node
     ) -> None:
         super().__init__(location)
-        self.type: NodeExprLiteral.Type = _type
-        self.value: int = value
+        self.inner_node: Node = inner_node
 
     # -Dunder Methods
     def __str__(self) -> str:
-        return f"{self.type.name}({self.value})"
+        return f"({self.inner_node})"
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:
-        return visitor.visit_expression_literal(self)
-
-    # -Sub-Classes
-    class Type(IntEnum):
-        '''Literal Type'''
-        Integer = auto()
+        return visitor.visit_expression_group(self)
