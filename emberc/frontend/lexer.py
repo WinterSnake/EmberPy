@@ -21,6 +21,7 @@ SYMBOLS: tuple[str, ...] = (
 KEYWORDS: dict[str, Token.Type] = {
     'if': Token.Type.KeywordIf,
     'else': Token.Type.KeywordElse,
+    'while': Token.Type.KeywordWhile,
     # -Types
     'bool': Token.Type.KeywordBoolean,
     'int8': Token.Type.KeywordInt8,

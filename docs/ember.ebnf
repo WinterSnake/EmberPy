@@ -1,8 +1,9 @@
 module: declaration*;
 declaration: declaration_variable | statement;
 declaration_variable: TYPE IDENTIFIER ('=' expression)? ';';
-statement: statement_if | statement_block | statment_expression;
+statement: statement_if | statement_while | statement_block | statment_expression;
 statement_if: 'if' '(' expression ')' statement ('else' statement)?;
+statement_while: 'while' '(' expression ')' statement;
 statement_block: '{' declaration* '}';
 statement_expression: expression ';';
 expression: expression_assignment;

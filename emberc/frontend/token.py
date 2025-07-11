@@ -42,6 +42,7 @@ class Token:
         # -Keywords
         KeywordIf = auto()
         KeywordElse = auto()
+        KeywordWhile = auto()
         # -Keywords: Types
         KeywordBoolean = auto()
         KeywordInt8 = auto()

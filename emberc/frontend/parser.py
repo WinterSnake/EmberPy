@@ -13,7 +13,7 @@ from .token import Token
 from ..middleware.nodes import (
     Node, NodeExpr, NodeModule,
     NodeStmtDeclVar, NodeStmtBlock, NodeStmtExpr,
-    NodeStmtIf,
+    NodeStmtIf, NodeStmtLoop,
     NodeExprBinary, NodeExprUnary, NodeExprGroup,
     NodeExprAssign, NodeExprId, NodeExprLiteral,
 )
@@ -146,12 +146,15 @@ class Parser:
     def _parse_statement(self) -> Node:
         '''
         Grammar[Statement]
-        statement_if | statement_block | statment_expression;
+        statement_if | statement_while | statement_block | statment_expression;
         '''
         print(f"[Parser::Stmt]")
         # -Rule: If
         if self._consume(Token.Type.KeywordIf):
             return self._parse_statement_if()
+        # -Rule: While
+        if self._consume(Token.Type.KeywordWhile):
+            return self._parse_statement_while()
         # -Rule: Block
         elif self._consume(Token.Type.SymbolLBrace):
             return self._parse_statement_block()
@@ -174,6 +177,20 @@ class Parser:
         if self._consume(Token.Type.KeywordElse):
             branch = self._parse_statement()
         return NodeStmtIf(condition, body, branch)
+
+    def _parse_statement_while(self) -> Node:
+        '''
+        Grammar[Statement::While]
+        'while' '(' expression ')' statement;
+        '''
+        print(f"[Parser::Stmt::While]")
+        # -TODO: Error Handling
+        assert self._consume(Token.Type.SymbolLParen)
+        condition = self._parse_expression()
+        # -TODO: Error Handling
+        assert self._consume(Token.Type.SymbolRParen)
+        body = self._parse_statement()
+        return NodeStmtLoop(condition, body)
 
     def _parse_statement_block(self) -> Node:
         '''

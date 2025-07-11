@@ -10,7 +10,7 @@ from typing import Any
 from .nodes import (
     Node, NodeModule,
     NodeStmtDeclVar, NodeStmtExpr, NodeStmtBlock,
-    NodeStmtIf,
+    NodeStmtIf, NodeStmtLoop,
     NodeExprBinary, NodeExprUnary, NodeExprGroup,
     NodeExprAssign, NodeExprId, NodeExprLiteral,
 )
@@ -41,6 +41,10 @@ class InterpreterVisitor:
             if node.branch is None:
                 return
             node.branch.accept(self)
+
+    def visit_statement_loop(self, node: NodeStmtLoop) -> None:
+        while node.condition.accept(self):
+            node.body.accept(self)
 
     def visit_statement_declaration_variable(self, node: NodeStmtDeclVar) -> None:
         value = None if node.initializer is None else node.initializer.accept(self)

@@ -8,6 +8,7 @@
 ## Imports
 from .core import Node, NodeExpr, NodeModule
 from .statement_block import NodeStmtBlock
+from .statement_loop import NodeStmtLoop
 from .statement_condition import NodeStmtIf
 from .statement_declaration import NodeStmtDeclVar
 from .statement_expression import NodeStmtExpr
