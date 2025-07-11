@@ -44,11 +44,11 @@ class NodeExprLiteral(NodeExpr):
 
     # -Constructor
     def __init__(
-        self, location: Location, _type: NodeExprLiteral.Type, value: int
+        self, location: Location, _type: NodeExprLiteral.Type, value: bool | int
     ) -> None:
         super().__init__(location)
         self.type: NodeExprLiteral.Type = _type
-        self.value: int = value
+        self.value: bool | int = value
 
     # -Dunder Methods
     def __str__(self) -> str:
@@ -61,4 +61,5 @@ class NodeExprLiteral(NodeExpr):
     # -Sub-Classes
     class Type(IntEnum):
         '''Literal Type'''
+        Boolean = auto()
         Integer = auto()

@@ -23,7 +23,7 @@ class InterpreterVisitor:
     # -Constructor
     def __init__(self, debug: bool = True) -> None:
         self.debug: bool = debug
-        self.environment: dict[str, int | None] = {}
+        self.environment: dict[str, bool | int | None] = {}
 
     # -Instance Methods
     def visit_module(self, node: NodeModule) -> None:
@@ -50,12 +50,12 @@ class InterpreterVisitor:
         value = node.expression.accept(self)
         print(f"[{node.expression.location}]{node} = {value}")
 
-    def visit_expression_assign(self, node: NodeExprAssign) -> int:
+    def visit_expression_assign(self, node: NodeExprAssign) -> bool | int:
         value: int = node.r_value.accept(self)
         self.environment[node.l_value.id] = value
         return value
 
-    def visit_expression_binary(self, node: NodeExprBinary) -> int | bool:
+    def visit_expression_binary(self, node: NodeExprBinary) -> bool | int:
         if self.debug:
             print(f"{{ ExprBin::{node.type.name} | {node.location} }}")
         l_value = node.lhs.accept(self)
@@ -84,7 +84,7 @@ class InterpreterVisitor:
             case NodeExprBinary.Type.NtEq:
                 return l_value != r_value
 
-    def visit_expression_unary(self, node: NodeExprUnary) -> int:
+    def visit_expression_unary(self, node: NodeExprUnary) -> bool | int:
         if self.debug:
             print(f"{{ ExprUn::{node.type.name} | {node.location} }}")
         value = node.value.accept(self)
@@ -94,17 +94,17 @@ class InterpreterVisitor:
             case NodeExprUnary.Type.Negative:
                 return -value
 
-    def visit_expression_group(self, node: NodeExprGroup) -> int:
+    def visit_expression_group(self, node: NodeExprGroup) -> bool | int:
         if self.debug:
             print(f"{{ ExprGrp::{node.location} }}")
         return node.inner_node.accept(self)
 
-    def visit_expression_id(self, node: NodeExprId) -> int:
+    def visit_expression_id(self, node: NodeExprId) -> bool | int:
         value = self.environment[node.id]
         assert value is not None
         return value
 
-    def visit_expression_literal(self, node: NodeExprLiteral) -> int:
+    def visit_expression_literal(self, node: NodeExprLiteral) -> bool | int:
         if self.debug:
             print(f"{{ ExprLit::{node.value} | {node.location} }}")
         return node.value

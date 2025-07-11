@@ -8,3 +8,5 @@ c;
 d;
 a = 20;
 a;
+bool f = true;
+f;

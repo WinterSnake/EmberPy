@@ -20,33 +20,34 @@ from ..middleware.nodes import (
 
 ## Constants
 OPERATOR_BINARY: dict[Token.Type, NodeExprBinary.Type] = {
-    Token.Type.Plus: NodeExprBinary.Type.Add,
-    Token.Type.Minus: NodeExprBinary.Type.Sub,
-    Token.Type.Star: NodeExprBinary.Type.Mul,
-    Token.Type.FSlash: NodeExprBinary.Type.Div,
-    Token.Type.Percent: NodeExprBinary.Type.Mod,
-    Token.Type.Lt: NodeExprBinary.Type.Lt,
-    Token.Type.Gt: NodeExprBinary.Type.Gt,
-    Token.Type.LtEq: NodeExprBinary.Type.LtEq,
-    Token.Type.GtEq: NodeExprBinary.Type.GtEq,
-    Token.Type.EqEq: NodeExprBinary.Type.EqEq,
-    Token.Type.BangEq: NodeExprBinary.Type.NtEq,
+    Token.Type.SymbolPlus: NodeExprBinary.Type.Add,
+    Token.Type.SymbolMinus: NodeExprBinary.Type.Sub,
+    Token.Type.SymbolStar: NodeExprBinary.Type.Mul,
+    Token.Type.SymbolFSlash: NodeExprBinary.Type.Div,
+    Token.Type.SymbolPercent: NodeExprBinary.Type.Mod,
+    Token.Type.SymbolLt: NodeExprBinary.Type.Lt,
+    Token.Type.SymbolGt: NodeExprBinary.Type.Gt,
+    Token.Type.SymbolLtEq: NodeExprBinary.Type.LtEq,
+    Token.Type.SymbolGtEq: NodeExprBinary.Type.GtEq,
+    Token.Type.SymbolEqEq: NodeExprBinary.Type.EqEq,
+    Token.Type.SymbolBangEq: NodeExprBinary.Type.NtEq,
 }
 OPERATOR_UNARY: dict[Token.Type, NodeExprUnary.Type] = {
-    Token.Type.Bang: NodeExprUnary.Type.Negate,
-    Token.Type.Minus: NodeExprUnary.Type.Negative,
+    Token.Type.SymbolBang: NodeExprUnary.Type.Negate,
+    Token.Type.SymbolMinus: NodeExprUnary.Type.Negative,
 }
 VARIABLE_TYPES: tuple[Token.Type, ...] = (
+    Token.Type.KeywordBoolean,
     # -Ints
-    Token.Type.Int8,
-    Token.Type.Int16,
-    Token.Type.Int32,
-    Token.Type.Int64,
+    Token.Type.KeywordInt8,
+    Token.Type.KeywordInt16,
+    Token.Type.KeywordInt32,
+    Token.Type.KeywordInt64,
     # -UInts
-    Token.Type.UInt8,
-    Token.Type.UInt16,
-    Token.Type.UInt32,
-    Token.Type.UInt64,
+    Token.Type.KeywordUInt8,
+    Token.Type.KeywordUInt16,
+    Token.Type.KeywordUInt32,
+    Token.Type.KeywordUInt64,
 )
 
 
@@ -136,10 +137,10 @@ class Parser:
         assert _id.type == Token.Type.Identifier
         assert _id.value is not None
         init: NodeExpr | None = None
-        if self._consume(Token.Type.Eq):
+        if self._consume(Token.Type.SymbolEq):
             init = self._parse_expression()
         # -TODO: Error Handling
-        assert self._consume(Token.Type.Semicolon)
+        assert self._consume(Token.Type.SymbolSemicolon)
         return NodeStmtDeclVar(_id.value, init)
 
     def _parse_statement(self) -> Node:
@@ -149,10 +150,10 @@ class Parser:
         '''
         print(f"[Parser::Stmt]")
         # -Rule: If
-        if self._consume(Token.Type.If):
+        if self._consume(Token.Type.KeywordIf):
             return self._parse_statement_if()
         # -Rule: Block
-        elif self._consume(Token.Type.LBrace):
+        elif self._consume(Token.Type.SymbolLBrace):
             return self._parse_statement_block()
         # -Rule: Expression
         return self._parse_statement_expression()
@@ -164,13 +165,13 @@ class Parser:
         '''
         print(f"[Parser::Stmt::If]")
         # -TODO: Error Handling
-        assert self._consume(Token.Type.LParen)
+        assert self._consume(Token.Type.SymbolLParen)
         condition = self._parse_expression()
         # -TODO: Error Handling
-        assert self._consume(Token.Type.RParen)
+        assert self._consume(Token.Type.SymbolRParen)
         body = self._parse_statement()
         branch: Node | None = None
-        if self._consume(Token.Type.Else):
+        if self._consume(Token.Type.KeywordElse):
             branch = self._parse_statement()
         return NodeStmtIf(condition, body, branch)
 
@@ -181,7 +182,7 @@ class Parser:
         '''
         print(f"[Parser::Stmt::Block]")
         body: list[Node] = []
-        while not self._consume(Token.Type.RBrace):
+        while not self._consume(Token.Type.SymbolRBrace):
             # -TODO: Error Handling
             assert not self.is_at_end
             node = self._parse_declaration()
@@ -196,7 +197,7 @@ class Parser:
         print(f"[Parser::Stmt::Expr]")
         node = self._parse_expression()
         # -TODO: Error Handling
-        assert self._consume(Token.Type.Semicolon)
+        assert self._consume(Token.Type.SymbolSemicolon)
         return NodeStmtExpr(node)
 
     def _parse_expression(self) -> NodeExpr:
@@ -214,7 +215,7 @@ class Parser:
         '''
         print(f"[Parser::Expr::Assign]")
         node = self._parse_expression_binary()
-        if self._consume(Token.Type.Eq):
+        if self._consume(Token.Type.SymbolEq):
             location = self._last_token.location
             # -TODO: Error Handling
             assert isinstance(node, NodeExprId)
@@ -233,7 +234,7 @@ class Parser:
             '''Handle "==" and "!=" tokens'''
             print(f"[Parser::Expr::Binary::Equality]")
             node = _comparison()
-            while (token := self._match(Token.Type.EqEq, Token.Type.BangEq)):
+            while (token := self._match(Token.Type.SymbolEqEq, Token.Type.SymbolBangEq)):
                 operator = OPERATOR_BINARY[token.type]
                 rhs = _comparison()
                 node = NodeExprBinary(token.location, operator, node, rhs)
@@ -244,7 +245,8 @@ class Parser:
             print(f"[Parser::Expr::Binary::Comparison]")
             node = _term()
             while (token := self._match(
-                Token.Type.Lt, Token.Type.Gt, Token.Type.LtEq, Token.Type.GtEq
+                Token.Type.SymbolLt, Token.Type.SymbolGt,
+                Token.Type.SymbolLtEq, Token.Type.SymbolGtEq
             )):
                 operator = OPERATOR_BINARY[token.type]
                 rhs = _term()
@@ -255,7 +257,7 @@ class Parser:
             '''Handle "+" and "-" tokens'''
             print(f"[Parser::Expr::Binary::Term]")
             node = _factor()
-            while (token := self._match(Token.Type.Plus, Token.Type.Minus)):
+            while (token := self._match(Token.Type.SymbolPlus, Token.Type.SymbolMinus)):
                 operator = OPERATOR_BINARY[token.type]
                 rhs = _factor()
                 node = NodeExprBinary(token.location, operator, node, rhs)
@@ -266,7 +268,7 @@ class Parser:
             print(f"[Parser::Expr::Binary::Factor]")
             node = self._parse_expression_unary()
             while (token := self._match(
-                Token.Type.Star, Token.Type.FSlash, Token.Type.Percent
+                Token.Type.SymbolStar, Token.Type.SymbolFSlash, Token.Type.SymbolPercent
             )):
                 operator = OPERATOR_BINARY[token.type]
                 rhs = self._parse_expression_unary()
@@ -299,11 +301,11 @@ class Parser:
             assert token.value is not None
             return NodeExprId(token.location, token.value)
         # -Rule: Group
-        if self._consume(Token.Type.LParen):
+        if self._consume(Token.Type.SymbolLParen):
             location = self._last_token.location
             node = self._parse_expression()
             # -TODO: Error Handling
-            assert self._consume(Token.Type.RParen)
+            assert self._consume(Token.Type.SymbolRParen)
             return NodeExprGroup(location, node)
         # -Rule: Literal
         return self._parse_expression_literal()
@@ -311,14 +313,25 @@ class Parser:
     def _parse_expression_literal(self) -> NodeExpr:
         '''
         Grammar[Expression::Literal]
-        NUMBER;
+        BOOLEAN | NUMBER;
         '''
         print(f"[Parser::Expr::Literal]")
         token = self._next()
         # -TODO: Error Handling
         assert token is not None
-        assert token.value is not None
-        assert token.type is Token.Type.Integer
-        return NodeExprLiteral(
-            token.location, NodeExprLiteral.Type.Integer, int(token.value)
-        )
+        _type: NodeExprLiteral.Type
+        value: bool | int
+        match token.type:
+            case Token.Type.LiteralTrue:
+                _type = NodeExprLiteral.Type.Boolean
+                value = True
+            case Token.Type.LiteralFalse:
+                _type = NodeExprLiteral.Type.Boolean
+                value = False
+            case Token.Type.Integer:
+                _type = NodeExprLiteral.Type.Integer
+                assert token.value is not None
+                value = int(token.value)
+            case _:
+                assert False
+        return NodeExprLiteral(token.location, _type, value)

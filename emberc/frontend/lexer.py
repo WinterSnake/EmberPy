@@ -19,17 +19,21 @@ SYMBOLS: tuple[str, ...] = (
     '(', ')', '{', '}', ';',
 )
 KEYWORDS: dict[str, Token.Type] = {
-    'if': Token.Type.If,
-    'else': Token.Type.Else,
+    'if': Token.Type.KeywordIf,
+    'else': Token.Type.KeywordElse,
     # -Types
-    'int8': Token.Type.Int8,
-    'int16': Token.Type.Int16,
-    'int32': Token.Type.Int32,
-    'int64': Token.Type.Int64,
-    'uint8': Token.Type.UInt8,
-    'uint16': Token.Type.UInt16,
-    'uint32': Token.Type.UInt32,
-    'uint64': Token.Type.UInt64,
+    'bool': Token.Type.KeywordBoolean,
+    'int8': Token.Type.KeywordInt8,
+    'int16': Token.Type.KeywordInt16,
+    'int32': Token.Type.KeywordInt32,
+    'int64': Token.Type.KeywordInt64,
+    'uint8': Token.Type.KeywordUInt8,
+    'uint16': Token.Type.KeywordUInt16,
+    'uint32': Token.Type.KeywordUInt32,
+    'uint64': Token.Type.KeywordUInt64,
+    # -Literals
+    'true': Token.Type.LiteralTrue,
+    'false': Token.Type.LiteralFalse,
 }
 
 
@@ -122,47 +126,47 @@ class Lexer:
         match buffer:
             # -Operator
             case '+':
-                symbol = Token.Type.Plus
+                symbol = Token.Type.SymbolPlus
             case '-':
-                symbol = Token.Type.Minus
+                symbol = Token.Type.SymbolMinus
             case '*':
-                symbol = Token.Type.Star
+                symbol = Token.Type.SymbolStar
             case '/':
-                symbol = Token.Type.FSlash
+                symbol = Token.Type.SymbolFSlash
             case '%':
-                symbol = Token.Type.Percent
+                symbol = Token.Type.SymbolPercent
             # -Comparison
             case '=':
                 if self._consume('='):
-                    symbol = Token.Type.EqEq
+                    symbol = Token.Type.SymbolEqEq
                 else:
-                    symbol = Token.Type.Eq
+                    symbol = Token.Type.SymbolEq
             case '!':
                 if self._consume('='):
-                    symbol = Token.Type.BangEq
+                    symbol = Token.Type.SymbolBangEq
                 else:
-                    symbol = Token.Type.Bang
+                    symbol = Token.Type.SymbolBang
             case '<':
                 if self._consume('='):
-                    symbol = Token.Type.LtEq
+                    symbol = Token.Type.SymbolLtEq
                 else:
-                    symbol = Token.Type.Lt
+                    symbol = Token.Type.SymbolLt
             case '>':
                 if self._consume('='):
-                    symbol = Token.Type.GtEq
+                    symbol = Token.Type.SymbolGtEq
                 else:
-                    symbol = Token.Type.Gt
+                    symbol = Token.Type.SymbolGt
             # -Misc
             case '(':
-                symbol = Token.Type.LParen
+                symbol = Token.Type.SymbolLParen
             case ')':
-                symbol = Token.Type.RParen
+                symbol = Token.Type.SymbolRParen
             case '{':
-                symbol = Token.Type.LBrace
+                symbol = Token.Type.SymbolLBrace
             case '}':
-                symbol = Token.Type.RBrace
+                symbol = Token.Type.SymbolRBrace
             case ';':
-                symbol = Token.Type.Semicolon
+                symbol = Token.Type.SymbolSemicolon
             case _:
                 print(f"Unknown symbol: '{buffer}'")
         return Token(location, symbol, None)

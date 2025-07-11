@@ -10,9 +10,12 @@ expression_assignment: IDENTIFIER '=' expression_assignment | expression_binary;
 expression_binary: expression_unary ( ('+', '-', '*', '/', '%', '<', '>', '>=', '<=', '==', '!=') expression_unary)*;
 expression_unary: ('-' | '!') expression_unary | expression_primary;
 expression_primary: IDENTIFIER | expression_literal | '(' expression ')';
-expression_literal: NUMBER;
+expression_literal: BOOLEAN | NUMBER;
 
-TYPE: BUILTIN_TYPES;
-BUILTIN_TYPES: INTS | UINTS;
 INTS: "int8" | "int16" | "int32" | "int64";
 UINTS: "uint8" | "uint16" | "uint32" | "uint64";
+BUILTIN_TYPES: "bool" | INTS | UINTS;
+TYPE: BUILTIN_TYPES;
+
+# Literals
+BOOLEAN: "true" | "false";
