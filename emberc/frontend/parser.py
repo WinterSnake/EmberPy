@@ -12,10 +12,11 @@ from collections.abc import Iterator
 from .token import Token
 from ..middleware.nodes import (
     Node, NodeExpr, NodeModule,
-    NodeStmtDeclVar, NodeStmtBlock, NodeStmtExpr,
-    NodeStmtIf, NodeStmtLoop,
-    NodeExprBinary, NodeExprUnary, NodeExprGroup,
-    NodeExprAssign, NodeExprId, NodeExprLiteral,
+    NodeStmtBlock, NodeStmtConditional, NodeStmtLoop,
+    NodeDeclVariable, NodeStmtExpression,
+    NodeExprAssignment,
+    NodeExprBinary, NodeExprUnary,
+    NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
 
 ## Constants
@@ -59,7 +60,8 @@ class Parser:
     """
 
     # -Constructor
-    def __init__(self, token_iter: Iterator[Token]) -> None:
+    def __init__(self, token_iter: Iterator[Token], debug_mode: bool = False) -> None:
+        self.debug_mode: bool = debug_mode
         self.is_at_end: bool = False
         self._token_iter: Iterator[Token] = token_iter
         self._lookahead: Token | None = None
@@ -120,7 +122,8 @@ class Parser:
         Grammar[Declaration]
         declaration_variable | statement;
         '''
-        print(f"[Parser::Decl]")
+        if self.debug_mode:
+            print(f"[Parser::Decl]")
         if (token := self._match(*VARIABLE_TYPES)):
             return self._parse_declaration_variable(token)
         return self._parse_statement()
@@ -130,7 +133,8 @@ class Parser:
         Grammar[Declaration::Variable]
         TYPE IDENTIFIER ('=' expression)? ';';
         '''
-        print(f"[Parser::Decl::Var]")
+        if self.debug_mode:
+            print(f"[Parser::Decl::Var]")
         _id = self._next()
         # -TODO: Error Handling
         assert _id is not None
@@ -141,14 +145,15 @@ class Parser:
             init = self._parse_expression()
         # -TODO: Error Handling
         assert self._consume(Token.Type.SymbolSemicolon)
-        return NodeStmtDeclVar(_id.value, init)
+        return NodeDeclVariable(_id.value, init)
 
     def _parse_statement(self) -> Node:
         '''
         Grammar[Statement]
         statement_if | statement_while | statement_block | statment_expression;
         '''
-        print(f"[Parser::Stmt]")
+        if self.debug_mode:
+            print(f"[Parser::Stmt]")
         # -Rule: If
         if self._consume(Token.Type.KeywordIf):
             return self._parse_statement_if()
@@ -166,7 +171,8 @@ class Parser:
         Grammar[Statement::If]
         'if' '(' expression ')' statement ('else' statement)?;
         '''
-        print(f"[Parser::Stmt::If]")
+        if self.debug_mode:
+            print(f"[Parser::Stmt::If]")
         # -TODO: Error Handling
         assert self._consume(Token.Type.SymbolLParen)
         condition = self._parse_expression()
@@ -176,14 +182,15 @@ class Parser:
         branch: Node | None = None
         if self._consume(Token.Type.KeywordElse):
             branch = self._parse_statement()
-        return NodeStmtIf(condition, body, branch)
+        return NodeStmtConditional(condition, body, branch)
 
     def _parse_statement_while(self) -> Node:
         '''
         Grammar[Statement::While]
         'while' '(' expression ')' statement;
         '''
-        print(f"[Parser::Stmt::While]")
+        if self.debug_mode:
+            print(f"[Parser::Stmt::While]")
         # -TODO: Error Handling
         assert self._consume(Token.Type.SymbolLParen)
         condition = self._parse_expression()
@@ -197,7 +204,8 @@ class Parser:
         Grammar[Statement::Block]
         '{' declaration* '}';
         '''
-        print(f"[Parser::Stmt::Block]")
+        if self.debug_mode:
+            print(f"[Parser::Stmt::Block]")
         body: list[Node] = []
         while not self._consume(Token.Type.SymbolRBrace):
             # -TODO: Error Handling
@@ -211,18 +219,20 @@ class Parser:
         Grammar[Statement::Expression]
         expression ';';
         '''
-        print(f"[Parser::Stmt::Expr]")
+        if self.debug_mode:
+            print(f"[Parser::Stmt::Expr]")
         node = self._parse_expression()
         # -TODO: Error Handling
         assert self._consume(Token.Type.SymbolSemicolon)
-        return NodeStmtExpr(node)
+        return NodeStmtExpression(node)
 
     def _parse_expression(self) -> NodeExpr:
         '''
         Grammar[Expression]
         expression_assignment;
         '''
-        print(f"[Parser::Expr]")
+        if self.debug_mode:
+            print(f"[Parser::Expr]")
         return self._parse_expression_assignment()
 
     def _parse_expression_assignment(self) -> NodeExpr:
@@ -230,14 +240,15 @@ class Parser:
         Grammar[Expression::Assignment]
         IDENTIFIER '=' expression_assignment | expression_binary;
         '''
-        print(f"[Parser::Expr::Assign]")
+        if self.debug_mode:
+            print(f"[Parser::Expr::Assign]")
         node = self._parse_expression_binary()
         if self._consume(Token.Type.SymbolEq):
             location = self._last_token.location
             # -TODO: Error Handling
-            assert isinstance(node, NodeExprId)
+            assert isinstance(node, NodeExprVariable)
             r_value = self._parse_expression_assignment()
-            node = NodeExprAssign(location, node, r_value)
+            node = NodeExprAssignment(location, node.id, r_value)
         return node
 
     def _parse_expression_binary(self) -> NodeExpr:
@@ -245,11 +256,13 @@ class Parser:
         Grammar[Expression::Binary]
         expression_unary ( ('+', '-', '*', '/', '%', '<', '>', '>=', '<=', '==', '!=') expression_unary)*;
         '''
-        print(f"[Parser::Expr::Binary]")
+        if self.debug_mode:
+            print(f"[Parser::Expr::Binary]")
         # -Internal Functions
         def _equality() -> NodeExpr:
             '''Handle "==" and "!=" tokens'''
-            print(f"[Parser::Expr::Binary::Equality]")
+            if self.debug_mode:
+                print(f"[Parser::Expr::Binary::Equality]")
             node = _comparison()
             while (token := self._match(Token.Type.SymbolEqEq, Token.Type.SymbolBangEq)):
                 operator = OPERATOR_BINARY[token.type]
@@ -259,7 +272,8 @@ class Parser:
 
         def _comparison() -> NodeExpr:
             '''Handle "<", ">", "<=" and ">=" tokens'''
-            print(f"[Parser::Expr::Binary::Comparison]")
+            if self.debug_mode:
+                print(f"[Parser::Expr::Binary::Comparison]")
             node = _term()
             while (token := self._match(
                 Token.Type.SymbolLt, Token.Type.SymbolGt,
@@ -272,7 +286,8 @@ class Parser:
 
         def _term() -> NodeExpr:
             '''Handle "+" and "-" tokens'''
-            print(f"[Parser::Expr::Binary::Term]")
+            if self.debug_mode:
+                print(f"[Parser::Expr::Binary::Term]")
             node = _factor()
             while (token := self._match(Token.Type.SymbolPlus, Token.Type.SymbolMinus)):
                 operator = OPERATOR_BINARY[token.type]
@@ -282,7 +297,8 @@ class Parser:
 
         def _factor() -> NodeExpr:
             '''Handle "*", "/", and "%" tokens'''
-            print(f"[Parser::Expr::Binary::Factor]")
+            if self.debug_mode:
+                print(f"[Parser::Expr::Binary::Factor]")
             node = self._parse_expression_unary()
             while (token := self._match(
                 Token.Type.SymbolStar, Token.Type.SymbolFSlash, Token.Type.SymbolPercent
@@ -300,7 +316,8 @@ class Parser:
         Grammar[Expression::Unary]
         ('-' | '!') expression_unary | expression_primary;
         '''
-        print(f"[Parser::Expr::Unary]")
+        if self.debug_mode:
+            print(f"[Parser::Expr::Unary]")
         if (token := self._match(*OPERATOR_UNARY.keys())):
             operator = OPERATOR_UNARY[token.type]
             node = self._parse_expression_unary()
@@ -312,11 +329,12 @@ class Parser:
         Grammar[Expression::Primary]
         IDENTIFIER | expression_literal | '(' expression ')';
         '''
-        print(f"[Parser::Expr::Primary]")
+        if self.debug_mode:
+            print(f"[Parser::Expr::Primary]")
         # -Rule: Identifier
         if (token := self._match(Token.Type.Identifier)):
             assert token.value is not None
-            return NodeExprId(token.location, token.value)
+            return NodeExprVariable(token.location, token.value)
         # -Rule: Group
         if self._consume(Token.Type.SymbolLParen):
             location = self._last_token.location
@@ -332,7 +350,8 @@ class Parser:
         Grammar[Expression::Literal]
         BOOLEAN | NUMBER;
         '''
-        print(f"[Parser::Expr::Literal]")
+        if self.debug_mode:
+            print(f"[Parser::Expr::Literal]")
         token = self._next()
         # -TODO: Error Handling
         assert token is not None

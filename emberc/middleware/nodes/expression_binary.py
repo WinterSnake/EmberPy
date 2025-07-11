@@ -2,7 +2,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Node::Expression - Binary     ##
+## Node: Expression - Binary     ##
 ##-------------------------------##
 
 ## Imports
@@ -15,8 +15,8 @@ from ...location import Location
 
 
 ## Functions
-def _binary_type_to_str(_type: NodeExprBinary.Type) -> str:
-    """Returns a char of the operator passed in"""
+def _get_operator_str(_type: NodeExprBinary.Type) -> str:
+    """Returns the char/string of a given binary operator"""
     match _type:
         case NodeExprBinary.Type.Add:
             return '+'
@@ -33,35 +33,35 @@ def _binary_type_to_str(_type: NodeExprBinary.Type) -> str:
         case NodeExprBinary.Type.Gt:
             return '>'
         case NodeExprBinary.Type.LtEq:
-            return '<='
+            return "<="
         case NodeExprBinary.Type.GtEq:
-            return '>='
+            return ">="
         case NodeExprBinary.Type.EqEq:
-            return '=='
+            return "=="
         case NodeExprBinary.Type.NtEq:
-            return '!='
+            return "!="
 
 
 ## Classes
 class NodeExprBinary(NodeExpr):
     """
-    Ember Expression Node: Binary
-    Represents a binary expression node with lhs, rhs and the operator
+    Ember Node: Expression :: Binary
+    Represents an AST node of a binary expression with its operator
     """
 
     # -Constructor
     def __init__(
-        self, location: Location, _type: NodeExprBinary.Type,
-        lhs: NodeExpr, rhs: NodeExpr
+            self, location: Location, operator: NodeExprBinary.Type,
+            lhs: NodeExpr, rhs: NodeExpr
     ) -> None:
         super().__init__(location)
-        self.type: NodeExprBinary.Type = _type
+        self.operator: NodeExprBinary.Type = operator
         self.lhs: NodeExpr = lhs
         self.rhs: NodeExpr = rhs
 
     # -Dunder Methods
     def __str__(self) -> str:
-        return f"({self.lhs} {self.rhs} {_binary_type_to_str(self.type)})"
+        return f"({self.lhs} {self.rhs} {_get_operator_str(self.operator)})"
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:

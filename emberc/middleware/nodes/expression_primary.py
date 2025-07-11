@@ -2,7 +2,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Node::Expression - Literal    ##
+## Node: Expression - Primary    ##
 ##-------------------------------##
 
 ## Imports
@@ -15,15 +15,34 @@ from ...location import Location
 
 
 ## Classes
-class NodeExprId(NodeExpr):
+class NodeExprGroup(NodeExpr):
     """
-    Ember Expression Node: Id
-    Represents an id expression node for variables
+    Ember Node: Expression :: Group
+    Represents an AST node of a grouped expression
     """
+
     # -Constructor
-    def __init__(
-        self, location: Location, _id: str
-    ) -> None:
+    def __init__(self, location: Location, expression: NodeExpr) -> None:
+        super().__init__(location)
+        self.expression: NodeExpr = expression
+
+    # -Dunder Methods
+    def __str__(self) -> str:
+        return f"({self.expression})"
+
+    # -Instance Methods
+    def accept(self, visitor: NodeVisitor) -> Any:
+        return visitor.visit_expression_group(self)
+
+
+class NodeExprVariable(NodeExpr):
+    """
+    Ember Node: Expression :: Group
+    Represents an AST node of a variable location
+    """
+
+    # -Constructor
+    def __init__(self, location: Location, _id: str) -> None:
         super().__init__(location)
         self.id: str = _id
 
@@ -33,13 +52,13 @@ class NodeExprId(NodeExpr):
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:
-        return visitor.visit_expression_id(self)
+        return visitor.visit_expression_variable(self)
 
 
 class NodeExprLiteral(NodeExpr):
     """
-    Ember Expression Node: Literal
-    Represents a literal expression node
+    Ember Node: Expression :: Literal
+    Represents an AST node of a constant literal with it's value
     """
 
     # -Constructor
@@ -52,7 +71,12 @@ class NodeExprLiteral(NodeExpr):
 
     # -Dunder Methods
     def __str__(self) -> str:
-        return f"{self.type.name}({self.value})"
+        match self.type:
+            case NodeExprLiteral.Type.Boolean:
+                return f"Bool({self.value})"
+            case NodeExprLiteral.Type.Integer:
+                return f"Integer({self.value})"
+        assert False
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:

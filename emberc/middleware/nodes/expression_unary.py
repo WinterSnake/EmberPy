@@ -2,7 +2,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Node::Expression - Unary      ##
+## Node: Expression - Unary      ##
 ##-------------------------------##
 
 ## Imports
@@ -15,8 +15,8 @@ from ...location import Location
 
 
 ## Functions
-def _unary_type_to_str(_type: NodeExprUnary.Type) -> str:
-    """Returns a char of the operator passed in"""
+def _get_operator_str(_type: NodeExprUnary.Type) -> str:
+    """Returns the char/string of a given unary operator"""
     match _type:
         case NodeExprUnary.Type.Negate:
             return '!'
@@ -27,21 +27,21 @@ def _unary_type_to_str(_type: NodeExprUnary.Type) -> str:
 ## Classes
 class NodeExprUnary(NodeExpr):
     """
-    Ember Expression Node: Unary
-    Represents a unary expression node with operator and leaf node
+    Ember Node: Expression :: Unary
+    Represents an AST node of a unary expression with its operator
     """
 
     # -Constructor
     def __init__(
-        self, location: Location, _type: NodeExprUnary.Type, value: NodeExpr
+        self, location: Location, operator: NodeExprUnary.Type, expression: NodeExpr
     ) -> None:
         super().__init__(location)
-        self.type: NodeExprUnary.Type = _type
-        self.value: NodeExpr = value
+        self.operator: NodeExprUnary.Type = operator
+        self.expression: NodeExpr = expression
 
     # -Dunder Methods
     def __str__(self) -> str:
-        return f"({self.value} {_unary_type_to_str(self.type)})"
+        return f"({self.expression} {_get_operator_str(self.operator)})"
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:

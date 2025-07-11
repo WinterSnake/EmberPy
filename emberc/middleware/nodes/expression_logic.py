@@ -2,12 +2,10 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Node::Expression - Group      ##
+## Node: Expression - Logic      ##
 ##-------------------------------##
 
 ## Imports
-from __future__ import annotations
-from enum import IntEnum, auto
 from typing import Any
 from .core import NodeExpr
 from .visitor import NodeVisitor
@@ -15,23 +13,22 @@ from ...location import Location
 
 
 ## Classes
-class NodeExprGroup(NodeExpr):
+class NodeExprAssignment(NodeExpr):
     """
-    Ember Expression Node: Group
-    Represents a group expression with its inner node
+    Ember Node: Expression :: Assignment
+    Represents an AST node of an assignment expression
     """
 
     # -Constructor
-    def __init__(
-        self, location: Location, inner_node: NodeExpr
-    ) -> None:
+    def __init__(self, location: Location, _id: str, expression: NodeExpr) -> None:
         super().__init__(location)
-        self.inner_node: NodeExpr = inner_node
+        self.id: str = _id
+        self.expression: NodeExpr = expression
 
     # -Dunder Methods
     def __str__(self) -> str:
-        return f"({self.inner_node})"
+        return f"(Id({self.id}) = {self.expression})"
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:
-        return visitor.visit_expression_group(self)
+        return visitor.visit_expression_assignment(self)

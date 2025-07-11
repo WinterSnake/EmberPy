@@ -6,7 +6,6 @@
 ##-------------------------------##
 
 ## Imports
-from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Sequence
 from .visitor import NodeVisitor
@@ -17,7 +16,7 @@ from ...location import Location
 class Node(ABC):
     """
     Ember Node
-    Represents a base node for AST generation
+    Base AST Node Type
     """
 
     # -Instance Methods
@@ -28,7 +27,7 @@ class Node(ABC):
 class NodeExpr(Node):
     """
     Ember Node: Expression
-    Represents a base expression node for AST generation
+    Base AST Expression Node Type
     """
 
     # -Constructor
@@ -36,15 +35,30 @@ class NodeExpr(Node):
         self.location: Location = location
 
 
-class NodeModule(Node):
+class NodeContainer(Node):
     """
-    Ember Node: Module
-    Represents a compilation unit and all nodes attached
+    Ember Node: Container
+    Represents an AST node with an inner body block
     """
 
     # -Constructor
-    def __init__(self, statements: Sequence[Node]) -> None:
-        self.statements: Sequence[Node] = statements
+    def __init__(self, body: Sequence[Node]) -> None:
+        self.body: Sequence[Node] = body
+
+    # -Dunder Methods
+    def __str__(self) -> str:
+        return '[' + ','.join(str(node) for node in self.body) + ']'
+
+
+class NodeModule(NodeContainer):
+    """
+    Ember Node: Module
+    Represents an AST node of a file (module)
+    """
+
+    # -Constructor
+    def __init__(self, body: Sequence[Node]) -> None:
+        super().__init__(body)
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:
