@@ -37,6 +37,10 @@ class InterpreterVisitor:
     def visit_statement_if(self, node: NodeStmtIf) -> None:
         if node.condition.accept(self):
             node.body.accept(self)
+        else:
+            if node.branch is None:
+                return
+            node.branch.accept(self)
 
     def visit_statement_declaration_variable(self, node: NodeStmtDeclVar) -> None:
         value = None if node.initializer is None else node.initializer.accept(self)

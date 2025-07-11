@@ -20,6 +20,7 @@ SYMBOLS: tuple[str, ...] = (
 )
 KEYWORDS: dict[str, Token.Type] = {
     'if': Token.Type.If,
+    'else': Token.Type.Else,
     # -Types
     'int8': Token.Type.Int8,
     'int16': Token.Type.Int16,
@@ -76,7 +77,7 @@ class Lexer:
         return current
 
     def _consume(self, char: str) -> bool:
-        ''''''
+        '''Consumes next character if expected char'''
         if self._peek() != char:
             return False
         _ = self._advance()

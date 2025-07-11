@@ -141,7 +141,7 @@ class Parser:
     def _parse_statement_if(self) -> Node:
         '''
         Grammar[Statement::If]
-        'if' '(' expression ')' statement;
+        'if' '(' expression ')' statement ('else' statement)?;
         '''
         # -TODO: Error Handling
         if not self._consume(Token.Type.LParen):
@@ -151,7 +151,10 @@ class Parser:
         if not self._consume(Token.Type.RParen):
             pass
         body = self._parse_statement()
-        return NodeStmtIf(condition, body)
+        branch: Node | None = None
+        if self._consume(Token.Type.Else):
+            branch = self._parse_statement()
+        return NodeStmtIf(condition, body, branch)
 
     def _parse_statement_block(self) -> Node:
         '''

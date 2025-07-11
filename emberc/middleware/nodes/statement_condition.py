@@ -21,9 +21,12 @@ class NodeStmtIf(Node):
     """
 
     # -Constructor
-    def __init__(self, condition: NodeExpr, body: Node) -> None:
+    def __init__(
+        self, condition: NodeExpr, body: Node, branch: Node | None
+    ) -> None:
         self.condition: NodeExpr = condition
         self.body: Node = body
+        self.branch: Node | None = branch
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:

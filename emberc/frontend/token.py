@@ -39,6 +39,7 @@ class Token:
         Integer = auto()
         # -Keywords
         If = auto()
+        Else = auto()
         # -Keywords: Types
         Int8 = auto()
         Int16 = auto()
