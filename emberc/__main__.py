@@ -5,6 +5,7 @@
 ##-------------------------------##
 
 ## Imports
+import sys
 from pathlib import Path
 from .frontend import Lexer, Parser, Token
 from .middleware.interpreter import InterpreterVisitor
@@ -12,15 +13,19 @@ from .middleware.interpreter import InterpreterVisitor
 
 ## Functions
 def _entry() -> None:
-    #file: Path = Path("./tests/00-operators.ember")
-    file: Path = Path("./tests/01-variables.ember")
-    lexer: Lexer = Lexer(file)
-    tokens: list[Token] = [token for token in lexer.lex()]
-    #for token in tokens:
-    #    print(token)
-    parser: Parser = Parser(iter(tokens))
+    if len(sys.argv) != 2:
+        print("No source file provided", file=sys.stderr)
+        usage()
+        return
+    source = Path(sys.argv[1])
+    lexer: Lexer = Lexer(source)
+    parser: Parser = Parser(lexer.lex())
     ast = parser.parse()
     InterpreterVisitor.run(ast)
+
+
+def usage() -> None:
+    print("emberc <file.ember>")
 
 
 ## Body
