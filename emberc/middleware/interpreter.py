@@ -9,8 +9,9 @@
 from typing import Any
 from .nodes import (
     Node, NodeModule,
-    NodeStmtExpr,NodeExprGroup,
-    NodeExprBinary, NodeExprUnary, NodeExprLiteral,
+    NodeStmtDeclVar, NodeStmtExpr,
+    NodeExprBinary, NodeExprUnary, NodeExprGroup,
+    NodeExprId, NodeExprLiteral,
 )
 
 
@@ -21,11 +22,16 @@ class InterpreterVisitor:
     # -Constructor
     def __init__(self, debug: bool = True) -> None:
         self.debug: bool = debug
+        self.environment: dict[str, int] = {}
 
     # -Instance Methods
     def visit_module(self, node: NodeModule) -> None:
         for statement in node.statements:
             statement.accept(self)
+
+    def visit_statement_declaration_variable(self, node: NodeStmtDeclVar) -> None:
+        assert node.initializer is not None
+        self.environment[node.id] = node.initializer.accept(self)
 
     def visit_statement_expression(self, node: NodeStmtExpr) -> None:
         value = node.expression.accept(self)
@@ -60,6 +66,9 @@ class InterpreterVisitor:
         if self.debug:
             print(f"{{ ExprGrp::{node.location} }}")
         return node.inner_node.accept(self)
+
+    def visit_expression_id(self, node: NodeExprId) -> int:
+        return self.environment[node.id]
 
     def visit_expression_literal(self, node: NodeExprLiteral) -> int:
         if self.debug:

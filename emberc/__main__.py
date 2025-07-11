@@ -12,7 +12,8 @@ from .middleware.interpreter import InterpreterVisitor
 
 ## Functions
 def _entry() -> None:
-    file: Path = Path("./tests/00-operators.ember")
+    #file: Path = Path("./tests/00-operators.ember")
+    file: Path = Path("./tests/01-variables.ember")
     lexer: Lexer = Lexer(file)
     tokens: list[Token] = [token for token in lexer.lex()]
     #for token in tokens:

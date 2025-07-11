@@ -2,3 +2,7 @@ int8 a = 15;
 uint8 b = 255;
 int16 c = a + b;
 uint64 d = (c / 5) + (8 - 4) * 5;
+a;
+b;
+c;
+d;

@@ -29,7 +29,6 @@ OPERATOR_UNARY: dict[Token.Type, NodeExprUnary.Type] = {
     Token.Type.Minus: NodeExprUnary.Type.Negative,
 }
 VARIABLE_TYPES: tuple[Token.Type, ...] = (
-    Token.Type.Identifier,
     # -Ints
     Token.Type.Int8,
     Token.Type.Int16,
