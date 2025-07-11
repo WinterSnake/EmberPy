@@ -14,16 +14,28 @@ from ..location import Location
 
 ## Constants
 SYMBOLS: dict[str, Token.Type] = {
-    # -Math
+    # -Operator
     '+': Token.Type.Plus,
     '-': Token.Type.Minus,
     '*': Token.Type.Star,
     '/': Token.Type.FSlash,
     '%': Token.Type.Percent,
+    '=': Token.Type.Eq,
     # -Misc
     '(': Token.Type.LParen,
     ')': Token.Type.RParen,
     ';': Token.Type.Semicolon,
+}
+KEYWORDS: dict[str, Token.Type] = {
+    # -Types
+    'int8': Token.Type.Int8,
+    'int16': Token.Type.Int16,
+    'int32': Token.Type.Int32,
+    'int64': Token.Type.Int64,
+    'uint8': Token.Type.UInt8,
+    'uint16': Token.Type.UInt16,
+    'uint32': Token.Type.UInt32,
+    'uint64': Token.Type.UInt64,
 }
 
 
@@ -85,6 +97,9 @@ class Lexer:
             # -Default -> Number
             elif c.isnumeric():
                 token = self._lex_number(c)
+            # -Default -> Word
+            elif c.isalpha() or c == '_':
+                token = self._lex_word(c)
             # -Default -> Default
             elif c.isspace():
                 continue
@@ -102,7 +117,7 @@ class Lexer:
         Generates a symbol token
         '''
         symbol: Token.Type
-        location = Location(self.file, self.position)
+        location = self.location
         symbol = SYMBOLS[buffer]
         return Token(location, symbol, None)
 
@@ -111,7 +126,7 @@ class Lexer:
         Lexer State: Number
         Generates an integer token
         '''
-        location = Location(self.file, self.position)
+        location = self.location
         while c := self._peek():
             # Number -> Number
             if c.isnumeric():
@@ -123,7 +138,30 @@ class Lexer:
             break
         return Token(location, Token.Type.Integer, buffer)
 
+    def _lex_word(self, buffer: str) -> Token:
+        '''
+        Lexer State: Word
+        Generates a identifier or keyword token
+        '''
+        location = self.location
+        while c := self._peek():
+            # -Word -> Word
+            if c.isalnum() or c == '_':
+                c = self._advance()
+                assert(c)
+                buffer += c
+                continue
+            # -Word -> Default
+            break
+        _type = KEYWORDS.get(buffer, Token.Type.Identifier)
+        value: str | None = buffer if _type == Token.Type.Identifier else None
+        return Token(location, _type, value)
+
     # -Properties
     @property
     def position(self) -> tuple[int, int, int]:
         return (self.row, self.column, self.offset)
+
+    @property
+    def location(self) -> Location:
+        return Location(self.file, self.position)

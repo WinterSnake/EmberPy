@@ -35,8 +35,20 @@ class Token:
     class Type(IntEnum):
         '''Token Value Type'''
         # -Literals
+        Identifier = auto()
         Integer = auto()
+        # -Keywords
+        # -Keywords: Types
+        Int8 = auto()
+        Int16 = auto()
+        Int32 = auto()
+        Int64 = auto()
+        UInt8 = auto()
+        UInt16 = auto()
+        UInt32 = auto()
+        UInt64 = auto()
         # -Symbols
+        Eq = auto()
         Plus = auto()
         Minus = auto()
         Star = auto()
