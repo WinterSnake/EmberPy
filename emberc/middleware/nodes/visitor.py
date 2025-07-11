@@ -10,7 +10,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Protocol
 
 if TYPE_CHECKING:
-    from .statement_unit import NodeStatementUnit
+    from .core import NodeModule
+    from .statement_expression import NodeStmtExpr
     from .expression_binary import NodeExprBinary
     from .expression_unary import NodeExprUnary
     from .expression_group import NodeExprGroup
@@ -25,7 +26,8 @@ class NodeVisitor(Protocol):
     """
 
     # -Instance Methods
-    def visit_statement_unit(self, node: NodeStatementUnit) -> Any: ...
+    def visit_module(self, node: NodeModule) -> Any: ...
+    def visit_statement_expression(self, node: NodeStmtExpr) -> Any: ...
     def visit_expression_binary(self, node: NodeExprBinary) -> Any: ...
     def visit_expression_unary(self, node: NodeExprUnary) -> Any: ...
     def visit_expression_group(self, node: NodeExprGroup) -> Any: ...

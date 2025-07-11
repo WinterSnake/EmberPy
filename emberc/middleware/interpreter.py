@@ -6,10 +6,10 @@
 ##-------------------------------##
 
 ## Imports
-from __future__ import annotations
 from typing import Any
 from .nodes import (
-    NodeStatementUnit,
+    Node, NodeModule,
+    NodeStmtExpr,NodeExprGroup,
     NodeExprBinary, NodeExprUnary, NodeExprLiteral,
 )
 
@@ -23,10 +23,13 @@ class InterpreterVisitor:
         self.debug: bool = debug
 
     # -Instance Methods
-    def visit_statement_unit(self, node: NodeStatementUnit) -> None:
-        for node in node.nodes:
-            value = node.accept(self)
-            print(f"{node} = {value}")
+    def visit_module(self, node: NodeModule) -> None:
+        for statement in node.statements:
+            statement.accept(self)
+
+    def visit_statement_expression(self, node: NodeStmtExpr) -> None:
+        value = node.expression.accept(self)
+        print(f"{node} = {value}")
 
     def visit_expression_binary(self, node: NodeExprBinary) -> int:
         if self.debug:
@@ -48,7 +51,7 @@ class InterpreterVisitor:
     def visit_expression_unary(self, node: NodeExprUnary) -> int:
         if self.debug:
             print(f"{{ ExprUn::{node.type.name} | {node.location} }}")
-        value = node.node.accept(self)
+        value = node.value.accept(self)
         match node.type:
             case NodeExprUnary.Type.Negative:
                 return -value

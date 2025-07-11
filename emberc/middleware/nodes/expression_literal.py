@@ -2,20 +2,20 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Node: Literal                 ##
+## Node::Expression - Literal    ##
 ##-------------------------------##
 
 ## Imports
 from __future__ import annotations
 from enum import IntEnum, auto
 from typing import Any
-from .node import Node
+from .core import NodeExpr
 from .visitor import NodeVisitor
 from ...location import Location
 
 
 ## Classes
-class NodeExprLiteral(Node):
+class NodeExprLiteral(NodeExpr):
     """
     Ember Expression Node: Literal
     Represents a literal expression node

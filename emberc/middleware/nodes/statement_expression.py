@@ -2,36 +2,32 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Node::Expression - Group      ##
+## Node::Statement - Expression  ##
 ##-------------------------------##
 
 ## Imports
 from __future__ import annotations
-from enum import IntEnum, auto
 from typing import Any
-from .core import NodeExpr
+from .core import Node, NodeExpr
 from .visitor import NodeVisitor
 from ...location import Location
 
 
 ## Classes
-class NodeExprGroup(NodeExpr):
+class NodeStmtExpr(Node):
     """
-    Ember Expression Node: Group
-    Represents a group expression with its inner node
+    Ember Statement Node: Expression
+    Represents a statement for an expression node
     """
 
     # -Constructor
-    def __init__(
-        self, location: Location, inner_node: NodeExpr
-    ) -> None:
-        super().__init__(location)
-        self.inner_node: NodeExpr = inner_node
+    def __init__(self, expression: NodeExpr) -> None:
+        self.expression: NodeExpr = expression
 
     # -Dunder Methods
     def __str__(self) -> str:
-        return f"({self.inner_node})"
+        return str(self.expression)
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:
-        return visitor.visit_expression_group(self)
+        return visitor.visit_statement_expression(self)

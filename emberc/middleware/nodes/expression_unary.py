@@ -2,14 +2,14 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Node: Unary                   ##
+## Node::Expression - Unary      ##
 ##-------------------------------##
 
 ## Imports
 from __future__ import annotations
 from enum import IntEnum, auto
 from typing import Any
-from .node import Node
+from .core import NodeExpr
 from .visitor import NodeVisitor
 from ...location import Location
 
@@ -23,7 +23,7 @@ def _unary_type_to_str(_type: NodeExprUnary.Type) -> str:
 
 
 ## Classes
-class NodeExprUnary(Node):
+class NodeExprUnary(NodeExpr):
     """
     Ember Expression Node: Unary
     Represents a unary expression node with operator and leaf node
@@ -31,15 +31,15 @@ class NodeExprUnary(Node):
 
     # -Constructor
     def __init__(
-        self, location: Location, _type: NodeExprUnary.Type, node: Node
+        self, location: Location, _type: NodeExprUnary.Type, value: NodeExpr
     ) -> None:
         super().__init__(location)
         self.type: NodeExprUnary.Type = _type
-        self.node: Node = node
+        self.value: NodeExpr = value
 
     # -Dunder Methods
     def __str__(self) -> str:
-        return f"({self.node} {_unary_type_to_str(self.type)})"
+        return f"({self.value} {_unary_type_to_str(self.type)})"
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:

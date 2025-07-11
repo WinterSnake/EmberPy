@@ -11,8 +11,8 @@ import sys
 from collections.abc import Iterator
 from .token import Token
 from ..middleware.nodes import (
-    Node,
-    NodeStatementUnit,
+    Node, NodeExpr, NodeModule,
+    NodeStmtExpr,
     NodeExprBinary, NodeExprUnary, NodeExprGroup, NodeExprLiteral
 )
 
@@ -81,51 +81,51 @@ class Parser:
 
     # -Instance Methods: Parsing
     def parse(self) -> Node:
-        '''Produces an AST from a given token iterator and returns any errors encountered'''
-        return self._parse_unit()
-
-    def _parse_unit(self) -> Node:
         '''
-        Grammar[Unit]
+        Grammar[Module]
         statement*;
         '''
-        token = self._peek()
-        # -TODO: Error Handling
-        assert token is not None
-        nodes: list[Node] = []
+        statements: list[Node] = []
         while not self.is_at_end:
             if self._peek() is None:
                 break
             node = self._parse_statement()
-            nodes.append(node)
-        return NodeStatementUnit(token.location.file, nodes)
-    
+            statements.append(node)
+        return NodeModule(statements)
+
     def _parse_statement(self) -> Node:
         '''
         Grammar[Statement]
+        statement_expression;
+        '''
+        return self._parse_statement_expression()
+
+    def _parse_statement_expression(self) -> Node:
+        '''
+        Grammar[Statement::Expression]
         expression ';';
         '''
         node = self._parse_expression()
         # -TODO: Error Handling
         if not self._consume(Token.Type.Semicolon):
             pass
-        return node
+        return NodeStmtExpr(node)
 
-    def _parse_expression(self) -> Node:
+    def _parse_expression(self) -> NodeExpr:
         '''
         Grammar[Expression]
         expression_binary;
         '''
         return self._parse_expression_binary()
 
-    def _parse_expression_binary(self) -> Node:
+    def _parse_expression_binary(self) -> NodeExpr:
         '''
         Grammar[Expression::Binary]
         expression_binary_term;
         '''
         return self._parse_expression_binary_term()
 
-    def _parse_expression_binary_term(self) -> Node:
+    def _parse_expression_binary_term(self) -> NodeExpr:
         '''
         Grammar[Expression::Binary::Term]
         expression_binary_factor ( ('+' | '-') expression_binary_factor)*;
@@ -137,7 +137,7 @@ class Parser:
             node = NodeExprBinary(token.location, operator, node, rhs)
         return node
 
-    def _parse_expression_binary_factor(self) -> Node:
+    def _parse_expression_binary_factor(self) -> NodeExpr:
         '''
         Grammar[Expression::Binary::Factor]
         expression_unary ( ('*' | '/' | '%') expression_unary)*;
@@ -151,7 +151,7 @@ class Parser:
             node = NodeExprBinary(token.location, operator, node, rhs)
         return node
 
-    def _parse_expression_unary(self) -> Node:
+    def _parse_expression_unary(self) -> NodeExpr:
         '''
         Grammar[Expression::Unary]
         ('-' unary) | primary;
@@ -162,7 +162,7 @@ class Parser:
             return NodeExprUnary(token.location, operator, node)
         return self._parse_primary()
 
-    def _parse_primary(self) -> Node:
+    def _parse_primary(self) -> NodeExpr:
         '''
         Grammar[Expression::Primary]
         expression_literal | '(' expression ')';
@@ -176,7 +176,7 @@ class Parser:
             return NodeExprGroup(location, node)
         return self._parse_literal()
 
-    def _parse_literal(self) -> Node:
+    def _parse_literal(self) -> NodeExpr:
         '''
         Grammar[Expression::Literal]
         NUMBER;

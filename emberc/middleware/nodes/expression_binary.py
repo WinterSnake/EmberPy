@@ -2,14 +2,14 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Node: Binary                  ##
+## Node::Expression - Binary     ##
 ##-------------------------------##
 
 ## Imports
 from __future__ import annotations
 from enum import IntEnum, auto
 from typing import Any
-from .node import Node
+from .core import NodeExpr
 from .visitor import NodeVisitor
 from ...location import Location
 
@@ -31,7 +31,7 @@ def _binary_type_to_str(_type: NodeExprBinary.Type) -> str:
 
 
 ## Classes
-class NodeExprBinary(Node):
+class NodeExprBinary(NodeExpr):
     """
     Ember Expression Node: Binary
     Represents a binary expression node with lhs, rhs and the operator
@@ -40,12 +40,12 @@ class NodeExprBinary(Node):
     # -Constructor
     def __init__(
         self, location: Location, _type: NodeExprBinary.Type,
-        lhs: Node, rhs: Node
+        lhs: NodeExpr, rhs: NodeExpr
     ) -> None:
         super().__init__(location)
         self.type: NodeExprBinary.Type = _type
-        self.lhs: Node = lhs
-        self.rhs: Node = rhs
+        self.lhs: NodeExpr = lhs
+        self.rhs: NodeExpr = rhs
 
     # -Dunder Methods
     def __str__(self) -> str:
