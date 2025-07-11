@@ -6,6 +6,7 @@
 
 ## Imports
 import sys
+from collections.abc import Iterator
 from pathlib import Path
 from .frontend import Lexer, Parser, Token
 from .middleware.interpreter import InterpreterVisitor
@@ -32,7 +33,7 @@ def _entry() -> None:
         usage()
         return
     lexer: Lexer = Lexer(source)
-    token_iter = lexer.lex()
+    token_iter: Iterator[Token] = lexer.lex()
     if DUMP_TOKENS:
         tokens = [token for token in token_iter]
         for token in tokens:
@@ -40,7 +41,6 @@ def _entry() -> None:
         token_iter = iter(tokens)
     parser: Parser = Parser(token_iter)
     ast = parser.parse()
-    return
     InterpreterVisitor.run(ast)
 
 

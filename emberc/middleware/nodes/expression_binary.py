@@ -28,6 +28,18 @@ def _binary_type_to_str(_type: NodeExprBinary.Type) -> str:
             return '/'
         case NodeExprBinary.Type.Mod:
             return '%'
+        case NodeExprBinary.Type.Lt:
+            return '<'
+        case NodeExprBinary.Type.Gt:
+            return '>'
+        case NodeExprBinary.Type.LtEq:
+            return '<='
+        case NodeExprBinary.Type.GtEq:
+            return '>='
+        case NodeExprBinary.Type.EqEq:
+            return '=='
+        case NodeExprBinary.Type.NtEq:
+            return '!='
 
 
 ## Classes
@@ -63,3 +75,9 @@ class NodeExprBinary(NodeExpr):
         Mul = auto()
         Div = auto()
         Mod = auto()
+        Lt = auto()
+        Gt = auto()
+        LtEq = auto()
+        GtEq = auto()
+        EqEq = auto()
+        NtEq = auto()

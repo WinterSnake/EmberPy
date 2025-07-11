@@ -25,6 +25,12 @@ OPERATOR_BINARY: dict[Token.Type, NodeExprBinary.Type] = {
     Token.Type.Star: NodeExprBinary.Type.Mul,
     Token.Type.FSlash: NodeExprBinary.Type.Div,
     Token.Type.Percent: NodeExprBinary.Type.Mod,
+    Token.Type.Lt: NodeExprBinary.Type.Lt,
+    Token.Type.Gt: NodeExprBinary.Type.Gt,
+    Token.Type.LtEq: NodeExprBinary.Type.LtEq,
+    Token.Type.GtEq: NodeExprBinary.Type.GtEq,
+    Token.Type.EqEq: NodeExprBinary.Type.EqEq,
+    Token.Type.BangEq: NodeExprBinary.Type.NtEq,
 }
 OPERATOR_UNARY: dict[Token.Type, NodeExprUnary.Type] = {
     Token.Type.Bang: NodeExprUnary.Type.Negate,
@@ -207,9 +213,35 @@ class Parser:
     def _parse_expression_binary(self) -> NodeExpr:
         '''
         Grammar[Expression::Binary]
-        expression_binary_term;
+        expression_binary_equality;
         '''
-        return self._parse_expression_binary_term()
+        return self._parse_expression_binary_equality()
+
+    def _parse_expression_binary_equality(self) -> NodeExpr:
+        '''
+        Grammar[Expression::Binary::Equality]
+        expression_binary_comparison ( ('==' | '!=') expression_binary_comparison);
+        '''
+        node = self._parse_expression_binary_comparison()
+        while (token := self._match(Token.Type.EqEq, Token.Type.BangEq)):
+            operator = OPERATOR_BINARY[token.type]
+            rhs = self._parse_expression_binary_comparison()
+            node = NodeExprBinary(token.location, operator, node, rhs)
+        return node
+
+    def _parse_expression_binary_comparison(self) -> NodeExpr:
+        '''
+        Grammar[Expression::Binary::Comparison]
+        expression_binary_term ( ('>' | '<' | '>=' | '<=') expression_binary_term);
+        '''
+        node = self._parse_expression_binary_term()
+        while (token := self._match(
+            Token.Type.Lt, Token.Type.Gt, Token.Type.LtEq, Token.Type.GtEq
+        )):
+            operator = OPERATOR_BINARY[token.type]
+            rhs = self._parse_expression_binary_term()
+            node = NodeExprBinary(token.location, operator, node, rhs)
+        return node
 
     def _parse_expression_binary_term(self) -> NodeExpr:
         '''

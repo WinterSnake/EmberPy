@@ -23,7 +23,7 @@ class InterpreterVisitor:
     # -Constructor
     def __init__(self, debug: bool = True) -> None:
         self.debug: bool = debug
-        self.environment: dict[str, int] = {}
+        self.environment: dict[str, int | None] = {}
 
     # -Instance Methods
     def visit_module(self, node: NodeModule) -> None:
@@ -34,12 +34,13 @@ class InterpreterVisitor:
         for statement in node.statements:
             statement.accept(self)
 
-    def visit_statement_if(self, node: NodeStmtIf) -> Any:
-        pass
+    def visit_statement_if(self, node: NodeStmtIf) -> None:
+        if node.condition.accept(self):
+            node.body.accept(self)
 
     def visit_statement_declaration_variable(self, node: NodeStmtDeclVar) -> None:
-        assert node.initializer is not None
-        self.environment[node.id] = node.initializer.accept(self)
+        value = None if node.initializer is None else node.initializer.accept(self)
+        self.environment[node.id] = value
 
     def visit_statement_expression(self, node: NodeStmtExpr) -> None:
         value = node.expression.accept(self)
@@ -50,7 +51,7 @@ class InterpreterVisitor:
         self.environment[node.l_value.id] = value
         return value
 
-    def visit_expression_binary(self, node: NodeExprBinary) -> int:
+    def visit_expression_binary(self, node: NodeExprBinary) -> int | bool:
         if self.debug:
             print(f"{{ ExprBin::{node.type.name} | {node.location} }}")
         l_value = node.lhs.accept(self)
@@ -66,6 +67,18 @@ class InterpreterVisitor:
                 return l_value // r_value
             case NodeExprBinary.Type.Mod:
                 return l_value % r_value
+            case NodeExprBinary.Type.Lt:
+                return l_value < r_value
+            case NodeExprBinary.Type.Gt:
+                return l_value > r_value
+            case NodeExprBinary.Type.LtEq:
+                return l_value <= r_value
+            case NodeExprBinary.Type.GtEq:
+                return l_value >= r_value
+            case NodeExprBinary.Type.EqEq:
+                return l_value == r_value
+            case NodeExprBinary.Type.NtEq:
+                return l_value != r_value
 
     def visit_expression_unary(self, node: NodeExprUnary) -> int:
         if self.debug:
@@ -83,7 +96,9 @@ class InterpreterVisitor:
         return node.inner_node.accept(self)
 
     def visit_expression_id(self, node: NodeExprId) -> int:
-        return self.environment[node.id]
+        value = self.environment[node.id]
+        assert value is not None
+        return value
 
     def visit_expression_literal(self, node: NodeExprLiteral) -> int:
         if self.debug:
