@@ -7,28 +7,24 @@
 
 ## Imports
 from __future__ import annotations
-from typing import Any, Sequence
-from .core import Node
+from typing import Any
+from .core import Node, NodeExpr
 from .visitor import NodeVisitor
 from ...location import Location
 
 
 ## Classes
-class NodeStmtBlock(Node):
+class NodeStmtIf(Node):
     """
     Ember Statement Node: Block
     Represents a statement block node
     """
 
     # -Constructor
-    def __init__(self, statements: Sequence[Node]) -> None:
-        self.statements: Sequence[Node] = statements
-
-    # -Dunder Methods
-    def __str__(self) -> str:
-        _str = ','.join(str(node) for node in self.statements)
-        return f"{{ {_str} }}"
+    def __init__(self, condition: NodeExpr, body: Node) -> None:
+        self.condition: NodeExpr = condition
+        self.body: Node = body
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:
-        return visitor.visit_statement_block(self)
+        return visitor.visit_statement_if(self)

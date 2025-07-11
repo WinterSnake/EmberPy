@@ -10,6 +10,7 @@ from typing import Any
 from .nodes import (
     Node, NodeModule,
     NodeStmtDeclVar, NodeStmtExpr, NodeStmtBlock,
+    NodeStmtIf,
     NodeExprBinary, NodeExprUnary, NodeExprGroup,
     NodeExprAssign, NodeExprId, NodeExprLiteral,
 )
@@ -32,6 +33,9 @@ class InterpreterVisitor:
     def visit_statement_block(self, node: NodeStmtBlock) -> None:
         for statement in node.statements:
             statement.accept(self)
+
+    def visit_statement_if(self, node: NodeStmtIf) -> Any:
+        pass
 
     def visit_statement_declaration_variable(self, node: NodeStmtDeclVar) -> None:
         assert node.initializer is not None
@@ -68,6 +72,8 @@ class InterpreterVisitor:
             print(f"{{ ExprUn::{node.type.name} | {node.location} }}")
         value = node.value.accept(self)
         match node.type:
+            case NodeExprUnary.Type.Negate:
+                return not value
             case NodeExprUnary.Type.Negative:
                 return -value
 

@@ -50,11 +50,20 @@ class Token:
         UInt64 = auto()
         # -Symbols
         Eq = auto()
+        Bang = auto()
         Plus = auto()
         Minus = auto()
         Star = auto()
         FSlash = auto()
         Percent = auto()
+        # -Symbols: Comparison
+        EqEq = auto()
+        BangEq = auto()
+        Lt = auto()
+        Gt = auto()
+        LtEq = auto()
+        GtEq = auto()
+        # -Symbols: Misc
         LParen = auto()
         RParen = auto()
         LBrace = auto()

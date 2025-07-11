@@ -18,6 +18,8 @@ from ...location import Location
 def _unary_type_to_str(_type: NodeExprUnary.Type) -> str:
     """Returns a char of the operator passed in"""
     match _type:
+        case NodeExprUnary.Type.Negate:
+            return '!'
         case NodeExprUnary.Type.Negative:
             return '-'
 
@@ -48,4 +50,5 @@ class NodeExprUnary(NodeExpr):
     # -Sub-Classes
     class Type(IntEnum):
         '''Unary Operator Type'''
+        Negate = auto()
         Negative = auto()

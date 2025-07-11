@@ -13,6 +13,7 @@ from .token import Token
 from ..middleware.nodes import (
     Node, NodeExpr, NodeModule,
     NodeStmtDeclVar, NodeStmtBlock, NodeStmtExpr,
+    NodeStmtIf,
     NodeExprBinary, NodeExprUnary, NodeExprGroup,
     NodeExprAssign, NodeExprId, NodeExprLiteral,
 )
@@ -26,6 +27,7 @@ OPERATOR_BINARY: dict[Token.Type, NodeExprBinary.Type] = {
     Token.Type.Percent: NodeExprBinary.Type.Mod,
 }
 OPERATOR_UNARY: dict[Token.Type, NodeExprUnary.Type] = {
+    Token.Type.Bang: NodeExprUnary.Type.Negate,
     Token.Type.Minus: NodeExprUnary.Type.Negative,
 }
 VARIABLE_TYPES: tuple[Token.Type, ...] = (
@@ -109,14 +111,20 @@ class Parser:
     def _parse_statement(self) -> Node:
         '''
         Grammar[Statement]
-        statement_block |
+        statement_if | statement_block |
         ( (statement_declaration_variable | statement_expression) ';');
         '''
         node: Node
+        # -Rule: Block
         if (self._consume(Token.Type.LBrace)):
             node = self._parse_statement_block()
+        # -Rule: Variable Declartion
         elif (token := self._match(*VARIABLE_TYPES)):
             node = self._parse_statement_declaration_variable(token)
+        # -Rule: If
+        elif self._consume(Token.Type.If):
+            node = self._parse_statement_if()
+        # -Rule: Expression
         else:
             node = self._parse_statement_expression()
         # -TODO: Error Handling
@@ -124,9 +132,24 @@ class Parser:
             pass
         return node
 
+    def _parse_statement_if(self) -> Node:
+        '''
+        Grammar[Statement::If]
+        'if' '(' expression ')' statement;
+        '''
+        # -TODO: Error Handling
+        if not self._consume(Token.Type.LParen):
+            pass
+        condition = self._parse_expression()
+        # -TODO: Error Handling
+        if not self._consume(Token.Type.RParen):
+            pass
+        body = self._parse_statement()
+        return NodeStmtIf(condition, body)
+
     def _parse_statement_block(self) -> Node:
         '''
-        Grammar[Statement::Declartion::Block]
+        Grammar[Statement::Block]
         '{' statement* '}';
         '''
         statements: list[Node] = []

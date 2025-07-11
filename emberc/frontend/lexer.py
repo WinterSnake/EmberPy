@@ -13,21 +13,11 @@ from .token import Token
 from ..location import Location
 
 ## Constants
-SYMBOLS: dict[str, Token.Type] = {
-    # -Operator
-    '+': Token.Type.Plus,
-    '-': Token.Type.Minus,
-    '*': Token.Type.Star,
-    '/': Token.Type.FSlash,
-    '%': Token.Type.Percent,
-    '=': Token.Type.Eq,
-    # -Misc
-    '(': Token.Type.LParen,
-    ')': Token.Type.RParen,
-    '{': Token.Type.LBrace,
-    '}': Token.Type.RBrace,
-    ';': Token.Type.Semicolon,
-}
+SYMBOLS: tuple[str, ...] = (
+    '+', '-', '*', '/', '%',
+    '=', '!', '<', '>',
+    '(', ')', '{', '}', ';',
+)
 KEYWORDS: dict[str, Token.Type] = {
     'if': Token.Type.If,
     # -Types
@@ -85,6 +75,13 @@ class Lexer:
         self._lookahead = current
         return current
 
+    def _consume(self, char: str) -> bool:
+        ''''''
+        if self._peek() != char:
+            return False
+        _ = self._advance()
+        return True
+
     # -Instance Methods: Lexing
     def lex(self) -> Generator[Token, None, None]:
         '''
@@ -121,7 +118,52 @@ class Lexer:
         '''
         symbol: Token.Type
         location = self.location
-        symbol = SYMBOLS[buffer]
+        match buffer:
+            # -Operator
+            case '+':
+                symbol = Token.Type.Plus
+            case '-':
+                symbol = Token.Type.Minus
+            case '*':
+                symbol = Token.Type.Star
+            case '/':
+                symbol = Token.Type.FSlash
+            case '%':
+                symbol = Token.Type.Percent
+            # -Comparison
+            case '=':
+                if self._consume('='):
+                    symbol = Token.Type.EqEq
+                else:
+                    symbol = Token.Type.Eq
+            case '!':
+                if self._consume('='):
+                    symbol = Token.Type.BangEq
+                else:
+                    symbol = Token.Type.Bang
+            case '<':
+                if self._consume('='):
+                    symbol = Token.Type.LtEq
+                else:
+                    symbol = Token.Type.Lt
+            case '>':
+                if self._consume('='):
+                    symbol = Token.Type.GtEq
+                else:
+                    symbol = Token.Type.Gt
+            # -Misc
+            case '(':
+                symbol = Token.Type.LParen
+            case ')':
+                symbol = Token.Type.RParen
+            case '{':
+                symbol = Token.Type.LBrace
+            case '}':
+                symbol = Token.Type.RBrace
+            case ';':
+                symbol = Token.Type.Semicolon
+            case _:
+                print(f"Unknown symbol: '{buffer}'")
         return Token(location, symbol, None)
 
     def _lex_number(self, buffer: str) -> Token:
