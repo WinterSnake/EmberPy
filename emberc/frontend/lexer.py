@@ -24,9 +24,12 @@ SYMBOLS: dict[str, Token.Type] = {
     # -Misc
     '(': Token.Type.LParen,
     ')': Token.Type.RParen,
+    '{': Token.Type.LBrace,
+    '}': Token.Type.RBrace,
     ';': Token.Type.Semicolon,
 }
 KEYWORDS: dict[str, Token.Type] = {
+    'if': Token.Type.If,
     # -Types
     'int8': Token.Type.Int8,
     'int16': Token.Type.Int16,

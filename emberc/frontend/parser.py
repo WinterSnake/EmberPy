@@ -127,6 +127,7 @@ class Parser:
         TYPE IDENTIFIER ('=' expression)?;
         '''
         _id = self._next()
+        # -TODO: Error Handling
         assert _id is not None
         assert _id.type == Token.Type.Identifier
         assert _id.value is not None
@@ -158,8 +159,7 @@ class Parser:
         if self._consume(Token.Type.Eq):
             location = self._last_token.location
             # -TODO: Error Handling
-            if not isinstance(node, NodeExprId):
-                pass
+            assert isinstance(node, NodeExprId)
             r_value = self._parse_expression_assignment()
             node = NodeExprAssign(location, node, r_value)
         return node
@@ -231,6 +231,7 @@ class Parser:
         NUMBER;
         '''
         token = self._next()
+        # -TODO: Error Handling
         assert token is not None
         assert token.value is not None
         assert token.type is Token.Type.Integer

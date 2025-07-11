@@ -38,6 +38,7 @@ class Token:
         Identifier = auto()
         Integer = auto()
         # -Keywords
+        If = auto()
         # -Keywords: Types
         Int8 = auto()
         Int16 = auto()
@@ -56,4 +57,6 @@ class Token:
         Percent = auto()
         LParen = auto()
         RParen = auto()
+        LBrace = auto()
+        RBrace = auto()
         Semicolon = auto()

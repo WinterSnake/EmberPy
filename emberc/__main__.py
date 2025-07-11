@@ -10,17 +10,37 @@ from pathlib import Path
 from .frontend import Lexer, Parser, Token
 from .middleware.interpreter import InterpreterVisitor
 
+## Constants
+DUMP_TOKENS: bool = False
+
 
 ## Functions
 def _entry() -> None:
-    if len(sys.argv) != 2:
+    global DUMP_TOKENS
+    if len(sys.argv) < 2:
         print("No source file provided", file=sys.stderr)
         usage()
         return
-    source = Path(sys.argv[1])
+    source: Path | None = None
+    for arg in sys.argv[1:]:
+        if arg in ("-t", "--dump-tokens"):
+            DUMP_TOKENS = True
+        else:
+            source = Path(arg)
+    if source is None:
+        print("No source file provided", file=sys.stderr)
+        usage()
+        return
     lexer: Lexer = Lexer(source)
-    parser: Parser = Parser(lexer.lex())
+    token_iter = lexer.lex()
+    if DUMP_TOKENS:
+        tokens = [token for token in token_iter]
+        for token in tokens:
+            print(token)
+        token_iter = iter(tokens)
+    parser: Parser = Parser(token_iter)
     ast = parser.parse()
+    return
     InterpreterVisitor.run(ast)
 
 
