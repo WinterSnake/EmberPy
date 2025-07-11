@@ -6,7 +6,7 @@
 
 ## Imports
 from pathlib import Path
-from .frontend import Lexer, Token
+from .frontend import Lexer, Parser, Token
 
 
 ## Functions
@@ -14,8 +14,10 @@ def _entry() -> None:
     file: Path = Path("./tests/00-operators.ember")
     lexer: Lexer = Lexer(file)
     tokens: list[Token] = [token for token in lexer.lex()]
-    for token in tokens:
-        print(token)
+    #for token in tokens:
+    #    print(token)
+    parser: Parser = Parser(iter(tokens))
+    ast = parser.parse()
 
 
 ## Body

@@ -7,9 +7,10 @@
 
 ## Imports
 from .lexer import Lexer
+from .parser import Parser
 from .token import Token
 
 ## Constants
 __all__: tuple[str, ...] = (
-    "Lexer", "Token",
+    "Lexer", "Parser", "Token",
 )
