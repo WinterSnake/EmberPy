@@ -12,12 +12,13 @@ from .frontend import Lexer, Parser, Token
 from .middleware.interpreter import InterpreterVisitor
 
 ## Constants
+DEBUG_MODE: bool = False
 DUMP_TOKENS: bool = False
 
 
 ## Functions
 def _entry() -> None:
-    global DUMP_TOKENS
+    global DEBUG_MODE, DUMP_TOKENS
     if len(sys.argv) < 2:
         print("No source file provided", file=sys.stderr)
         usage()
@@ -26,6 +27,8 @@ def _entry() -> None:
     for arg in sys.argv[1:]:
         if arg in ("-t", "--dump-tokens"):
             DUMP_TOKENS = True
+        elif arg in ("-d", "--debug-mode"):
+            DEBUG_MODE = True
         else:
             source = Path(arg)
     if source is None:
@@ -39,9 +42,9 @@ def _entry() -> None:
         for token in tokens:
             print(token)
         token_iter = iter(tokens)
-    parser: Parser = Parser(token_iter)
+    parser: Parser = Parser(token_iter, DEBUG_MODE)
     ast = parser.parse()
-    InterpreterVisitor.run(ast)
+    InterpreterVisitor.run(ast, DEBUG_MODE)
 
 
 def usage() -> None:

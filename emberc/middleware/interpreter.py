@@ -11,12 +11,13 @@ from typing import Any
 from .nodes import (
     Node, NodeModule, NodeStmtBlock, NodeStmtConditional, NodeStmtLoop,
     NodeDeclVariable, NodeStmtExpression, NodeExprAssignment,
-    NodeExprBinary, NodeExprUnary, 
+    NodeExprCall, NodeExprBinary, NodeExprUnary, 
     NodeExprGroup, NodeExprVariable, NodeExprLiteral
 )
 
 ## Constants
-ENVIRONMENT: dict[str, bool | int | None]
+ENVIRONMENT = dict[str, bool | int | None]
+LITERAL = bool | int
 
 
 ## Classes
@@ -26,7 +27,9 @@ class InterpreterVisitor:
     # -Constructor
     def __init__(self, debug_mode: bool) -> None:
         self.debug_mode: bool = debug_mode
-        self.environments: list[ENVIRONMENT] = [{}]
+        self.environments: list[ENVIRONMENT] = [{
+            'print': print
+        }]
 
     # -Instance Methods: Environment
     def pop(self) -> None:
@@ -94,21 +97,22 @@ class InterpreterVisitor:
             node.body.accept(self)
 
     def visit_statement_expression(self, node: NodeStmtExpression) -> None:
-        value = node.expression.accept(self)
-        print(value)
-
-    def visit_expression_assignment(self, node: NodeExprAssignment) -> bool | int:
         if self.debug_mode:
-            print(f"{{Interpreter::Stmt::Assignment}}[{node.location}]{node}")
+            print(f"{{Interpreter::Stmt::Expression}}")
+        node.expression.accept(self)
+
+    def visit_expression_assignment(self, node: NodeExprAssignment) -> LITERAL:
+        if self.debug_mode:
+            print(f"{{Interpreter::Expr::Assignment}}[{node.location}]{node}")
         environment = self._get_variable_environment(node.id)
         assert environment is not None
         value = node.expression.accept(self)
         environment[node.id] = value
         return value
 
-    def visit_expression_binary(self, node: NodeExprBinary) -> bool | int:
+    def visit_expression_binary(self, node: NodeExprBinary) -> LITERAL:
         if self.debug_mode:
-            print(f"{{Interpreter::Stmt::Binary}}[{node.location}]{node}")
+            print(f"{{Interpreter::Expr::Binary}}[{node.location}]{node}")
         lhs = node.lhs.accept(self)
         rhs = node.rhs.accept(self)
         match node.operator:
@@ -135,9 +139,9 @@ class InterpreterVisitor:
             case NodeExprBinary.Type.NtEq:
                 return lhs != rhs
 
-    def visit_expression_unary(self, node: NodeExprUnary) -> bool | int:
+    def visit_expression_unary(self, node: NodeExprUnary) -> LITERAL:
         if self.debug_mode:
-            print(f"{{Interpreter::Stmt::Unary}}[{node.location}]{node}")
+            print(f"{{Interpreter::Expr::Unary}}[{node.location}]{node}")
         value = node.expression.accept(self)
         match node.operator:
             case NodeExprUnary.Type.Negate:
@@ -145,21 +149,30 @@ class InterpreterVisitor:
             case NodeExprUnary.Type.Negative:
                 return -value
 
-    def visit_expression_group(self, node: NodeExprGroup) -> bool | int:
+    def visit_expression_call(self, node: NodeExprCall) -> LITERAL | None:
         if self.debug_mode:
-            print(f"{{Interpreter::Stmt::Group}}[{node.location}]{node}")
+            print(f"{{Interpreter::Expr::Call}}[{node.location}]{node}")
+        callee = node.callee.accept(self)
+        if not node.has_arguments:
+            return callee()
+        args = tuple(arg.accept(self) for arg in node.arguments)
+        return callee(*args)
+
+    def visit_expression_group(self, node: NodeExprGroup) -> LITERAL:
+        if self.debug_mode:
+            print(f"{{Interpreter::Expr::Group}}[{node.location}]{node}")
         return node.expression.accept(self)
 
-    def visit_expression_variable(self, node: NodeExprVariable) -> bool | int:
+    def visit_expression_variable(self, node: NodeExprVariable) -> LITERAL:
         if self.debug_mode:
-            print(f"{{Interpreter::Stmt::Variable}}[{node.location}]{node}")
+            print(f"{{Interpreter::Expr::Variable}}[{node.location}]{node}")
         value = self._get_variable(node.id)
         assert value is not None
         return value
 
-    def visit_expression_literal(self, node: NodeExprLiteral) -> bool | int:
+    def visit_expression_literal(self, node: NodeExprLiteral) -> LITERAL:
         if self.debug_mode:
-            print(f"{{Interpreter::Stmt::Literal}}[{node.location}]{node}")
+            print(f"{{Interpreter::Expr::Literal}}[{node.location}]{node}")
         return node.value
 
     # -Static Methods

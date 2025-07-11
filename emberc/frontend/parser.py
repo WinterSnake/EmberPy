@@ -14,7 +14,7 @@ from ..middleware.nodes import (
     Node, NodeExpr, NodeModule,
     NodeStmtBlock, NodeStmtConditional, NodeStmtLoop,
     NodeDeclVariable, NodeStmtExpression,
-    NodeExprAssignment,
+    NodeExprAssignment, NodeExprCall,
     NodeExprBinary, NodeExprUnary,
     NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
@@ -254,13 +254,15 @@ class Parser:
     def _parse_expression_binary(self) -> NodeExpr:
         '''
         Grammar[Expression::Binary]
-        expression_unary ( ('+', '-', '*', '/', '%', '<', '>', '>=', '<=', '==', '!=') expression_unary)*;
+        expression_unary_prefix ( ('+', '-', '*', '/', '%', '<', '>', '>=', '<=', '==', '!=') expression_unary_prefix)*;
         '''
         if self.debug_mode:
             print(f"[Parser::Expr::Binary]")
         # -Internal Functions
         def _equality() -> NodeExpr:
-            '''Handle "==" and "!=" tokens'''
+            '''
+            comparison ( ("==" | "!=") comparison)*;
+            '''
             if self.debug_mode:
                 print(f"[Parser::Expr::Binary::Equality]")
             node = _comparison()
@@ -271,7 +273,9 @@ class Parser:
             return node
 
         def _comparison() -> NodeExpr:
-            '''Handle "<", ">", "<=" and ">=" tokens'''
+            '''
+            term ( ("<" | ">" | "<=" | ">=") term)*;
+            '''
             if self.debug_mode:
                 print(f"[Parser::Expr::Binary::Comparison]")
             node = _term()
@@ -285,7 +289,9 @@ class Parser:
             return node
 
         def _term() -> NodeExpr:
-            '''Handle "+" and "-" tokens'''
+            '''
+            factor ( ("+" | "-") factor)*;
+            '''
             if self.debug_mode:
                 print(f"[Parser::Expr::Binary::Term]")
             node = _factor()
@@ -296,33 +302,68 @@ class Parser:
             return node
 
         def _factor() -> NodeExpr:
-            '''Handle "*", "/", and "%" tokens'''
+            '''
+            expression_unary_prefix ( ("*" | "/" | "%") expression_unary_prefix)*;
+            '''
             if self.debug_mode:
                 print(f"[Parser::Expr::Binary::Factor]")
-            node = self._parse_expression_unary()
+            node = self._parse_expression_unary_prefix()
             while (token := self._match(
                 Token.Type.SymbolStar, Token.Type.SymbolFSlash, Token.Type.SymbolPercent
             )):
                 operator = OPERATOR_BINARY[token.type]
-                rhs = self._parse_expression_unary()
+                rhs = self._parse_expression_unary_prefix()
                 node = NodeExprBinary(token.location, operator, node, rhs)
             return node
 
         # -Body
         return _equality()
 
-    def _parse_expression_unary(self) -> NodeExpr:
+    def _parse_expression_unary_prefix(self) -> NodeExpr:
         '''
-        Grammar[Expression::Unary]
-        ('-' | '!') expression_unary | expression_primary;
+        Grammar[Expression::Unary::Prefix]
+        ('-' | '!') expression_unary_prefix | expression_unary_postfix;
         '''
         if self.debug_mode:
-            print(f"[Parser::Expr::Unary]")
+            print(f"[Parser::Expr::Unary::Prefix]")
         if (token := self._match(*OPERATOR_UNARY.keys())):
             operator = OPERATOR_UNARY[token.type]
-            node = self._parse_expression_unary()
+            node = self._parse_expression_unary_prefix()
             return NodeExprUnary(token.location, operator, node)
-        return self._parse_expression_primary()
+        return self._parse_expression_unary_postfix()
+
+    def _parse_expression_unary_postfix(self) -> NodeExpr:
+        '''
+        Grammar[Expression::Unary::Postfix]
+        expression_primary (expression_unary_postfix_call)*;
+        '''
+        if self.debug_mode:
+            print(f"[Parser::Expr::Unary::Postfix]")
+        # -Internal Functions
+        def _call(node: NodeExpr) -> NodeExpr:
+            '''
+            ( '(' expression (',' expression)* ')' );
+            '''
+            if self.debug_mode:
+                print(f"[Parser::Expr::Unary::Postfix::Call]")
+            location = self._last_token.location
+            arguments: list[NodeExpr] = []
+            argument = self._parse_expression()
+            arguments.append(argument)
+            while self._consume(Token.Type.SymbolComma):
+                argument = self._parse_expression()
+                arguments.append(argument)
+            # -TODO: Error Handling
+            assert self._consume(Token.Type.SymbolRParen)
+            return NodeExprCall(location, node, arguments)
+
+        # -Body
+        node = self._parse_expression_primary()
+        # -Rule: Call
+        while self._consume(Token.Type.SymbolLParen):
+            node = _call(node)
+        return node
+
 
     def _parse_expression_primary(self) -> NodeExpr:
         '''

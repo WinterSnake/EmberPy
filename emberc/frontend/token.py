@@ -73,4 +73,5 @@ class Token:
         SymbolRParen = auto()
         SymbolLBrace = auto()
         SymbolRBrace = auto()
+        SymbolComma = auto()
         SymbolSemicolon = auto()

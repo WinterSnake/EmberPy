@@ -16,7 +16,7 @@ from ..location import Location
 SYMBOLS: tuple[str, ...] = (
     '+', '-', '*', '/', '%',
     '=', '!', '<', '>',
-    '(', ')', '{', '}', ';',
+    '(', ')', '{', '}', ',', ';',
 )
 KEYWORDS: dict[str, Token.Type] = {
     'if': Token.Type.KeywordIf,
@@ -166,6 +166,8 @@ class Lexer:
                 symbol = Token.Type.SymbolLBrace
             case '}':
                 symbol = Token.Type.SymbolRBrace
+            case ',':
+                symbol = Token.Type.SymbolComma
             case ';':
                 symbol = Token.Type.SymbolSemicolon
             case _:

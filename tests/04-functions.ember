@@ -1,0 +1,4 @@
+print(420, 1000);
+int8 a = 100;
+int8 b = 200;
+print(a + b);
