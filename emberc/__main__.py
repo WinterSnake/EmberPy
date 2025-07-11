@@ -45,7 +45,8 @@ def _entry() -> None:
 
 
 def usage() -> None:
-    print("emberc <file.ember>")
+    print("emberc [options] <file.ember>")
+    print("\t-t, --dump-tokens: print out all found tokens from given source file")
 
 
 ## Body

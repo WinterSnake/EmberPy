@@ -104,52 +104,70 @@ class Parser:
     def parse(self) -> Node:
         '''
         Grammar[Module]
-        statement*;
+        declaration*;
         '''
-        statements: list[Node] = []
+        body: list[Node] = []
         while not self.is_at_end:
             if self._peek() is None:
                 break
-            node = self._parse_statement()
-            statements.append(node)
-        return NodeModule(statements)
+            node = self._parse_declaration()
+            body.append(node)
+        return NodeModule(body)
+
+    def _parse_declaration(self) -> Node:
+        '''
+        Grammar[Declaration]
+        declaration_variable | statement;
+        '''
+        print(f"[Parser::Decl]")
+        if (token := self._match(*VARIABLE_TYPES)):
+            return self._parse_declaration_variable(token)
+        return self._parse_statement()
+
+    def _parse_declaration_variable(self, token: Token) -> Node:
+        '''
+        Grammar[Declaration::Variable]
+        TYPE IDENTIFIER ('=' expression)? ';';
+        '''
+        print(f"[Parser::Decl::Var]")
+        _id = self._next()
+        # -TODO: Error Handling
+        assert _id is not None
+        assert _id.type == Token.Type.Identifier
+        assert _id.value is not None
+        init: NodeExpr | None = None
+        if self._consume(Token.Type.Eq):
+            init = self._parse_expression()
+        # -TODO: Error Handling
+        assert self._consume(Token.Type.Semicolon)
+        return NodeStmtDeclVar(_id.value, init)
 
     def _parse_statement(self) -> Node:
         '''
         Grammar[Statement]
-        statement_if | statement_block |
-        ( (statement_declaration_variable | statement_expression) ';');
+        statement_if | statement_block | statment_expression;
         '''
-        node: Node
-        # -Rule: Block
-        if (self._consume(Token.Type.LBrace)):
-            node = self._parse_statement_block()
-        # -Rule: Variable Declartion
-        elif (token := self._match(*VARIABLE_TYPES)):
-            node = self._parse_statement_declaration_variable(token)
+        print(f"[Parser::Stmt]")
         # -Rule: If
-        elif self._consume(Token.Type.If):
-            node = self._parse_statement_if()
+        if self._consume(Token.Type.If):
+            return self._parse_statement_if()
+        # -Rule: Block
+        elif self._consume(Token.Type.LBrace):
+            return self._parse_statement_block()
         # -Rule: Expression
-        else:
-            node = self._parse_statement_expression()
-        # -TODO: Error Handling
-        if not self._consume(Token.Type.Semicolon):
-            pass
-        return node
+        return self._parse_statement_expression()
 
     def _parse_statement_if(self) -> Node:
         '''
         Grammar[Statement::If]
         'if' '(' expression ')' statement ('else' statement)?;
         '''
+        print(f"[Parser::Stmt::If]")
         # -TODO: Error Handling
-        if not self._consume(Token.Type.LParen):
-            pass
+        assert self._consume(Token.Type.LParen)
         condition = self._parse_expression()
         # -TODO: Error Handling
-        if not self._consume(Token.Type.RParen):
-            pass
+        assert self._consume(Token.Type.RParen)
         body = self._parse_statement()
         branch: Node | None = None
         if self._consume(Token.Type.Else):
@@ -159,52 +177,43 @@ class Parser:
     def _parse_statement_block(self) -> Node:
         '''
         Grammar[Statement::Block]
-        '{' statement* '}';
+        '{' declaration* '}';
         '''
-        statements: list[Node] = []
+        print(f"[Parser::Stmt::Block]")
+        body: list[Node] = []
         while not self._consume(Token.Type.RBrace):
             # -TODO: Error Handling
-            if self._peek() is None:
-                break
-            node = self._parse_statement()
-            statements.append(node)
-        return NodeStmtBlock(statements)
-
-    def _parse_statement_declaration_variable(self, token: Token) -> Node:
-        '''
-        Grammar[Statement::Declartion::Variable]
-        TYPE IDENTIFIER ('=' expression)?;
-        '''
-        _id = self._next()
-        # -TODO: Error Handling
-        assert _id is not None
-        assert _id.type == Token.Type.Identifier
-        assert _id.value is not None
-        init: NodeExpr | None = None
-        if self._consume(Token.Type.Eq):
-            init = self._parse_expression()
-        return NodeStmtDeclVar(_id.value, init)
+            assert not self.is_at_end
+            node = self._parse_declaration()
+            body.append(node)
+        return NodeStmtBlock(body)
 
     def _parse_statement_expression(self) -> Node:
         '''
         Grammar[Statement::Expression]
-        expression;
+        expression ';';
         '''
-        return NodeStmtExpr(self._parse_expression())
+        print(f"[Parser::Stmt::Expr]")
+        node = self._parse_expression()
+        # -TODO: Error Handling
+        assert self._consume(Token.Type.Semicolon)
+        return NodeStmtExpr(node)
 
     def _parse_expression(self) -> NodeExpr:
         '''
         Grammar[Expression]
         expression_assignment;
         '''
+        print(f"[Parser::Expr]")
         return self._parse_expression_assignment()
 
     def _parse_expression_assignment(self) -> NodeExpr:
         '''
         Grammar[Expression::Assignment]
-        (IDENTIFIER '=' expression_assignment) | expression_binary;
+        IDENTIFIER '=' expression_assignment | expression_binary;
         '''
-        node: NodeExpr = self._parse_expression_binary()
+        print(f"[Parser::Expr::Assign]")
+        node = self._parse_expression_binary()
         if self._consume(Token.Type.Eq):
             location = self._last_token.location
             # -TODO: Error Handling
@@ -216,95 +225,95 @@ class Parser:
     def _parse_expression_binary(self) -> NodeExpr:
         '''
         Grammar[Expression::Binary]
-        expression_binary_equality;
+        expression_unary ( ('+', '-', '*', '/', '%', '<', '>', '>=', '<=', '==', '!=') expression_unary)*;
         '''
-        return self._parse_expression_binary_equality()
+        print(f"[Parser::Expr::Binary]")
+        # -Internal Functions
+        def _equality() -> NodeExpr:
+            '''Handle "==" and "!=" tokens'''
+            print(f"[Parser::Expr::Binary::Equality]")
+            node = _comparison()
+            while (token := self._match(Token.Type.EqEq, Token.Type.BangEq)):
+                operator = OPERATOR_BINARY[token.type]
+                rhs = _comparison()
+                node = NodeExprBinary(token.location, operator, node, rhs)
+            return node
 
-    def _parse_expression_binary_equality(self) -> NodeExpr:
-        '''
-        Grammar[Expression::Binary::Equality]
-        expression_binary_comparison ( ('==' | '!=') expression_binary_comparison);
-        '''
-        node = self._parse_expression_binary_comparison()
-        while (token := self._match(Token.Type.EqEq, Token.Type.BangEq)):
-            operator = OPERATOR_BINARY[token.type]
-            rhs = self._parse_expression_binary_comparison()
-            node = NodeExprBinary(token.location, operator, node, rhs)
-        return node
+        def _comparison() -> NodeExpr:
+            '''Handle "<", ">", "<=" and ">=" tokens'''
+            print(f"[Parser::Expr::Binary::Comparison]")
+            node = _term()
+            while (token := self._match(
+                Token.Type.Lt, Token.Type.Gt, Token.Type.LtEq, Token.Type.GtEq
+            )):
+                operator = OPERATOR_BINARY[token.type]
+                rhs = _term()
+                node = NodeExprBinary(token.location, operator, node, rhs)
+            return node
 
-    def _parse_expression_binary_comparison(self) -> NodeExpr:
-        '''
-        Grammar[Expression::Binary::Comparison]
-        expression_binary_term ( ('>' | '<' | '>=' | '<=') expression_binary_term);
-        '''
-        node = self._parse_expression_binary_term()
-        while (token := self._match(
-            Token.Type.Lt, Token.Type.Gt, Token.Type.LtEq, Token.Type.GtEq
-        )):
-            operator = OPERATOR_BINARY[token.type]
-            rhs = self._parse_expression_binary_term()
-            node = NodeExprBinary(token.location, operator, node, rhs)
-        return node
+        def _term() -> NodeExpr:
+            '''Handle "+" and "-" tokens'''
+            print(f"[Parser::Expr::Binary::Term]")
+            node = _factor()
+            while (token := self._match(Token.Type.Plus, Token.Type.Minus)):
+                operator = OPERATOR_BINARY[token.type]
+                rhs = _factor()
+                node = NodeExprBinary(token.location, operator, node, rhs)
+            return node
 
-    def _parse_expression_binary_term(self) -> NodeExpr:
-        '''
-        Grammar[Expression::Binary::Term]
-        expression_binary_factor ( ('+' | '-') expression_binary_factor)*;
-        '''
-        node = self._parse_expression_binary_factor()
-        while (token := self._match(Token.Type.Plus, Token.Type.Minus)):
-            operator = OPERATOR_BINARY[token.type]
-            rhs = self._parse_expression_binary_factor()
-            node = NodeExprBinary(token.location, operator, node, rhs)
-        return node
+        def _factor() -> NodeExpr:
+            '''Handle "*", "/", and "%" tokens'''
+            print(f"[Parser::Expr::Binary::Factor]")
+            node = self._parse_expression_unary()
+            while (token := self._match(
+                Token.Type.Star, Token.Type.FSlash, Token.Type.Percent
+            )):
+                operator = OPERATOR_BINARY[token.type]
+                rhs = self._parse_expression_unary()
+                node = NodeExprBinary(token.location, operator, node, rhs)
+            return node
 
-    def _parse_expression_binary_factor(self) -> NodeExpr:
-        '''
-        Grammar[Expression::Binary::Factor]
-        expression_unary ( ('*' | '/' | '%') expression_unary)*;
-        '''
-        node = self._parse_expression_unary()
-        while (token := self._match(
-            Token.Type.Star, Token.Type.FSlash, Token.Type.Percent
-        )):
-            operator = OPERATOR_BINARY[token.type]
-            rhs = self._parse_expression_unary()
-            node = NodeExprBinary(token.location, operator, node, rhs)
-        return node
+        # -Body
+        return _equality()
 
     def _parse_expression_unary(self) -> NodeExpr:
         '''
         Grammar[Expression::Unary]
-        ('-' unary) | primary;
+        ('-' | '!') expression_unary | expression_primary;
         '''
-        if (token := self._match(Token.Type.Minus)):
+        print(f"[Parser::Expr::Unary]")
+        if (token := self._match(*OPERATOR_UNARY.keys())):
             operator = OPERATOR_UNARY[token.type]
             node = self._parse_expression_unary()
             return NodeExprUnary(token.location, operator, node)
-        return self._parse_primary()
+        return self._parse_expression_primary()
 
-    def _parse_primary(self) -> NodeExpr:
+    def _parse_expression_primary(self) -> NodeExpr:
         '''
         Grammar[Expression::Primary]
         IDENTIFIER | expression_literal | '(' expression ')';
         '''
+        print(f"[Parser::Expr::Primary]")
+        # -Rule: Identifier
+        if (token := self._match(Token.Type.Identifier)):
+            assert token.value is not None
+            return NodeExprId(token.location, token.value)
+        # -Rule: Group
         if self._consume(Token.Type.LParen):
             location = self._last_token.location
             node = self._parse_expression()
             # -TODO: Error Handling
-            if not self._consume(Token.Type.RParen):
-                pass
+            assert self._consume(Token.Type.RParen)
             return NodeExprGroup(location, node)
-        elif (token := self._match(Token.Type.Identifier)):
-            assert token.value is not None
-            return NodeExprId(token.location, token.value)
-        return self._parse_literal()
+        # -Rule: Literal
+        return self._parse_expression_literal()
 
-    def _parse_literal(self) -> NodeExpr:
+    def _parse_expression_literal(self) -> NodeExpr:
         '''
         Grammar[Expression::Literal]
         NUMBER;
         '''
+        print(f"[Parser::Expr::Literal]")
         token = self._next()
         # -TODO: Error Handling
         assert token is not None
