@@ -7,6 +7,7 @@
 ## Imports
 from pathlib import Path
 from .frontend import Lexer, Parser, Token
+from .middleware.interpreter import InterpreterVisitor
 
 
 ## Functions
@@ -18,6 +19,7 @@ def _entry() -> None:
     #    print(token)
     parser: Parser = Parser(iter(tokens))
     ast = parser.parse()
+    InterpreterVisitor.run(ast)
 
 
 ## Body
