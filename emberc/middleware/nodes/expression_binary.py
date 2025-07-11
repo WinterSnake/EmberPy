@@ -16,8 +16,7 @@ from ...location import Location
 
 ## Functions
 def _binary_type_to_str(_type: NodeExprBinary.Type) -> str:
-    """
-    """
+    """Returns a char of the operator passed in"""
     match _type:
         case NodeExprBinary.Type.Add:
             return '+'
@@ -34,6 +33,8 @@ def _binary_type_to_str(_type: NodeExprBinary.Type) -> str:
 ## Classes
 class NodeExprBinary(Node):
     """
+    Ember Expression Node: Binary
+    Represents a binary expression node with lhs, rhs and the operator
     """
 
     # -Constructor
@@ -56,7 +57,7 @@ class NodeExprBinary(Node):
 
     # -Sub-Classes
     class Type(IntEnum):
-        ''''''
+        '''Binary Operator Type'''
         Add = auto()
         Sub = auto()
         Mul = auto()

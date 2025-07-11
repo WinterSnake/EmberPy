@@ -33,11 +33,7 @@ class Token:
 
     # -Sub-Classes
     class Type(IntEnum):
-        '''
-        Ember Token
-        Value Type Enum
-        '''
-
+        '''Token Value Type'''
         # -Literals
         Integer = auto()
         # -Symbols

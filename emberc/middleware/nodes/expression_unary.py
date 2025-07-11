@@ -16,8 +16,7 @@ from ...location import Location
 
 ## Functions
 def _unary_type_to_str(_type: NodeExprUnary.Type) -> str:
-    """
-    """
+    """Returns a char of the operator passed in"""
     match _type:
         case NodeExprUnary.Type.Negative:
             return '-'
@@ -26,6 +25,8 @@ def _unary_type_to_str(_type: NodeExprUnary.Type) -> str:
 ## Classes
 class NodeExprUnary(Node):
     """
+    Ember Expression Node: Unary
+    Represents a unary expression node with operator and leaf node
     """
 
     # -Constructor
@@ -46,5 +47,5 @@ class NodeExprUnary(Node):
 
     # -Sub-Classes
     class Type(IntEnum):
-        ''''''
+        '''Unary Operator Type'''
         Negative = auto()

@@ -70,6 +70,7 @@ class Parser:
         return True
 
     def _match(self, *types: Token.Type) -> Token | None:
+        '''Returns next token if token matches expected type'''
         token = self._peek()
         if token is not None and token.type in types:
             return self._next()

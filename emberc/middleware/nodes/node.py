@@ -16,6 +16,8 @@ from ...location import Location
 ## Classes
 class Node(ABC):
     """
+    Ember Node
+    Represents a base node for AST generation
     """
 
     # -Constructor

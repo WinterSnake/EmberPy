@@ -18,6 +18,8 @@ from ...location import Location
 ## Classes
 class NodeStatementUnit(Node):
     """
+    Ember Statement Node: Unit
+    Represents a compilation unit and all nodes attached
     """
 
     # -Constructor

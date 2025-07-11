@@ -19,6 +19,8 @@ if TYPE_CHECKING:
 ## Classes
 class NodeVisitor(Protocol):
     """
+    Ember Node Visitor
+    Visitor pattern protocol for handling and evaluating nodes
     """
 
     # -Instance Methods

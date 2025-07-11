@@ -17,6 +17,8 @@ from ...location import Location
 ## Classes
 class NodeExprLiteral(Node):
     """
+    Ember Expression Node: Literal
+    Represents a literal expression node
     """
 
     # -Constructor
