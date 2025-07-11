@@ -12,8 +12,9 @@ from collections.abc import Iterator
 from .token import Token
 from ..middleware.nodes import (
     Node, NodeExpr, NodeModule,
-    NodeStmtExpr,
-    NodeExprBinary, NodeExprUnary, NodeExprGroup, NodeExprLiteral
+    NodeStmtDeclVar, NodeStmtExpr,
+    NodeExprBinary, NodeExprUnary, NodeExprGroup,
+    NodeExprId, NodeExprLiteral,
 )
 
 ## Constants
@@ -27,6 +28,19 @@ OPERATOR_BINARY: dict[Token.Type, NodeExprBinary.Type] = {
 OPERATOR_UNARY: dict[Token.Type, NodeExprUnary.Type] = {
     Token.Type.Minus: NodeExprUnary.Type.Negative,
 }
+VARIABLE_TYPES: tuple[Token.Type, ...] = (
+    Token.Type.Identifier,
+    # -Ints
+    Token.Type.Int8,
+    Token.Type.Int16,
+    Token.Type.Int32,
+    Token.Type.Int64,
+    # -UInts
+    Token.Type.UInt8,
+    Token.Type.UInt16,
+    Token.Type.UInt32,
+    Token.Type.UInt64,
+)
 
 
 ## Classes
@@ -96,20 +110,38 @@ class Parser:
     def _parse_statement(self) -> Node:
         '''
         Grammar[Statement]
-        statement_expression;
+        (statement_variable_declaration | statement_expression) ';';
         '''
-        return self._parse_statement_expression()
+        node: Node
+        if (token := self._match(*VARIABLE_TYPES)):
+            node = self._parse_statement_variable_declaration(token)
+        else:
+            node = self._parse_statement_expression()
+        # -TODO: Error Handling
+        if not self._consume(Token.Type.Semicolon):
+            pass
+        return node
+
+    def _parse_statement_variable_declaration(self, token: Token) -> Node:
+        '''
+        Grammar[Statement]
+        TYPE IDENTIFIER ('=' expression)?;
+        '''
+        _id = self._next()
+        assert _id is not None
+        assert _id.type == Token.Type.Identifier
+        assert _id.value is not None
+        init: NodeExpr | None = None
+        if self._consume(Token.Type.Eq):
+            init = self._parse_expression()
+        return NodeStmtDeclVar(_id.value, init)
 
     def _parse_statement_expression(self) -> Node:
         '''
         Grammar[Statement::Expression]
-        expression ';';
+        expression;
         '''
-        node = self._parse_expression()
-        # -TODO: Error Handling
-        if not self._consume(Token.Type.Semicolon):
-            pass
-        return NodeStmtExpr(node)
+        return NodeStmtExpr(self._parse_expression())
 
     def _parse_expression(self) -> NodeExpr:
         '''
@@ -133,7 +165,7 @@ class Parser:
         node = self._parse_expression_binary_factor()
         while (token := self._match(Token.Type.Plus, Token.Type.Minus)):
             operator = OPERATOR_BINARY[token.type]
-            rhs = self._parse_expression_unary()
+            rhs = self._parse_expression_binary_factor()
             node = NodeExprBinary(token.location, operator, node, rhs)
         return node
 
@@ -165,7 +197,7 @@ class Parser:
     def _parse_primary(self) -> NodeExpr:
         '''
         Grammar[Expression::Primary]
-        expression_literal | '(' expression ')';
+        IDENTIFIER | expression_literal | '(' expression ')';
         '''
         if self._consume(Token.Type.LParen):
             location = self._last_token.location
@@ -174,6 +206,9 @@ class Parser:
             if not self._consume(Token.Type.RParen):
                 pass
             return NodeExprGroup(location, node)
+        elif (token := self._match(Token.Type.Identifier)):
+            assert token.value is not None
+            return NodeExprId(token.location, token.value)
         return self._parse_literal()
 
     def _parse_literal(self) -> NodeExpr:

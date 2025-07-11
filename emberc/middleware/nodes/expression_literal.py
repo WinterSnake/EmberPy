@@ -15,6 +15,27 @@ from ...location import Location
 
 
 ## Classes
+class NodeExprId(NodeExpr):
+    """
+    Ember Expression Node: Id
+    Represents an id expression node for variables
+    """
+    # -Constructor
+    def __init__(
+        self, location: Location, _id: str
+    ) -> None:
+        super().__init__(location)
+        self.id: str = _id
+
+    # -Dunder Methods
+    def __str__(self) -> str:
+        return f"Id({self.id})"
+
+    # -Instance Methods
+    def accept(self, visitor: NodeVisitor) -> Any:
+        return visitor.visit_expression_id(self)
+
+
 class NodeExprLiteral(NodeExpr):
     """
     Ember Expression Node: Literal
