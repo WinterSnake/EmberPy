@@ -11,7 +11,7 @@ from .nodes import (
     Node, NodeModule,
     NodeStmtDeclVar, NodeStmtExpr,
     NodeExprBinary, NodeExprUnary, NodeExprGroup,
-    NodeExprId, NodeExprLiteral,
+    NodeExprAssign, NodeExprId, NodeExprLiteral,
 )
 
 
@@ -35,7 +35,12 @@ class InterpreterVisitor:
 
     def visit_statement_expression(self, node: NodeStmtExpr) -> None:
         value = node.expression.accept(self)
-        print(f"{node} = {value}")
+        print(f"[{node.expression.location}]{node} = {value}")
+
+    def visit_expression_assign(self, node: NodeExprAssign) -> int:
+        value: int = node.r_value.accept(self)
+        self.environment[node.l_value.id] = value
+        return value
 
     def visit_expression_binary(self, node: NodeExprBinary) -> int:
         if self.debug:

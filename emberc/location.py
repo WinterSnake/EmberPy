@@ -20,7 +20,7 @@ class Location:
 
     # -Dunder Methods
     def __str__(self) -> str:
-        return f"[{self.file}:{self.row}:{self.column}:{self.offset}]"
+        return f"{self.file}:{self.row}:{self.column}:{self.offset}"
 
     # -Properties
     @property

@@ -14,7 +14,7 @@ from ..middleware.nodes import (
     Node, NodeExpr, NodeModule,
     NodeStmtDeclVar, NodeStmtExpr,
     NodeExprBinary, NodeExprUnary, NodeExprGroup,
-    NodeExprId, NodeExprLiteral,
+    NodeExprAssign, NodeExprId, NodeExprLiteral,
 )
 
 ## Constants
@@ -145,9 +145,24 @@ class Parser:
     def _parse_expression(self) -> NodeExpr:
         '''
         Grammar[Expression]
-        expression_binary;
+        expression_assignment;
         '''
-        return self._parse_expression_binary()
+        return self._parse_expression_assignment()
+
+    def _parse_expression_assignment(self) -> NodeExpr:
+        '''
+        Grammar[Expression]
+        (IDENTIFIER '=' expression_assignment) | expression_binary;
+        '''
+        node: NodeExpr = self._parse_expression_binary()
+        if self._consume(Token.Type.Eq):
+            location = self._last_token.location
+            # -TODO: Error Handling
+            if not isinstance(node, NodeExprId):
+                pass
+            r_value = self._parse_expression_assignment()
+            node = NodeExprAssign(location, node, r_value)
+        return node
 
     def _parse_expression_binary(self) -> NodeExpr:
         '''

@@ -26,7 +26,7 @@ class Token:
 
     # -Dunder Methods
     def __str__(self) -> str:
-        _str = f"{self.location} {self.type.name}"
+        _str = f"[{self.location}] {self.type.name}"
         if self.value:
             _str += f" '{self.value}'"
         return _str
