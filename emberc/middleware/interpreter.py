@@ -9,7 +9,7 @@
 from typing import Any
 from .nodes import (
     Node, NodeModule,
-    NodeStmtDeclVar, NodeStmtExpr,
+    NodeStmtDeclVar, NodeStmtExpr, NodeStmtBlock,
     NodeExprBinary, NodeExprUnary, NodeExprGroup,
     NodeExprAssign, NodeExprId, NodeExprLiteral,
 )
@@ -26,6 +26,10 @@ class InterpreterVisitor:
 
     # -Instance Methods
     def visit_module(self, node: NodeModule) -> None:
+        for statement in node.statements:
+            statement.accept(self)
+
+    def visit_statement_block(self, node: NodeStmtBlock) -> None:
         for statement in node.statements:
             statement.accept(self)
 

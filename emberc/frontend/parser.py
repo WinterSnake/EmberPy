@@ -12,7 +12,7 @@ from collections.abc import Iterator
 from .token import Token
 from ..middleware.nodes import (
     Node, NodeExpr, NodeModule,
-    NodeStmtDeclVar, NodeStmtExpr,
+    NodeStmtDeclVar, NodeStmtBlock, NodeStmtExpr,
     NodeExprBinary, NodeExprUnary, NodeExprGroup,
     NodeExprAssign, NodeExprId, NodeExprLiteral,
 )
@@ -109,11 +109,14 @@ class Parser:
     def _parse_statement(self) -> Node:
         '''
         Grammar[Statement]
-        (statement_variable_declaration | statement_expression) ';';
+        statement_block |
+        ( (statement_declaration_variable | statement_expression) ';');
         '''
         node: Node
-        if (token := self._match(*VARIABLE_TYPES)):
-            node = self._parse_statement_variable_declaration(token)
+        if (self._consume(Token.Type.LBrace)):
+            node = self._parse_statement_block()
+        elif (token := self._match(*VARIABLE_TYPES)):
+            node = self._parse_statement_declaration_variable(token)
         else:
             node = self._parse_statement_expression()
         # -TODO: Error Handling
@@ -121,9 +124,23 @@ class Parser:
             pass
         return node
 
-    def _parse_statement_variable_declaration(self, token: Token) -> Node:
+    def _parse_statement_block(self) -> Node:
         '''
-        Grammar[Statement]
+        Grammar[Statement::Declartion::Block]
+        '{' statement* '}';
+        '''
+        statements: list[Node] = []
+        while not self._consume(Token.Type.RBrace):
+            # -TODO: Error Handling
+            if self._peek() is None:
+                break
+            node = self._parse_statement()
+            statements.append(node)
+        return NodeStmtBlock(statements)
+
+    def _parse_statement_declaration_variable(self, token: Token) -> Node:
+        '''
+        Grammar[Statement::Declartion::Variable]
         TYPE IDENTIFIER ('=' expression)?;
         '''
         _id = self._next()
@@ -152,7 +169,7 @@ class Parser:
 
     def _parse_expression_assignment(self) -> NodeExpr:
         '''
-        Grammar[Expression]
+        Grammar[Expression::Assignment]
         (IDENTIFIER '=' expression_assignment) | expression_binary;
         '''
         node: NodeExpr = self._parse_expression_binary()
