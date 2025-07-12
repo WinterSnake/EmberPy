@@ -7,18 +7,14 @@
 
 ## Imports
 from __future__ import annotations
-from collections.abc import Callable
-from typing import Any, Protocol
+from collections.abc import Callable, Sequence
+from typing import Any, Protocol, Type
 from .nodes import (
     Node, NodeModule, NodeStmtBlock, NodeStmtConditional, NodeStmtLoop,
-    NodeDeclVariable, NodeStmtExpression, NodeExprAssignment,
+    NodeDeclFunction, NodeDeclVariable, NodeStmtExpression, NodeExprAssignment,
     NodeExprCall, NodeExprBinary, NodeExprUnary, 
     NodeExprGroup, NodeExprVariable, NodeExprLiteral
 )
-
-## Constants
-LITERAL: Type
-ENVIRONMENT: Type
 
 
 ## Classes
@@ -42,7 +38,7 @@ class SystemCallable:
     def call(
         self, interpreter: InterpreterVisitor, *arguments: LITERAL
     ) -> LITERAL | None:
-        if not args:
+        if not arguments:
             return self.func()
         return self.func(*arguments)
 
@@ -52,6 +48,7 @@ class EmberFunction:
     def __init__(self, parameters: Sequence[str] | None, body: Node) -> None:
         self.parameters: Sequence[str] | None = parameters
         self.body: Node = body
+        self.arity: int = len(parameters) if parameters is not None else 0
 
     # -Instance Methods
     def call(
@@ -59,18 +56,12 @@ class EmberFunction:
     ) -> LITERAL | None:
         interpreter.push()
         environment = interpreter.current_environment
-        if self.arguments:
+        if self.parameters:
             for parameter, argument in zip(self.parameters, arguments):
-                environment[argument] = argument
-        self.body.accept(interpreter)
+                environment[parameter] = argument
+        value = self.body.accept(interpreter)
         interpreter.pop()
-
-    # -Property
-    @property
-    def arity(self) -> int:
-        if self.parameters is None:
-            return 0
-        return len(self.parameters)
+        return value
 
 
 class InterpreterVisitor:
@@ -119,7 +110,7 @@ class InterpreterVisitor:
 
     def visit_declaration_function(self, node: NodeDeclFunction) -> None:
         environment = self.current_environment
-        environment[node.id] = EmberFunction(node.arguments, node.body)
+        environment[node.id] = EmberFunction(node.parameters, node.body)
 
     def visit_declaration_variable(self, node: NodeDeclVariable) -> None:
         environment = self.current_environment
@@ -210,7 +201,7 @@ class InterpreterVisitor:
             print(f"{{Interpreter::Expr::Call}}[{node.location}]{node}")
         callee = node.callee.accept(self)
         if callee.arity >= 0 and callee.arity != node.argument_count:
-            print(f"Error: Invalid invoke {callee}, expected: {node.arity}; got: {node.argument_count}")
+            print(f"Error: Invalid invoke {callee}, expected: {callee.arity}; got: {node.argument_count}")
             return None
         if node.has_arguments:
             assert node.arguments is not None

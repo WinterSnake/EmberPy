@@ -97,7 +97,7 @@ class Parser:
         self._lookahead = None
         return True
 
-    def _match(self, *types: Token.Type) -> Token | None:
+    def _match(self, *types: Token.Type) -> bool:
         '''Returns next token if token matches expected type'''
         token = self._peek()
         if token is None or token.type not in types:
@@ -135,7 +135,7 @@ class Parser:
         # -Rule: Statement
         return self._parse_statement()
 
-    def _parse_declaration_function(self) -> None:
+    def _parse_declaration_function(self) -> Node:
         '''
         Grammar[Declaration::Function]
         'fn' IDENTIFIER '(' (TYPE IDENTIFIER (',' TYPE IDENTIFIER)*)? ')' ':' TYPE statement_block;
@@ -173,7 +173,7 @@ class Parser:
             parameters = [_parameter()]
             # -Parameters: 2+
             while self._consume(Token.Type.SymbolComma):
-                parameters.append(_argument())
+                parameters.append(_parameter())
             # -TODO: Error Handling
             assert self._consume(Token.Type.SymbolRParen)
         # -TODO: Error Handling
@@ -392,7 +392,7 @@ class Parser:
             print(f"[Parser::Expr::Unary::Prefix]")
         if self._match(*OPERATOR_UNARY.keys()):
             token = self._last_token
-            operator = OPERATOR_BINARY[token.type]
+            operator = OPERATOR_UNARY[token.type]
             node = self._parse_expression_unary_prefix()
             return NodeExprUnary(token.location, operator, node)
         return self._parse_expression_unary_postfix()
