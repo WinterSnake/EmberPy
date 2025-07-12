@@ -7,7 +7,7 @@
 
 ## Imports
 from __future__ import annotations
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from typing import cast
 from .token import Token
 from ..middleware.nodes import (
@@ -15,7 +15,7 @@ from ..middleware.nodes import (
     NodeStmtBlock, NodeStmtConditional, NodeStmtLoop,
     NodeDeclFunction, NodeDeclVariable, NodeStmtExpression,
     NodeStmtReturn, NodeExprAssignment, NodeExprCall,
-    NodeExprBinary, NodeExprUnary,
+    NodeExprLogical, NodeExprBinary, NodeExprUnary,
     NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
 
@@ -382,7 +382,7 @@ class Parser:
         '''
         if self.debug_mode:
             print(f"[Parser::Expr::Assign]")
-        node = self._parse_expression_binary()
+        node = self._parse_expression_logical()
         if self._consume(Token.Type.SymbolEq):
             location = self._last_token.location
             # -TODO: Error Handling
@@ -391,14 +391,46 @@ class Parser:
             node = NodeExprAssignment(location, node.id, r_value)
         return node
 
+    def _parse_expression_logical(self) -> NodeExpr:
+        '''
+        Grammar[Expression::Logical]
+        expression_binary ( ('and' | 'or) expression_binary)*;
+        '''
+        # -Internal Functions
+        def _logical_or() -> NodeExpr:
+            '''
+            logical_and ("or" logical_and)*;
+            '''
+            node = _logical_and()
+            while self._match(Token.Type.KeywordOr):
+                token = self._last_token
+                operator = NodeExprLogical.Type.Or
+                rhs = _logical_and()
+                node = NodeExprLogical(token.location, operator, node, rhs)
+            return node
+
+        def _logical_and() -> NodeExpr:
+            '''
+            expression_binary ("and" expression_binary)*;
+            '''
+            node = self._parse_expression_binary()
+            while self._match(Token.Type.KeywordAnd):
+                token = self._last_token
+                operator = NodeExprLogical.Type.And
+                rhs = self._parse_expression_binary()
+                node = NodeExprLogical(token.location, operator, node, rhs)
+            return node
+
+        # -Body
+        return _logical_or()
+
     def _parse_expression_binary(self) -> NodeExpr:
         '''
         Grammar[Expression::Binary]
-        expression_unary_prefix ( ('+', '-', '*', '/', '%', '<', '>', '>=', '<=', '==', '!=') expression_unary_prefix)*;
+        expression_unary_prefix ( ('+' | '-' | '*' | '/' | '%' | '<' | '>' | '>=' | '<=' | '==' | '!=') expression_unary_prefix)*;
         '''
         if self.debug_mode:
             print(f"[Parser::Expr::Binary]")
-        # -Internal Functions
         def _equality() -> NodeExpr:
             '''
             comparison ( ("==" | "!=") comparison)*;

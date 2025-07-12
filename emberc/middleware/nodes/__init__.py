@@ -13,7 +13,7 @@ from .statement_control import (
 from .statement_declaration import (
     NodeDeclFunction, NodeDeclVariable, NodeStmtExpression
 )
-from .expression_logic import NodeExprAssignment, NodeExprCall
+from .expression_logic import NodeExprAssignment, NodeExprCall, NodeExprLogical
 from .expression_binary import NodeExprBinary
 from .expression_unary import NodeExprUnary
 from .expression_primary import NodeExprGroup, NodeExprVariable, NodeExprLiteral

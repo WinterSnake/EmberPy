@@ -6,10 +6,22 @@
 ##-------------------------------##
 
 ## Imports
+from __future__ import annotations
+from enum import IntEnum, auto
 from typing import Any, Sequence
 from .core import NodeExpr
 from .visitor import NodeVisitor
 from ...location import Location
+
+
+## Functions
+def _get_operator_str(_type: NodeExprLogical.Type) -> str:
+    """Returns the char/string of a given binary operator"""
+    match _type:
+        case NodeExprLogical.Type.Or:
+            return 'and'
+        case NodeExprLogical.Type.And:
+            return 'or'
 
 
 ## Classes
@@ -72,3 +84,34 @@ class NodeExprCall(NodeExpr):
         if self.arguments is None:
             return 0
         return len(self.arguments)
+
+
+class NodeExprLogical(NodeExpr):
+    """
+    Ember Node: Expression :: Logical
+    Represents an AST node of a logical operator
+    """
+
+    # -Constructor
+    def __init__(
+        self, location: Location, operator: NodeExprLogical.Type,
+        lhs: NodeExpr, rhs: NodeExpr
+    ) -> None:
+        super().__init__(location)
+        self.operator: NodeExprLogical.Type = operator
+        self.lhs: NodeExpr = lhs
+        self.rhs: NodeExpr = rhs
+
+    # -Dunder Methods
+    def __str__(self) -> str:
+        return f"(({self.lhs}) {self.operator.name} ({self.rhs}))"
+
+    # -Instance Methods
+    def accept(self, visitor: NodeVisitor) -> Any:
+        return visitor.visit_expression_logical(self)
+
+    # -Sub-Classes
+    class Type(IntEnum):
+        '''Logical Operator Type'''
+        And = auto()
+        Or = auto()

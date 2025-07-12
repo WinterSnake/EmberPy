@@ -44,6 +44,8 @@ class Token:
         KeywordReturn = auto()
         KeywordIf = auto()
         KeywordElse = auto()
+        KeywordAnd = auto()
+        KeywordOr = auto()
         KeywordWhile = auto()
         KeywordDo = auto()
         KeywordFor = auto()

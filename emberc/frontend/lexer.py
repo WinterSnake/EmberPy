@@ -23,6 +23,8 @@ KEYWORDS: dict[str, Token.Type] = {
     'return': Token.Type.KeywordReturn,
     'if': Token.Type.KeywordIf,
     'else': Token.Type.KeywordElse,
+    'and': Token.Type.KeywordAnd,
+    'or': Token.Type.KeywordOr,
     'while': Token.Type.KeywordWhile,
     'do': Token.Type.KeywordDo,
     'for': Token.Type.KeywordFor,

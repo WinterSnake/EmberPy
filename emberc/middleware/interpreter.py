@@ -8,12 +8,12 @@
 ## Imports
 from __future__ import annotations
 from collections.abc import Callable, Sequence
-from typing import Any, Protocol, Type
+from typing import Any, Protocol, Type, cast
 from .nodes import (
     Node, NodeModule, NodeDeclFunction, NodeDeclVariable,
     NodeStmtBlock, NodeStmtConditional, NodeStmtLoop, NodeStmtReturn,
     NodeStmtExpression, NodeExprAssignment, NodeExprCall,
-    NodeExprBinary, NodeExprUnary, NodeExprGroup,
+    NodeExprLogical, NodeExprBinary, NodeExprUnary, NodeExprGroup,
     NodeExprVariable, NodeExprLiteral
 )
 
@@ -167,6 +167,7 @@ class InterpreterVisitor:
         if self.debug_mode:
             print(f"[Interpreter::Stmt::Loop]")
         call_stack = self.current_call_stack
+        value = node.condition.accept(self)
         while node.condition.accept(self):
             node.body.accept(self)
             if call_stack is not None and call_stack['exit']:
@@ -198,6 +199,17 @@ class InterpreterVisitor:
         value = node.expression.accept(self)
         environment[node.id] = value
         return value
+
+    def visit_expression_logical(self, node: NodeExprLogical) -> bool:
+        if self.debug_mode:
+            print(f"[Interpreter::Expr::Logical]")
+        logic = bool(node.lhs.accept(self))
+        if not logic and node.operator is NodeExprLogical.Type.And:
+            return False
+        elif logic and node.operator is NodeExprLogical.Type.Or:
+            return True
+        else:
+            return bool(node.rhs.accept(self))
 
     def visit_expression_binary(self, node: NodeExprBinary) -> LITERAL:
         if self.debug_mode:
@@ -273,7 +285,9 @@ class InterpreterVisitor:
     def run(node: Node, debug_mode: bool = False):
         interpreter = InterpreterVisitor(debug_mode)
         node.accept(interpreter)
-        interpreter.current_environment['__start__'].call(interpreter)
+        cast(
+            EmberCallable, interpreter.current_environment['__start__']
+        ).call(interpreter)
 
     # -Properties
     @property
