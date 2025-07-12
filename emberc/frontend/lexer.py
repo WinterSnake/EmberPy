@@ -20,6 +20,7 @@ SYMBOLS: tuple[str, ...] = (
 )
 KEYWORDS: dict[str, Token.Type] = {
     'fn': Token.Type.KeywordFunction,
+    'return': Token.Type.KeywordReturn,
     'if': Token.Type.KeywordIf,
     'else': Token.Type.KeywordElse,
     'while': Token.Type.KeywordWhile,

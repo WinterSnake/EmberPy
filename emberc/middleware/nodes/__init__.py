@@ -7,7 +7,9 @@
 
 ## Imports
 from .core import Node, NodeExpr, NodeModule
-from .statement_control import NodeStmtBlock, NodeStmtConditional, NodeStmtLoop
+from .statement_control import (
+    NodeStmtBlock, NodeStmtConditional, NodeStmtLoop, NodeStmtReturn,
+)
 from .statement_declaration import (
     NodeDeclFunction, NodeDeclVariable, NodeStmtExpression
 )

@@ -14,7 +14,7 @@ from ..middleware.nodes import (
     Node, NodeExpr, NodeModule,
     NodeStmtBlock, NodeStmtConditional, NodeStmtLoop,
     NodeDeclFunction, NodeDeclVariable, NodeStmtExpression,
-    NodeExprAssignment, NodeExprCall,
+    NodeStmtReturn, NodeExprAssignment, NodeExprCall,
     NodeExprBinary, NodeExprUnary,
     NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
@@ -209,7 +209,7 @@ class Parser:
     def _parse_statement(self) -> Node:
         '''
         Grammar[Statement]
-        statement_if | statement_while | statement_block | statment_expression;
+        statement_if | statement_while | statement_block | statement_return | statment_expression;
         '''
         if self.debug_mode:
             print(f"[Parser::Stmt]")
@@ -222,6 +222,9 @@ class Parser:
         # -Rule: Block
         elif self._consume(Token.Type.SymbolLBrace):
             return self._parse_statement_block()
+        # -Rule: Return
+        elif self._consume(Token.Type.KeywordReturn):
+            return self._parse_statement_return()
         # -Rule: Expression
         return self._parse_statement_expression()
 
@@ -272,6 +275,19 @@ class Parser:
             node = self._parse_declaration()
             body.append(node)
         return NodeStmtBlock(body)
+
+    def _parse_statement_return(self) -> Node:
+        '''
+        Grammar[Statement::Return]
+        'return' expression? ';';
+        '''
+        location = self._last_token.location
+        value: NodeExpr | None = None
+        if not self._consume(Token.Type.SymbolSemicolon):
+            value = self._parse_expression()
+            # -TODO: Error Handling
+            assert self._consume(Token.Type.SymbolSemicolon)
+        return NodeStmtReturn(value)
 
     def _parse_statement_expression(self) -> Node:
         '''

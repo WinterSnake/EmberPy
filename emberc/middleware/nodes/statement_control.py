@@ -72,3 +72,22 @@ class NodeStmtLoop(Node):
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:
         return visitor.visit_statement_loop(self)
+
+
+class NodeStmtReturn(Node):
+    """
+    Ember Node: Statement :: Return
+    Represents an AST node of a return statement with its value
+    """
+
+    # -Constructor
+    def __init__(self, expression: NodeExpr | None) -> None:
+        self.expression: NodeExpr | None = expression
+
+    # -Dunder Methods
+    def __str__(self) -> str:
+        return f"Return({self.expression})"
+
+    # -Instance Methods
+    def accept(self, visitor: NodeVisitor) -> Any:
+        return visitor.visit_statement_return(self)

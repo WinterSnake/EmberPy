@@ -41,6 +41,7 @@ class Token:
         LiteralFalse = auto()
         # -Keywords
         KeywordFunction = auto()
+        KeywordReturn = auto()
         KeywordIf = auto()
         KeywordElse = auto()
         KeywordWhile = auto()
