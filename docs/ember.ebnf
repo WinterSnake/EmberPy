@@ -11,7 +11,7 @@ expression_assignment: IDENTIFIER '=' expression_assignment | expression_binary;
 expression_binary: expression_unary_prefix ( ('+', '-', '*', '/', '%', '<', '>', '>=', '<=', '==', '!=') expression_unary_prefix)*;
 expression_unary_prefix: ('-' | '!') expression_unary_prefix | expression_unary_postfix;
 expression_unary_postfix: expression_primary (expression_unary_postfix_call)*;
-expression_unary_postfix_call: ( '(' expression (',' expression)* ')' );
+expression_unary_postfix_call: ( '(' (expression (',' expression)*)? ')' );
 expression_primary: IDENTIFIER | expression_literal | '(' expression ')';
 expression_literal: BOOLEAN | NUMBER;
 

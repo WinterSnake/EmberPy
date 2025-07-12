@@ -342,14 +342,17 @@ class Parser:
         # -Internal Functions
         def _call(node: NodeExpr) -> NodeExpr:
             '''
-            ( '(' expression (',' expression)* ')' );
+            ( '(' (expression (',' expression)*)? ')' );
             '''
             if self.debug_mode:
                 print(f"[Parser::Expr::Unary::Postfix::Call]")
             location = self._last_token.location
-            arguments: list[NodeExpr] = []
-            argument = self._parse_expression()
-            arguments.append(argument)
+            # -Arguments: 0
+            if self._consume(Token.Type.SymbolRParen):
+                return NodeExprCall(location, node, None)
+            # -Arguments: 1
+            arguments: list[NodeExpr] = [self._parse_expression()]
+            # -Arguments: 2+
             while self._consume(Token.Type.SymbolComma):
                 argument = self._parse_expression()
                 arguments.append(argument)
