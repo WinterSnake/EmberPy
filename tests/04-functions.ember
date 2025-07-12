@@ -8,8 +8,9 @@ fn __start__(): void
 
 fn add(int8 a, int8 b): int8
 {
-	print(a + b);
+	return a + b;
 }
 
+int8 c = add(8, 10);
+print(c);
 __start__();
-add(10, 8);

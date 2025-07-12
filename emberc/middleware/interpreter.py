@@ -10,10 +10,11 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from typing import Any, Protocol, Type
 from .nodes import (
-    Node, NodeModule, NodeStmtBlock, NodeStmtConditional, NodeStmtLoop,
-    NodeDeclFunction, NodeDeclVariable, NodeStmtExpression, NodeExprAssignment,
-    NodeExprCall, NodeExprBinary, NodeExprUnary, 
-    NodeExprGroup, NodeExprVariable, NodeExprLiteral
+    Node, NodeModule, NodeDeclFunction, NodeDeclVariable,
+    NodeStmtBlock, NodeStmtConditional, NodeStmtLoop, NodeStmtReturn,
+    NodeStmtExpression, NodeExprAssignment, NodeExprCall,
+    NodeExprBinary, NodeExprUnary, NodeExprGroup,
+    NodeExprVariable, NodeExprLiteral
 )
 
 
@@ -54,14 +55,13 @@ class EmberFunction:
     def call(
         self, interpreter: InterpreterVisitor, *arguments: LITERAL
     ) -> LITERAL | None:
-        interpreter.push()
+        interpreter.push_call_stack()
         environment = interpreter.current_environment
         if self.parameters:
             for parameter, argument in zip(self.parameters, arguments):
                 environment[parameter] = argument
-        value = self.body.accept(interpreter)
-        interpreter.pop()
-        return value
+        self.body.accept(interpreter)
+        return interpreter.pop_call_stack()
 
 
 class InterpreterVisitor:
@@ -73,18 +73,37 @@ class InterpreterVisitor:
         self.environments: list[ENVIRONMENT] = [{
             'print': SystemCallable(print, -1)
         }]
+        self.call_stack: list[CALL_STACK] = []
 
     # -Instance Methods: Environment
-    def pop(self) -> None:
+    def pop_call_stack(self) -> LITERAL | None:
+        '''Pop last call stack from interpreter and return value'''
+        if self.debug_mode:
+            print("\tPop call stack")
+        call_stack = self.call_stack.pop()
+        self.pop_env()
+        return call_stack['value']
+
+    def pop_env(self) -> None:
         '''Pop last environment on the stack'''
         if self.debug_mode:
-            print("Pop environment")
+            print("\tPop environment")
         self.environments.pop()
 
-    def push(self) -> None:
+    def push_call_stack(self) -> None:
+        '''Push new call stack into interpreter'''
+        if self.debug_mode:
+            print("\tPush call stack")
+        self.push_env()
+        self.call_stack.append({
+            'exit': False,
+            'value': None,
+        })
+
+    def push_env(self) -> None:
         '''Push new environment on the stack'''
         if self.debug_mode:
-            print("Push environment")
+            print("\tPush environment")
         self.environments.append({})
 
     def _get_variable(self, _id: str) -> LITERAL | None:
@@ -122,10 +141,13 @@ class InterpreterVisitor:
     def visit_statement_block(self, node: NodeStmtBlock) -> None:
         if self.debug_mode:
             print(f"[Interpreter::Stmt::Block]")
-        self.push()
+        call_stack = self.current_call_stack
+        self.push_env()
         for child in node.body:
             child.accept(self)
-        self.pop()
+            if call_stack is not None and call_stack['exit']:
+                break
+        self.pop_env()
 
     def visit_statement_conditional(self, node: NodeStmtConditional) -> None:
         if self.debug_mode:
@@ -140,8 +162,24 @@ class InterpreterVisitor:
     def visit_statement_loop(self, node: NodeStmtLoop) -> None:
         if self.debug_mode:
             print(f"[Interpreter::Stmt::Loop]")
+        call_stack = self.current_call_stack
         while node.condition.accept(self):
             node.body.accept(self)
+            if call_stack is not None and call_stack['exit']:
+                break
+
+    def visit_statement_return(self, node: NodeStmtReturn) -> None:
+        if self.debug_mode:
+            print(f"[Interpreter::Stmt::Return]")
+        value: LITERAL | None = None
+        if node.expression is not None:
+            value = node.expression.accept(self)
+        call_stack = self.current_call_stack
+        if call_stack is None:
+            print(f"Error: Invalid return statement")
+        else:
+            call_stack['exit'] = True
+            call_stack['value'] = value
 
     def visit_statement_expression(self, node: NodeStmtExpression) -> None:
         if self.debug_mode:
@@ -237,7 +275,14 @@ class InterpreterVisitor:
     def current_environment(self) -> ENVIRONMENT:
         return self.environments[-1]
 
+    @property
+    def current_call_stack(self) -> CALL_STACK | None:
+        if self.call_stack is None:
+            return None
+        return self.call_stack[-1]
+
 
 ## Body
 LITERAL = bool | int | EmberCallable
 ENVIRONMENT = dict[str, LITERAL | None]
+CALL_STACK = dict[str, bool | LITERAL | None]
