@@ -7,6 +7,7 @@
 
 ## Imports
 from __future__ import annotations
+from collections.abc import Callable
 from typing import Any
 from .nodes import (
     Node, NodeModule, NodeStmtBlock, NodeStmtConditional, NodeStmtLoop,
@@ -16,8 +17,8 @@ from .nodes import (
 )
 
 ## Constants
-ENVIRONMENT = dict[str, bool | int | None]
-LITERAL = bool | int
+LITERAL = bool | int | Callable[..., Any]
+ENVIRONMENT = dict[str, LITERAL | None]
 
 
 ## Classes
@@ -44,7 +45,7 @@ class InterpreterVisitor:
             print("Push environment")
         self.environments.append({})
 
-    def _get_variable(self, _id: str) -> bool | int | None:
+    def _get_variable(self, _id: str) -> LITERAL | None:
         '''Iterate through each environment and return id value from closest to stack'''
         for env in reversed(self.environments):
             if _id in env:
@@ -155,6 +156,7 @@ class InterpreterVisitor:
         callee = node.callee.accept(self)
         if not node.has_arguments:
             return callee()
+        assert node.arguments is not None
         args = tuple(arg.accept(self) for arg in node.arguments)
         return callee(*args)
 
