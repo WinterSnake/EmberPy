@@ -138,7 +138,7 @@ class Parser:
     def _parse_declaration_function(self) -> Node:
         '''
         Grammar[Declaration::Function]
-        'fn' IDENTIFIER '(' (TYPE IDENTIFIER (',' TYPE IDENTIFIER)*)? ')' ':' TYPE statement_block;
+        'fn' IDENTIFIER '(' (TYPE IDENTIFIER (',' TYPE IDENTIFIER)*)? ')' ':' TYPE statement;
         '''
         if self.debug_mode:
             print(f"[Parser::Decl::Function]")
@@ -183,8 +183,8 @@ class Parser:
         _type = self._last_token
         # -TODO: Error Handling
         assert self._consume(Token.Type.SymbolLBrace)
-        body = cast(NodeStmtBlock, self._parse_statement_block())
-        return NodeDeclFunction(_id.value, parameters, body.body)
+        body = self._parse_statement()
+        return NodeDeclFunction(_id.value, parameters, body)
 
     def _parse_declaration_variable(self) -> Node:
         '''
@@ -209,7 +209,7 @@ class Parser:
     def _parse_statement(self) -> Node:
         '''
         Grammar[Statement]
-        statement_if | statement_while | statement_for |
+        statement_if | statement_while | statement_for | statement_do |
         statement_block | statement_return | statment_expression;
         '''
         if self.debug_mode:
@@ -220,6 +220,9 @@ class Parser:
         # -Rule: While
         elif self._consume(Token.Type.KeywordWhile):
             return self._parse_statement_while()
+        # -Rule: Do
+        elif self._consume(Token.Type.KeywordDo):
+            return self._parse_statement_do()
         # -Rule: For
         elif self._consume(Token.Type.KeywordFor):
             return self._parse_statement_for()
@@ -265,11 +268,33 @@ class Parser:
         body = self._parse_statement()
         return NodeStmtLoop(condition, body)
 
+    def _parse_statement_do(self) -> Node:
+        '''
+        Grammar[Statement::Do]
+        'do' '{' declaration* '}' 'while' '(' expression ')' ';';
+        '''
+        if self.debug_mode:
+            print(f"[Parser::Stmt::Do]")
+        # -TODO: Error Handling
+        assert self._consume(Token.Type.SymbolLBrace)
+        body = self._parse_statement_block()
+        # -TODO: Error Handling
+        assert self._consume(Token.Type.KeywordWhile)
+        assert self._consume(Token.Type.SymbolLParen)
+        condition = self._parse_expression()
+        # -TODO: Error Handling
+        assert self._consume(Token.Type.SymbolRParen)
+        assert self._consume(Token.Type.SymbolSemicolon)
+        loop = NodeStmtLoop(condition, body)
+        return NodeStmtBlock([body, loop])
+
     def _parse_statement_for(self) -> Node:
         '''
         Grammar[Statement::For]
         'for' '(' (declaration_variable | statement_expression | ';') expression? ';' expression? ')' statement;
         '''
+        if self.debug_mode:
+            print(f"[Parser::Stmt::For]")
         # -TODO: Error Handling
         assert self._consume(Token.Type.SymbolLParen)
         # -Initializer

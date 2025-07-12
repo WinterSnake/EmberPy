@@ -24,6 +24,7 @@ KEYWORDS: dict[str, Token.Type] = {
     'if': Token.Type.KeywordIf,
     'else': Token.Type.KeywordElse,
     'while': Token.Type.KeywordWhile,
+    'do': Token.Type.KeywordDo,
     'for': Token.Type.KeywordFor,
     # -Types
     'void': Token.Type.KeywordVoid,

@@ -7,13 +7,13 @@
 
 ## Imports
 from typing import Any, Sequence
-from .core import Node, NodeContainer, NodeExpr
+from .core import Node, NodeExpr
 from .visitor import NodeVisitor
 from ...location import Location
 
 
 ## Classes
-class NodeDeclFunction(NodeContainer):
+class NodeDeclFunction(Node):
     """
     Ember Node: Declaration :: Function
     Represents an AST node of a function declaration
@@ -21,11 +21,11 @@ class NodeDeclFunction(NodeContainer):
 
     # -Constructor
     def __init__(
-        self, _id: str, parameters: Sequence[str] | None, body: Sequence[Node]
+        self, _id: str, parameters: Sequence[str] | None, body: Node
     ) -> None:
-        super().__init__(body)
         self.id: str = _id
         self.parameters: Sequence[str] | None = parameters
+        self.body: Node = body
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:

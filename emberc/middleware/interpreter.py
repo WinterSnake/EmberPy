@@ -47,10 +47,10 @@ class SystemCallable:
 class EmberFunction:
     # -Constructor
     def __init__(
-        self, parameters: Sequence[str] | None, body: Sequence[Node]
+        self, parameters: Sequence[str] | None, body: Node
     ) -> None:
         self.parameters: Sequence[str] | None = parameters
-        self.body: Sequence[Node] = body
+        self.body: Node = body
         self.arity: int = len(parameters) if parameters is not None else 0
 
     # -Instance Methods
@@ -64,10 +64,7 @@ class EmberFunction:
         if self.parameters:
             for parameter, argument in zip(self.parameters, arguments):
                 environment[parameter] = argument
-        for child in self.body:
-            child.accept(interpreter)
-            if call_stack['exit']:
-                break
+        self.body.accept(interpreter)
         return interpreter.pop_call_stack()
 
 
@@ -284,7 +281,7 @@ class InterpreterVisitor:
 
     @property
     def current_call_stack(self) -> CALL_STACK | None:
-        if self.call_stack is None:
+        if not self.call_stack:
             return None
         return self.call_stack[-1]
 
