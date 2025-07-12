@@ -273,6 +273,7 @@ class InterpreterVisitor:
     def run(node: Node, debug_mode: bool = False):
         interpreter = InterpreterVisitor(debug_mode)
         node.accept(interpreter)
+        interpreter.current_environment['__start__'].call(interpreter)
 
     # -Properties
     @property

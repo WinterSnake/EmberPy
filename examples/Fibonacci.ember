@@ -18,5 +18,3 @@ fn __start__() : void
 	int32 i = fibonacci(29);
 	print(i);
 }
-__start__();
-

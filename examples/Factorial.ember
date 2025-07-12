@@ -9,5 +9,3 @@ fn __start__(): void
 	int32 i = factorial(8);
 	print(i);
 }
-
-__start__();

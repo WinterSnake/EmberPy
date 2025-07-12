@@ -147,6 +147,8 @@ class Parser:
             '''
             TYPE IDENTIFIER
             '''
+            if self.debug_mode:
+                print(f"[Parser::Decl::Function::Parameter]")
             # -TODO: Error Handling
             assert self._match(*VARIABLE_TYPES)
             _type = self._last_token
@@ -182,7 +184,6 @@ class Parser:
         assert self._match(*VARIABLE_TYPES)
         _type = self._last_token
         # -TODO: Error Handling
-        assert self._consume(Token.Type.SymbolLBrace)
         body = self._parse_statement()
         return NodeDeclFunction(_id.value, parameters, body)
 
@@ -214,24 +215,18 @@ class Parser:
         '''
         if self.debug_mode:
             print(f"[Parser::Stmt]")
-        # -Rule: If
-        if self._consume(Token.Type.KeywordIf):
-            return self._parse_statement_if()
-        # -Rule: While
-        elif self._consume(Token.Type.KeywordWhile):
-            return self._parse_statement_while()
-        # -Rule: Do
-        elif self._consume(Token.Type.KeywordDo):
-            return self._parse_statement_do()
-        # -Rule: For
-        elif self._consume(Token.Type.KeywordFor):
-            return self._parse_statement_for()
-        # -Rule: Block
-        elif self._consume(Token.Type.SymbolLBrace):
-            return self._parse_statement_block()
-        # -Rule: Return
-        elif self._consume(Token.Type.KeywordReturn):
-            return self._parse_statement_return()
+        rule_table: dict[Token.Type, Callable[[], Node]] = {
+            Token.Type.KeywordIf: self._parse_statement_if,
+            Token.Type.KeywordWhile: self._parse_statement_while,
+            Token.Type.KeywordDo: self._parse_statement_do,
+            Token.Type.KeywordFor: self._parse_statement_for,
+            Token.Type.KeywordReturn: self._parse_statement_return,
+            Token.Type.SymbolLBrace: self._parse_statement_block,
+        }
+        # -Rule: Table Lookup
+        if self._match(*rule_table.keys()):
+            token = self._last_token
+            return rule_table[token.type]()
         # -Rule: Expression
         return self._parse_statement_expression()
 

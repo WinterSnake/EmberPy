@@ -1,13 +1,15 @@
-int8 a = 0;
-while (a < 10)
-{
-	print(a);
-	a = a + 1;
-}
+fn __start__():void{
+	int8 a = 0;
+	while (a < 10)
+	{
+		print(a);
+		a = a + 1;
+	}
 
-int8 f = 0;
-do
-{
-	print(f * 5);
-	f = f + 1;
-} while(f <= 10);
+	int8 f = 0;
+	do
+	{
+		print(f * 5);
+		f = f + 1;
+	} while(f <= 10);
+}
