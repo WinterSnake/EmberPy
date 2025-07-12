@@ -45,6 +45,7 @@ class Token:
         KeywordIf = auto()
         KeywordElse = auto()
         KeywordWhile = auto()
+        KeywordFor = auto()
         # -Keywords: Types
         KeywordVoid = auto()
         KeywordBoolean = auto()

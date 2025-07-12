@@ -209,7 +209,8 @@ class Parser:
     def _parse_statement(self) -> Node:
         '''
         Grammar[Statement]
-        statement_if | statement_while | statement_block | statement_return | statment_expression;
+        statement_if | statement_while | statement_for |
+        statement_block | statement_return | statment_expression;
         '''
         if self.debug_mode:
             print(f"[Parser::Stmt]")
@@ -217,8 +218,11 @@ class Parser:
         if self._consume(Token.Type.KeywordIf):
             return self._parse_statement_if()
         # -Rule: While
-        if self._consume(Token.Type.KeywordWhile):
+        elif self._consume(Token.Type.KeywordWhile):
             return self._parse_statement_while()
+        # -Rule: For
+        elif self._consume(Token.Type.KeywordFor):
+            return self._parse_statement_for()
         # -Rule: Block
         elif self._consume(Token.Type.SymbolLBrace):
             return self._parse_statement_block()
@@ -260,6 +264,47 @@ class Parser:
         assert self._consume(Token.Type.SymbolRParen)
         body = self._parse_statement()
         return NodeStmtLoop(condition, body)
+
+    def _parse_statement_for(self) -> Node:
+        '''
+        Grammar[Statement::For]
+        'for' '(' (declaration_variable | statement_expression | ';') expression? ';' expression? ')' statement;
+        '''
+        # -TODO: Error Handling
+        assert self._consume(Token.Type.SymbolLParen)
+        # -Initializer
+        initializer: Node | None = None
+        if not self._consume(Token.Type.SymbolSemicolon):
+            if self._match(*VARIABLE_TYPES):
+                initializer = self._parse_declaration_variable()
+            else:
+                initializer = self._parse_statement_expression()
+        # -Condition
+        condition: NodeExpr | None = None
+        if not self._consume(Token.Type.SymbolSemicolon):
+            condition = self._parse_expression()
+            # -TODO: Error Handling
+            assert self._consume(Token.Type.SymbolSemicolon)
+        condition_location = self._last_token.location
+        # -Increment
+        increment: NodeExpr | None = None
+        if not self._consume(Token.Type.SymbolRParen):
+            increment = self._parse_expression()
+            # -TODO: Error Handling
+            assert self._consume(Token.Type.SymbolRParen)
+        body = self._parse_statement()
+        # -Desugar
+        if increment is not None:
+            body = NodeStmtBlock([body, increment])
+        if condition is None:
+            condition = NodeExprLiteral(
+                condition_location, NodeExprLiteral.Type.Boolean, True
+            )
+        body = NodeStmtLoop(condition, body)
+        if initializer is not None:
+            body = NodeStmtBlock([initializer, body])
+        return body
+
 
     def _parse_statement_block(self) -> Node:
         '''
