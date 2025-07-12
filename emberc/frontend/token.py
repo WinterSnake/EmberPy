@@ -40,10 +40,12 @@ class Token:
         LiteralTrue = auto()
         LiteralFalse = auto()
         # -Keywords
+        KeywordFunction = auto()
         KeywordIf = auto()
         KeywordElse = auto()
         KeywordWhile = auto()
         # -Keywords: Types
+        KeywordVoid = auto()
         KeywordBoolean = auto()
         KeywordInt8 = auto()
         KeywordInt16 = auto()
@@ -74,4 +76,5 @@ class Token:
         SymbolLBrace = auto()
         SymbolRBrace = auto()
         SymbolComma = auto()
+        SymbolColon = auto()
         SymbolSemicolon = auto()

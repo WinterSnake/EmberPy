@@ -1,4 +1,15 @@
-print();
-int8 a = 100;
-int8 b = 200;
-print(a + b);
+fn __start__(): void
+{
+	int8 a = 10;
+	int8 b = 20;
+	print(a + b);
+	print(a * 20);
+}
+
+fn add(int8 a, int8 b): int8
+{
+	print(a + b);
+}
+
+__start__();
+add(10, 8);

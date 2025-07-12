@@ -16,13 +16,15 @@ from ..location import Location
 SYMBOLS: tuple[str, ...] = (
     '+', '-', '*', '/', '%',
     '=', '!', '<', '>',
-    '(', ')', '{', '}', ',', ';',
+    '(', ')', '{', '}', ',', ':', ';',
 )
 KEYWORDS: dict[str, Token.Type] = {
+    'fn': Token.Type.KeywordFunction,
     'if': Token.Type.KeywordIf,
     'else': Token.Type.KeywordElse,
     'while': Token.Type.KeywordWhile,
     # -Types
+    'void': Token.Type.KeywordVoid,
     'bool': Token.Type.KeywordBoolean,
     'int8': Token.Type.KeywordInt8,
     'int16': Token.Type.KeywordInt16,
@@ -168,6 +170,8 @@ class Lexer:
                 symbol = Token.Type.SymbolRBrace
             case ',':
                 symbol = Token.Type.SymbolComma
+            case ':':
+                symbol = Token.Type.SymbolColon
             case ';':
                 symbol = Token.Type.SymbolSemicolon
             case _:

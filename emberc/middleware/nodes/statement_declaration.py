@@ -6,13 +6,43 @@
 ##-------------------------------##
 
 ## Imports
-from typing import Any
+from typing import Any, Sequence
 from .core import Node, NodeExpr
 from .visitor import NodeVisitor
 from ...location import Location
 
 
 ## Classes
+class NodeDeclFunction(Node):
+    """
+    Ember Node: Declaration :: Function
+    Represents an AST node of a function declaration
+    """
+
+    # -Constructor
+    def __init__(
+        self, _id: str, parameters: Sequence[str] | None, body: Node
+    ) -> None:
+        self.id: str = _id
+        self.parameters: Sequence[str] | None = parameters
+        self.body: Node = body
+
+    # -Instance Methods
+    def accept(self, visitor: NodeVisitor) -> Any:
+        visitor.visit_declaration_function(self)
+
+    # -Properties
+    @property
+    def has_parameters(self) -> bool:
+        return self.parameters is not None
+
+    @property
+    def parameter_count(self) -> int:
+        if self.parameters is None:
+            return 0
+        return len(self.parameters)
+
+
 class NodeDeclVariable(Node):
     """
     Ember Node: Declaration :: Variable

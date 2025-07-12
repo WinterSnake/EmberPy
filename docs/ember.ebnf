@@ -1,5 +1,6 @@
 module: declaration*;
-declaration: declaration_variable | statement;
+declaration: declaration_function | declaration_variable | statement;
+declaration_function: 'fn' IDENTIFIER '(' (TYPE IDENTIFIER (',' TYPE IDENTIFIER)*)? ')' ':' TYPE statement_block;
 declaration_variable: TYPE IDENTIFIER ('=' expression)? ';';
 statement: statement_if | statement_while | statement_block | statment_expression;
 statement_if: 'if' '(' expression ')' statement ('else' statement)?;

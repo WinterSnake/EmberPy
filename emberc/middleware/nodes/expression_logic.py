@@ -69,5 +69,6 @@ class NodeExprCall(NodeExpr):
 
     @property
     def argument_count(self) -> int:
-        assert self.arguments is not None
+        if self.arguments is None:
+            return 0
         return len(self.arguments)

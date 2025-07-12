@@ -8,7 +8,7 @@
 ## Imports
 from __future__ import annotations
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Protocol
 from .nodes import (
     Node, NodeModule, NodeStmtBlock, NodeStmtConditional, NodeStmtLoop,
     NodeDeclVariable, NodeStmtExpression, NodeExprAssignment,
@@ -17,11 +17,62 @@ from .nodes import (
 )
 
 ## Constants
-LITERAL = bool | int | Callable[..., Any]
-ENVIRONMENT = dict[str, LITERAL | None]
+LITERAL: Type
+ENVIRONMENT: Type
 
 
 ## Classes
+class EmberCallable(Protocol):
+    # -Instance Methods
+    def call(
+        self, interpreter: InterpreterVisitor, *args: LITERAL
+    ) -> LITERAL | None: ...
+
+    # -Properties
+    arity: int
+
+
+class SystemCallable:
+    # -Constructor
+    def __init__(self, func: Callable[..., Any], arity: int) -> None:
+        self.func: Callable[..., Any] = func
+        self.arity: int = arity
+
+    # -Instance Methods
+    def call(
+        self, interpreter: InterpreterVisitor, *arguments: LITERAL
+    ) -> LITERAL | None:
+        if not args:
+            return self.func()
+        return self.func(*arguments)
+
+
+class EmberFunction:
+    # -Constructor
+    def __init__(self, parameters: Sequence[str] | None, body: Node) -> None:
+        self.parameters: Sequence[str] | None = parameters
+        self.body: Node = body
+
+    # -Instance Methods
+    def call(
+        self, interpreter: InterpreterVisitor, *arguments: LITERAL
+    ) -> LITERAL | None:
+        interpreter.push()
+        environment = interpreter.current_environment
+        if self.arguments:
+            for parameter, argument in zip(self.parameters, arguments):
+                environment[argument] = argument
+        self.body.accept(interpreter)
+        interpreter.pop()
+
+    # -Property
+    @property
+    def arity(self) -> int:
+        if self.parameters is None:
+            return 0
+        return len(self.parameters)
+
+
 class InterpreterVisitor:
     """AST Traversal Pass: Interpreter"""
 
@@ -29,7 +80,7 @@ class InterpreterVisitor:
     def __init__(self, debug_mode: bool) -> None:
         self.debug_mode: bool = debug_mode
         self.environments: list[ENVIRONMENT] = [{
-            'print': print
+            'print': SystemCallable(print, -1)
         }]
 
     # -Instance Methods: Environment
@@ -65,6 +116,10 @@ class InterpreterVisitor:
             print(f"[Interpreter::Module]")
         for child in node.body:
             child.accept(self)
+
+    def visit_declaration_function(self, node: NodeDeclFunction) -> None:
+        environment = self.current_environment
+        environment[node.id] = EmberFunction(node.arguments, node.body)
 
     def visit_declaration_variable(self, node: NodeDeclVariable) -> None:
         environment = self.current_environment
@@ -124,7 +179,7 @@ class InterpreterVisitor:
             case NodeExprBinary.Type.Mul:
                 return lhs * rhs
             case NodeExprBinary.Type.Div:
-                return lhs / rhs
+                return lhs // rhs
             case NodeExprBinary.Type.Mod:
                 return lhs % rhs
             case NodeExprBinary.Type.Lt:
@@ -154,11 +209,14 @@ class InterpreterVisitor:
         if self.debug_mode:
             print(f"{{Interpreter::Expr::Call}}[{node.location}]{node}")
         callee = node.callee.accept(self)
-        if not node.has_arguments:
-            return callee()
-        assert node.arguments is not None
-        args = tuple(arg.accept(self) for arg in node.arguments)
-        return callee(*args)
+        if callee.arity >= 0 and callee.arity != node.argument_count:
+            print(f"Error: Invalid invoke {callee}, expected: {node.arity}; got: {node.argument_count}")
+            return None
+        if node.has_arguments:
+            assert node.arguments is not None
+            arguments = tuple(argument.accept(self) for argument in node.arguments)
+            return callee.call(self, *arguments)
+        return callee.call(self)
 
     def visit_expression_group(self, node: NodeExprGroup) -> LITERAL:
         if self.debug_mode:
@@ -187,3 +245,8 @@ class InterpreterVisitor:
     @property
     def current_environment(self) -> ENVIRONMENT:
         return self.environments[-1]
+
+
+## Body
+LITERAL = bool | int | EmberCallable
+ENVIRONMENT = dict[str, LITERAL | None]

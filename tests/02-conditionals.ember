@@ -1,19 +1,14 @@
 int8 a = 9;
 int8 b = 10;
 if (a == b - 1)
-	a;
+	print(a);
 
 if (false) { }
-else { 69; }
+else { print(69); }
 
-if (8 > 10)
-	100;
+if (8 > 10) { }
 else if (9 < 11)
-	420;
-else
-	69;
+	print(420);
+else { }
 
-if (10 != 10) {
-
-} else
-	777;
+if (10 != 10) { } else print(777);

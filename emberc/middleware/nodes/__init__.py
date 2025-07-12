@@ -8,7 +8,9 @@
 ## Imports
 from .core import Node, NodeExpr, NodeModule
 from .statement_control import NodeStmtBlock, NodeStmtConditional, NodeStmtLoop
-from .statement_declaration import NodeDeclVariable, NodeStmtExpression
+from .statement_declaration import (
+    NodeDeclFunction, NodeDeclVariable, NodeStmtExpression
+)
 from .expression_logic import NodeExprAssignment, NodeExprCall
 from .expression_binary import NodeExprBinary
 from .expression_unary import NodeExprUnary
@@ -18,7 +20,7 @@ from .expression_primary import NodeExprGroup, NodeExprVariable, NodeExprLiteral
 __all__: tuple[str, ...] = (
     "Node", "NodeExpr", "NodeModule",
     "NodeStmtBlock", "NodeStmtConditional", "NodeStmtLoop",
-    "NodeDeclVariable", "NodeStmtExpression",
+    "NodeDeclFunction", "NodeDeclVariable", "NodeStmtExpression",
     "NodeExprAssignment", "NodeExprCall",
     "NodeExprBinary", "NodeExprUnary",
     "NodeExprGroup", "NodeExprVariable", "NodeExprLiteral",

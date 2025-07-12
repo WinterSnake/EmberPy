@@ -14,7 +14,9 @@ if TYPE_CHECKING:
     from .statement_control import (
         NodeStmtBlock, NodeStmtConditional, NodeStmtLoop
     )
-    from .statement_declaration import NodeDeclVariable, NodeStmtExpression
+    from .statement_declaration import (
+        NodeDeclFunction, NodeDeclVariable, NodeStmtExpression
+    )
     from .expression_logic import NodeExprAssignment, NodeExprCall
     from .expression_binary import NodeExprBinary
     from .expression_unary import NodeExprUnary
@@ -32,6 +34,7 @@ class NodeVisitor(Protocol):
 
     # -Instance Methods
     def visit_module(self, node: NodeModule) -> Any: ...
+    def visit_declaration_function(self, node: NodeDeclFunction) -> Any: ...
     def visit_declaration_variable(self, node: NodeDeclVariable) -> Any: ...
     def visit_statement_block(self, node: NodeStmtBlock) -> Any: ...
     def visit_statement_conditional(self, node: NodeStmtConditional) -> Any: ...
