@@ -7,8 +7,8 @@
 
 ## Imports
 from __future__ import annotations
-import sys
 from collections.abc import Iterator
+from typing import cast
 from .token import Token
 from ..middleware.nodes import (
     Node, NodeExpr, NodeModule,
@@ -183,8 +183,8 @@ class Parser:
         _type = self._last_token
         # -TODO: Error Handling
         assert self._consume(Token.Type.SymbolLBrace)
-        body = self._parse_statement_block()
-        return NodeDeclFunction(_id.value, parameters, body)
+        body = cast(NodeStmtBlock, self._parse_statement_block())
+        return NodeDeclFunction(_id.value, parameters, body.body)
 
     def _parse_declaration_variable(self) -> Node:
         '''

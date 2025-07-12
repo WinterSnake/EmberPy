@@ -8,9 +8,14 @@ fn __start__(): void
 
 fn add(int8 a, int8 b): int8
 {
-	return a + b;
+	while (a < b)
+	{
+		print(a);
+		if (a == 6) return 69;
+		a = a + 1;
+	}
 }
 
-int8 c = add(8, 10);
+int8 c = add(1, 10);
 print(c);
 __start__();

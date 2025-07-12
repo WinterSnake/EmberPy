@@ -46,9 +46,11 @@ class SystemCallable:
 
 class EmberFunction:
     # -Constructor
-    def __init__(self, parameters: Sequence[str] | None, body: Node) -> None:
+    def __init__(
+        self, parameters: Sequence[str] | None, body: Sequence[Node]
+    ) -> None:
         self.parameters: Sequence[str] | None = parameters
-        self.body: Node = body
+        self.body: Sequence[Node] = body
         self.arity: int = len(parameters) if parameters is not None else 0
 
     # -Instance Methods
@@ -57,10 +59,15 @@ class EmberFunction:
     ) -> LITERAL | None:
         interpreter.push_call_stack()
         environment = interpreter.current_environment
+        call_stack = interpreter.current_call_stack
+        assert call_stack is not None
         if self.parameters:
             for parameter, argument in zip(self.parameters, arguments):
                 environment[parameter] = argument
-        self.body.accept(interpreter)
+        for child in self.body:
+            child.accept(interpreter)
+            if call_stack['exit']:
+                break
         return interpreter.pop_call_stack()
 
 
