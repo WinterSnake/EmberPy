@@ -15,12 +15,27 @@ TItem = TypeVar('TItem')
 TMatch = TypeVar('TMatch')
 
 
+## Functions
+def _get_match_comparable(
+    value: TItem, comparator: Callable[[TItem], TMatch] | None
+) -> TMatch:
+    """
+    Returns TMatch either by casting TItem to TMatch
+    or by calling the comparator to get TMatch from TItem
+    """
+    if comparator is not None:
+        return comparator(value)
+    return cast(TMatch, value)
+
+
+
 ## Classes
 class LookaheadBuffer(ABC, Generic[TItem, TMatch]):
     """
     Lookahead(1) Base
 
-    Defines an implementation for lookahead(1)
+    Defines an implementation for a lookahead(1) buffer
+    Sub-classes must implement a _next() method
     """
 
     # -Instance Methods
@@ -36,21 +51,28 @@ class LookaheadBuffer(ABC, Generic[TItem, TMatch]):
         return self._next()
 
     def _peek(self) -> TItem | None:
-        '''Returns T in buffer or sets buffer to next T and returns T'''
+        '''Returns T in buffer or sets buffer to next T and returns buffered T'''
         if self._buffer is None:
             self._buffer = self._next()
         return self._buffer
 
-    def _match(self, *matches: TMatch) -> TItem | Literal[False]:
-        '''Returns T if T matches given match inputs else returns False'''
+    def _consume(self, match: TMatch) -> bool:
+        '''Returns True if next T matches given match input else False'''
         value = self._peek()
         if value is None:
             return False
-        comparable: TMatch
-        if self._comparison:
-            comparable = self._comparison(value)
-        else:
-            comparable = cast(TMatch, value)
+        comparable: TMatch = _get_match_comparable(value, self._comparator)
+        if comparable != match:
+            return False
+        self._buffer = None
+        return True
+
+    def _match(self, *matches: TMatch) -> TItem | Literal[False]:
+        '''Returns T if next T matches given match inputs else returns False'''
+        value = self._peek()
+        if value is None:
+            return False
+        comparable: TMatch = _get_match_comparable(value, self._comparator)
         if comparable not in matches:
             return False
         self._buffer = None
@@ -59,4 +81,4 @@ class LookaheadBuffer(ABC, Generic[TItem, TMatch]):
 
     # -Properties
     _buffer: TItem | None
-    _comparison: Callable[[TItem], TMatch] | None
+    _comparator: Callable[[TItem], TMatch] | None

@@ -6,50 +6,41 @@
 
 ## Imports
 import sys
-from collections.abc import Iterator
+from collections.abc import Sequence
 from pathlib import Path
+from .errors import DebugLevel, EmberError
 from .frontend import Lexer, Parser, Token
-from .middleware.interpreter import InterpreterVisitor
+from .middleware.nodes import Node
 
 ## Constants
-DEBUG_MODE: bool = False
-DUMP_TOKENS: bool = False
+LEXER_LEVEL: DebugLevel = DebugLevel.Trace
+PARSER_LEVEL: DebugLevel = DebugLevel.Trace
 
 
 ## Functions
 def _entry() -> None:
-    global DEBUG_MODE, DUMP_TOKENS
-    if len(sys.argv) < 2:
-        print("No source file provided", file=sys.stderr)
-        usage()
-        return
-    source: Path | None = None
-    for arg in sys.argv[1:]:
-        if arg in ("-t", "--dump-tokens"):
-            DUMP_TOKENS = True
-        elif arg in ("-d", "--debug-mode"):
-            DEBUG_MODE = True
-        else:
-            source = Path(arg)
-    if source is None:
-        print("No source file provided", file=sys.stderr)
-        usage()
-        return
+    source: Path = Path("tests/00-operations.ember")
+    output = parse_source(source)
+    if isinstance(output, Sequence):
+        for err in output:
+            print(err.message, file=sys.stderr)
+        sys.exit(1)
+
+
+def parse_source(source: Path) -> Node | Sequence[EmberError]:
+    """Lex and parse a source file and return parsed AST or found errors"""
+    global LEXER_LEVEL, PARSER_LEVEL
     lexer: Lexer = Lexer(source)
-    token_iter: Iterator[Token] = lexer.lex()
-    if DUMP_TOKENS:
-        tokens = [token for token in token_iter]
-        for token in tokens:
-            print(token)
-        token_iter = iter(tokens)
-    parser: Parser = Parser(token_iter, DEBUG_MODE)
+    lexer.debug_level = LEXER_LEVEL
+    parser: Parser = Parser(lexer.lex())
+    parser.debug_level = PARSER_LEVEL
     ast = parser.parse()
-    InterpreterVisitor.run(ast, DEBUG_MODE)
+    errors = tuple((*lexer.errors, *parser.errors))
+    return errors if errors else ast
 
 
 def usage() -> None:
-    print("emberc [options] <file.ember>")
-    print("\t-t, --dump-tokens: print out all found tokens from given source file")
+    print("emberc <file.ember>")
 
 
 ## Body
