@@ -17,7 +17,7 @@ ERROR_TABLE: tuple[tuple[str, ...], ...] = (
     # -Lexer
     (
         "Unexpected character '{char}'",
-        "Unexpected symbol '{char}'",
+        "Unknown symbol '{char}'",
         "Unterminated multiline comment",
     ),
     # -Parser
@@ -64,7 +64,7 @@ class EmberError:
         message: str = ERROR_TABLE[index][self.code % 1000 - 1]
         if self.kwargs:
             message = message.format(**self.kwargs)
-        message: str = f"{step} Error {self.code} {message}"
+        message = f"{step} Error {self.code} {message}"
         if self.location:
             message = f"[{self.location}] {message}"
         return message
@@ -72,5 +72,5 @@ class EmberError:
     # -Class Properties
     # --Code: Lexer
     unexpected_character: ClassVar[int] = 1001
-    unexpected_symbol: ClassVar[int] = 1002
+    unknown_symbol: ClassVar[int] = 1002
     unterminated_comment_multiline: ClassVar[int] = 1003

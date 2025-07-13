@@ -11,6 +11,4 @@ from .parser import Parser
 from .token import Token
 
 ## Constants
-__all__: tuple[str, ...] = (
-    "Lexer", "Parser", "Token",
-)
+__all__: tuple[str, ...] = ("Lexer", "Parser", "Token")
