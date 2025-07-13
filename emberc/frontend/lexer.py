@@ -9,7 +9,7 @@
 from pathlib import Path
 from collections.abc import Iterator
 from typing import Any, TextIO
-from .lookahead_buffer import LookaheadBuffer, TKey
+from .lookahead_buffer import LookaheadBuffer
 from .token import Token
 from ..errors import DebugLevel, EmberError
 from ..location import Location
@@ -42,8 +42,6 @@ class Lexer(LookaheadBuffer[str, str]):
         self.errors: list[EmberError] = []
         # -Lookahead
         self._fp: TextIO
-        self._buffer: str | None = None
-        self._key: TKey = None
         # -State
         self.source: Path = source
         self.row: int = 1
@@ -52,6 +50,7 @@ class Lexer(LookaheadBuffer[str, str]):
 
     # -Instance Methods: Control
     def _next(self) -> str | None:
+        value: str | None
         value = self._fp.read(1)
         value = value if value else None
         if self.debug_level <= DebugLevel.Trace:

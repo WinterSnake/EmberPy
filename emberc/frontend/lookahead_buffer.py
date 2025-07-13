@@ -13,22 +13,22 @@ from typing import Generic, Literal, TypeVar, cast
 ## Constants
 TItem = TypeVar('TItem')
 TMatch = TypeVar('TMatch')
-TKey = Callable[[TItem], TMatch] | None
+type TKey[TItem, TMatch] = Callable[[TItem], TMatch] | None
 
 
 ## Functions
-def _get_match_key(value: TItem, key: TKey) -> TMatch:
+def _get_match_key(item: TItem, key: TKey[TItem, TMatch]) -> TMatch:
     """
     Returns TMatch either by casting TItem to TMatch
     or by calling the key to get TMatch from TItem
     """
     if key is not None:
-        return key(value)
-    return cast(TMatch, value)
+        return key(item)
+    return cast(TMatch, item)
 
 
 ## Classes
-class LookaheadBuffer(ABC, Generic[TItem, TMatch]):
+class LookaheadBuffer[TItem, TMatch](ABC):
     """
     Lookahead(1) Base
 
@@ -78,5 +78,5 @@ class LookaheadBuffer(ABC, Generic[TItem, TMatch]):
 
 
     # -Properties
-    _buffer: TItem | None
-    _key: TKey
+    _buffer: TItem | None = None
+    _key: TKey[TItem, TMatch] = None
