@@ -1,0 +1,13 @@
+/*
+	Ember Test: 00
+	__start__
+
+	/*
+		Nested multi-line comment support
+	*/
+*/
+
+fn __start__():void
+{
+	35 + 34;  // Exit: 69
+}

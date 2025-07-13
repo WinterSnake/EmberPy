@@ -13,20 +13,18 @@ from typing import Generic, Literal, TypeVar, cast
 ## Constants
 TItem = TypeVar('TItem')
 TMatch = TypeVar('TMatch')
+TKey = Callable[[TItem], TMatch] | None
 
 
 ## Functions
-def _get_match_comparable(
-    value: TItem, comparator: Callable[[TItem], TMatch] | None
-) -> TMatch:
+def _get_match_key(value: TItem, key: TKey) -> TMatch:
     """
     Returns TMatch either by casting TItem to TMatch
-    or by calling the comparator to get TMatch from TItem
+    or by calling the key to get TMatch from TItem
     """
-    if comparator is not None:
-        return comparator(value)
+    if key is not None:
+        return key(value)
     return cast(TMatch, value)
-
 
 
 ## Classes
@@ -43,7 +41,7 @@ class LookaheadBuffer(ABC, Generic[TItem, TMatch]):
     def _next(self) -> TItem | None: ...
 
     def _advance(self) -> TItem | None:
-        '''Returns T in buffer and resets buffer or returns next T'''
+        '''Returns TItem in buffer and resets buffer or returns next TItem'''
         if self._buffer:
             value = self._buffer
             self._buffer = None
@@ -51,29 +49,29 @@ class LookaheadBuffer(ABC, Generic[TItem, TMatch]):
         return self._next()
 
     def _peek(self) -> TItem | None:
-        '''Returns T in buffer or sets buffer to next T and returns buffered T'''
+        '''Returns TItem in buffer or sets buffer to next TItem and returns buffered TItem'''
         if self._buffer is None:
             self._buffer = self._next()
         return self._buffer
 
     def _consume(self, match: TMatch) -> bool:
-        '''Returns True if next T matches given match input else False'''
+        '''Returns True if next TItem key is TMatch else False and sets buffer'''
         value = self._peek()
         if value is None:
             return False
-        comparable: TMatch = _get_match_comparable(value, self._comparator)
-        if comparable != match:
+        key: TMatch = _get_match_key(value, self._key)
+        if key != match:
             return False
         self._buffer = None
         return True
 
     def _match(self, *matches: TMatch) -> TItem | Literal[False]:
-        '''Returns T if next T matches given match inputs else returns False'''
+        '''Returns TItem if next TItem key is in matches else returns False and sets buffer'''
         value = self._peek()
         if value is None:
             return False
-        comparable: TMatch = _get_match_comparable(value, self._comparator)
-        if comparable not in matches:
+        key: TMatch = _get_match_key(value, self._key)
+        if key not in matches:
             return False
         self._buffer = None
         return value
@@ -81,4 +79,4 @@ class LookaheadBuffer(ABC, Generic[TItem, TMatch]):
 
     # -Properties
     _buffer: TItem | None
-    _comparator: Callable[[TItem], TMatch] | None
+    _key: TKey

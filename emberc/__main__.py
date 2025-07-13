@@ -13,18 +13,18 @@ from .frontend import Lexer, Parser, Token
 from .middleware.nodes import Node
 
 ## Constants
-LEXER_LEVEL: DebugLevel = DebugLevel.Trace
+LEXER_LEVEL: DebugLevel = DebugLevel.Off
 PARSER_LEVEL: DebugLevel = DebugLevel.Trace
 
 
 ## Functions
 def _entry() -> None:
-    source: Path = Path("tests/00-operations.ember")
+    source: Path = Path("tests/00-start.ember")
     output = parse_source(source)
     if isinstance(output, Sequence):
         for err in output:
             print(err.message, file=sys.stderr)
-        sys.exit(1)
+        sys.exit(64)
 
 
 def parse_source(source: Path) -> Node | Sequence[EmberError]:

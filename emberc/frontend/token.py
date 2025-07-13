@@ -7,7 +7,6 @@
 
 ## Imports
 from __future__ import annotations
-from pathlib import Path
 from enum import IntEnum, auto
 from ..location import Location
 
@@ -18,68 +17,45 @@ class Token:
 
     # -Constructor
     def __init__(
-        self, location: Location, _type: Token.Type, value: str | None = None
+        self, location: Location, _type: Token.Type,
+        value: str | None = None
     ) -> None:
         self.location: Location = location
         self.type: Token.Type = _type
-        self.value: str | None = value
+        self._value: str | None = value
 
     # -Dunder Methods
     def __str__(self) -> str:
-        _str = f"[{self.location}] {self.type.name}"
-        if self.value:
-            _str += f" '{self.value}'"
+        _str = f"[{self.location}]{self.type.name}"
+        if self._value:
+            _str += f"({self.value})"
         return _str
+
+    # -Property
+    @property
+    def value(self) -> str:
+        assert self._value is not None
+        return self._value
 
     # -Sub-Classes
     class Type(IntEnum):
-        '''Token Value Type'''
-        # -Literals
+        # -Literal
         Identifier = auto()
         Integer = auto()
-        LiteralTrue = auto()
-        LiteralFalse = auto()
-        # -Keywords
+        # -Keyword
         KeywordFunction = auto()
-        KeywordReturn = auto()
-        KeywordIf = auto()
-        KeywordElse = auto()
-        KeywordAnd = auto()
-        KeywordOr = auto()
-        KeywordWhile = auto()
-        KeywordDo = auto()
-        KeywordFor = auto()
-        # -Keywords: Types
+        # -Keyword: Type
         KeywordVoid = auto()
-        KeywordBoolean = auto()
-        KeywordInt8 = auto()
-        KeywordInt16 = auto()
-        KeywordInt32 = auto()
-        KeywordInt64 = auto()
-        KeywordUInt8 = auto()
-        KeywordUInt16 = auto()
-        KeywordUInt32 = auto()
-        KeywordUInt64 = auto()
-        # -Symbols
-        SymbolEq = auto()
-        SymbolBang = auto()
+        # -Symbol: Operator
         SymbolPlus = auto()
         SymbolMinus = auto()
         SymbolStar = auto()
         SymbolFSlash = auto()
         SymbolPercent = auto()
-        # -Symbols: Comparison
-        SymbolEqEq = auto()
-        SymbolBangEq = auto()
-        SymbolLt = auto()
-        SymbolGt = auto()
-        SymbolLtEq = auto()
-        SymbolGtEq = auto()
-        # -Symbols: Misc
+        # -Symbol: Misc
         SymbolLParen = auto()
         SymbolRParen = auto()
         SymbolLBrace = auto()
         SymbolRBrace = auto()
-        SymbolComma = auto()
         SymbolColon = auto()
         SymbolSemicolon = auto()

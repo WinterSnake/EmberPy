@@ -6,102 +6,82 @@
 ##-------------------------------##
 
 ## Imports
-from collections.abc import Generator
 from pathlib import Path
-from typing import TextIO
+from collections.abc import Iterator
+from typing import Any, TextIO
+from .lookahead_buffer import LookaheadBuffer, TKey
 from .token import Token
+from ..errors import DebugLevel, EmberError
 from ..location import Location
 
 ## Constants
 SYMBOLS: tuple[str, ...] = (
     '+', '-', '*', '/', '%',
-    '=', '!', '<', '>',
-    '(', ')', '{', '}', ',', ':', ';',
+    '(', ')', '{', '}', ':', ';',
 )
 KEYWORDS: dict[str, Token.Type] = {
+    # -Keywords
     'fn': Token.Type.KeywordFunction,
-    'return': Token.Type.KeywordReturn,
-    'if': Token.Type.KeywordIf,
-    'else': Token.Type.KeywordElse,
-    'and': Token.Type.KeywordAnd,
-    'or': Token.Type.KeywordOr,
-    'while': Token.Type.KeywordWhile,
-    'do': Token.Type.KeywordDo,
-    'for': Token.Type.KeywordFor,
     # -Types
     'void': Token.Type.KeywordVoid,
-    'bool': Token.Type.KeywordBoolean,
-    'int8': Token.Type.KeywordInt8,
-    'int16': Token.Type.KeywordInt16,
-    'int32': Token.Type.KeywordInt32,
-    'int64': Token.Type.KeywordInt64,
-    'uint8': Token.Type.KeywordUInt8,
-    'uint16': Token.Type.KeywordUInt16,
-    'uint32': Token.Type.KeywordUInt32,
-    'uint64': Token.Type.KeywordUInt64,
-    # -Literals
-    'true': Token.Type.LiteralTrue,
-    'false': Token.Type.LiteralFalse,
 }
 
 
 ## Classes
-class Lexer:
+class Lexer(LookaheadBuffer[str, str]):
     """
-    Ember Lexer
+    Ember Language Lexer
     Lookahead(1)
+
+    Iterates over given source file and yields Ember tokens while lexing
     """
 
     # -Constructor
-    def __init__(self, file: Path) -> None:
-        self.file: Path = file
+    def __init__(self, source: Path) -> None:
+        self.debug_level: DebugLevel = DebugLevel.Off
+        self.errors: list[EmberError] = []
+        # -Lookahead
+        self._fp: TextIO
+        self._buffer: str | None = None
+        self._key: TKey = None
+        # -State
+        self.source: Path = source
         self.row: int = 1
         self.column: int = 0
         self.offset: int = 0
-        # -IO
-        self._fd: TextIO
-        self._lookahead: str | None = None
 
     # -Instance Methods: Control
     def _next(self) -> str | None:
-        '''Returns character from file or inner buffer'''
-        if self._lookahead:
-            value = self._lookahead
-            self._lookahead = None
-            return value
-        return self._fd.read(1)
+        value = self._fp.read(1)
+        value = value if value else None
+        if self.debug_level <= DebugLevel.Trace:
+            _value = f"'{value}'" if value is not None else str(None)
+            print(f"[Lexer::Next] {_value}")
+        return value
 
     def _advance(self) -> str | None:
-        '''Retrieves next character and increments position'''
-        current = self._next()
-        if current == '\n':
+        c = super()._advance()
+        if c == '\n':
             self.row += 1
             self.column = 0
-        else:
+        elif c is not None:
             self.column += 1
-        self.offset += 1
-        return current
+        if c is not None:
+            self.offset += 1
+        return c
 
-    def _peek(self) -> str | None:
-        '''Retrieves next character and sets inner buffer'''
-        current = self._next()
-        self._lookahead = current
-        return current
+    def _error(self, code: int, **kwargs: Any) -> None:
+        err = EmberError(code, self.location, **kwargs)
+        self.errors.append(err)
 
-    def _consume(self, char: str) -> bool:
-        '''Consumes next character if expected char'''
-        if self._peek() != char:
-            return False
-        _ = self._advance()
-        return True
-
-    # -Instance Methods: Lexing
-    def lex(self) -> Generator[Token, None, None]:
+    # -Instance Methods: Lex
+    def lex(self) -> Iterator[Token]:
         '''
-        Open current lexer file and iterates over
-        generated tokens from source.
+        Returns an iterator of created tokens from source file
+
+        Errors: Unexpected character
         '''
-        self._fd = self.file.open('r')
+        self._fp = self.source.open('r')
         while c := self._advance():
             token: Token | None = None
             # -Default -> Symbol
@@ -118,82 +98,104 @@ class Lexer:
                 continue
             # -Default -> Unknown
             else:
-                print(f"Unexpected char '{c}'")
-                return
+                self._error(EmberError.unexpected_character, char=c)
             if token:
                 yield token
-        self._fd.close()
+                token = None
+        self._fp.close()
 
-    def _lex_symbol(self, buffer: str) -> Token:
+    def _lex_symbol(self, buffer: str) -> Token | None:
         '''
         Lexer State: Symbol
-        Generates a symbol token
+        Returns a symbol token or handles comment consumption
+
+        Errors: Unknown symbol
         '''
-        symbol: Token.Type
+        _type: Token.Type
         location = self.location
+        if self.debug_level <= DebugLevel.Info:
+            print(f"[Lexer::Symbol] '{buffer}' @ {location}")
         match buffer:
-            # -Operator
+            # -Operators
             case '+':
-                symbol = Token.Type.SymbolPlus
+                _type = Token.Type.SymbolPlus
             case '-':
-                symbol = Token.Type.SymbolMinus
+                _type = Token.Type.SymbolMinus
             case '*':
-                symbol = Token.Type.SymbolStar
+                _type = Token.Type.SymbolStar
             case '/':
-                symbol = Token.Type.SymbolFSlash
+                _type = Token.Type.SymbolFSlash
+                if self._consume('/'):
+                    self._lex_comment_inline()
+                    return None
+                elif self._consume('*'):
+                    self._lex_comment_multiline()
+                    return None
             case '%':
-                symbol = Token.Type.SymbolPercent
-            # -Comparison
-            case '=':
-                if self._consume('='):
-                    symbol = Token.Type.SymbolEqEq
-                else:
-                    symbol = Token.Type.SymbolEq
-            case '!':
-                if self._consume('='):
-                    symbol = Token.Type.SymbolBangEq
-                else:
-                    symbol = Token.Type.SymbolBang
-            case '<':
-                if self._consume('='):
-                    symbol = Token.Type.SymbolLtEq
-                else:
-                    symbol = Token.Type.SymbolLt
-            case '>':
-                if self._consume('='):
-                    symbol = Token.Type.SymbolGtEq
-                else:
-                    symbol = Token.Type.SymbolGt
+                _type = Token.Type.SymbolPercent
             # -Misc
             case '(':
-                symbol = Token.Type.SymbolLParen
+                _type = Token.Type.SymbolLParen
             case ')':
-                symbol = Token.Type.SymbolRParen
+                _type = Token.Type.SymbolRParen
             case '{':
-                symbol = Token.Type.SymbolLBrace
+                _type = Token.Type.SymbolLBrace
             case '}':
-                symbol = Token.Type.SymbolRBrace
-            case ',':
-                symbol = Token.Type.SymbolComma
+                _type = Token.Type.SymbolRBrace
             case ':':
-                symbol = Token.Type.SymbolColon
+                _type = Token.Type.SymbolColon
             case ';':
-                symbol = Token.Type.SymbolSemicolon
+                _type = Token.Type.SymbolSemicolon
             case _:
-                print(f"Unknown symbol: '{buffer}'")
-        return Token(location, symbol, None)
+                self._error(EmberError.unknown_symbol, char=buffer)
+                return None
+        return Token(location, _type, None)
+
+    def _lex_comment_inline(self) -> None:
+        '''
+        Lexer State: Comment - Inline
+        Consumes characters until new line is reached
+        '''
+        if self.debug_level <= DebugLevel.Info:
+            print(f"[Lexer::Comment::Inline] @ {self.location}")
+        c = self._advance()
+        while c is not None and c != '\n':
+            c = self._advance()
+
+
+    def _lex_comment_multiline(self) -> None:
+        '''
+        Lexer State: Comment - Multiline
+        Consumes characters until a multiline comment terminator
+        is reached. Supports nested multiline comments.
+        
+        Errors: Unterminated comment multiline
+        '''
+        if self.debug_level <= DebugLevel.Info:
+            print(f"[Lexer::Comment::Multiline] @ {self.location}")
+        while c := self._advance():
+            if c == '/' and self._consume('*'):
+                self._lex_comment_multiline()
+            elif c == '*' and self._consume('/'):
+                return
+        self._error(EmberError.unterminated_comment_multiline)
+
 
     def _lex_number(self, buffer: str) -> Token:
         '''
         Lexer State: Number
-        Generates an integer token
+        Returns a number literal token
         '''
         location = self.location
+        if self.debug_level <= DebugLevel.Info:
+            print(f"[Lexer::Number] '{buffer}' @ {location}")
         while c := self._peek():
+            if self.debug_level <= DebugLevel.Trace:
+                print(f"[Lexer::Number::Iteration] \"{buffer + c}\"")
             # Number -> Number
             if c.isnumeric():
                 c = self._advance()
-                assert(c)
+                assert c is not None
                 buffer += c
                 continue
             # Number -> Default
@@ -203,27 +205,35 @@ class Lexer:
     def _lex_word(self, buffer: str) -> Token:
         '''
         Lexer State: Word
-        Generates a identifier or keyword token
+        Returns a keyword token or an identifier tag token
         '''
         location = self.location
+        if self.debug_level <= DebugLevel.Info:
+            print(f"[Lexer::Word] '{buffer}' @ {location}")
         while c := self._peek():
+            if self.debug_level <= DebugLevel.Trace:
+                print(f"[Lexer::Word::Iteration] \"{buffer + c}\"")
             # -Word -> Word
             if c.isalnum() or c == '_':
                 c = self._advance()
-                assert(c)
+                assert c is not None
                 buffer += c
                 continue
             # -Word -> Default
             break
         _type = KEYWORDS.get(buffer, Token.Type.Identifier)
-        value: str | None = buffer if _type == Token.Type.Identifier else None
+        value = buffer if _type is Token.Type.Identifier else None
         return Token(location, _type, value)
 
     # -Properties
+    @property
+    def has_error(self) -> bool:
+        return len(self.errors) > 0
+
     @property
     def position(self) -> tuple[int, int, int]:
         return (self.row, self.column, self.offset)
 
     @property
     def location(self) -> Location:
-        return Location(self.file, self.position)
+        return Location(self.source, self.position)
