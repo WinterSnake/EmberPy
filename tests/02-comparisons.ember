@@ -8,3 +8,5 @@ true != true;  // Output: false
 54 >= 100;  // Output: false
 6 == 8;  // Output: false
 9 != 10;  // Output: true
+bool c = false;
+true != c;  // Output: true

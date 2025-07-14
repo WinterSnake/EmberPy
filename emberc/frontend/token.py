@@ -30,6 +30,8 @@ def get_token_repr(token: Token) -> str:
         # -Keyword: Type
         case Token.Type.KeywordVoid:
             return "void"
+        case Token.Type.KeywordBool:
+            return "bool"
         case Token.Type.KeywordInt8:
             return "int8"
         # -Symbol: Operator
@@ -110,6 +112,7 @@ class Token:
         KeywordFalse = auto()
         # -Keyword: Type
         KeywordVoid = auto()
+        KeywordBool = auto()
         KeywordInt8 = auto()
         # -Symbol: Operator
         SymbolEq = auto()

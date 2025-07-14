@@ -23,6 +23,8 @@ from ..middleware.nodes import (
 
 ## Constants
 TYPES_TABLE: tuple[Token.Type, ...] = (
+    Token.Type.KeywordVoid,
+    Token.Type.KeywordBool,
     Token.Type.KeywordInt8,
 )
 OPERATOR_BINARY: dict[Token.Type, NodeExprBinary.Operator] = {

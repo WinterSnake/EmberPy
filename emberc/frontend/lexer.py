@@ -28,6 +28,7 @@ KEYWORDS: dict[str, Token.Type] = {
     'false': Token.Type.KeywordFalse,
     # -Types
     'void': Token.Type.KeywordVoid,
+    'bool': Token.Type.KeywordBool,
     'int8': Token.Type.KeywordInt8,
 }
 
