@@ -40,16 +40,20 @@ class Interpreter:
             child.accept(self)
 
     def visit_declaration_variable(self, node: NodeDeclVariable) -> None:
+        value: LITERAL | None = None
+        if node.initializer is not None:
+            value = node.initializer.accept(self)
         if self.debug_level <= DebugLevel.Info:
-            print(f"[Interpreter::Declaration::Variable] {node.id}")
+            print(f"[Interpreter::Declaration::Variable] {node.id} = {value}")
         env = self.current
-        env[node.id] = None  # type: ignore
+        env[node.id] = value  # type: ignore
 
     def visit_statement_assignment(self, node: NodeStmtAssignment) -> None:
+        value = node.expression.accept(self)
         if self.debug_level <= DebugLevel.Info:
-            print(f"[Interpreter::Statement::Assignment] {node.id}")
+            print(f"[Interpreter::Statement::Assignment] {node.id} = {value}")
         env = self.current
-        env[node.id] = node.expression.accept(self)
+        env[node.id] = value
 
     def visit_statement_expression(self, node: NodeStmtExpression) -> None:
         if self.debug_level <= DebugLevel.Info:

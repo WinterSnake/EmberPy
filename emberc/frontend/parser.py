@@ -107,7 +107,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _parse_declaration_variable(self) -> Node | EmberError:
         '''
         Grammar[Declaration::Variable]
-        TYPE IDENTIFIER ';';
+        TYPE IDENTIFIER ('=' expression)? ';';
         '''
         if self.debug_level <= DebugLevel.Info:
             print(f"[Parser::Declaration::Variable]")
@@ -120,13 +120,18 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
                 EmberError.invalid_identifier,
                 value=get_token_repr(_id)
             )
+        initializer: NodeExpr | None = None
+        if self._consume(Token.Type.SymbolEq):
+            initializer = self._parse_expression()
+        if isinstance(initializer, EmberError):
+            return initializer
         # --Invalid ';' consume
         if not self._consume(Token.Type.SymbolSemicolon):
             code: int = EmberError.invalid_consume_symbol
             if self.is_at_end:
                 code = EmberError.invalid_consume_symbol_eof
             _ = self._error(code, symbol=';')
-        return NodeDeclVariable(_id.value)
+        return NodeDeclVariable(_id.value, initializer)
 
     def _parse_statement(self) -> Node | EmberError:
         '''
