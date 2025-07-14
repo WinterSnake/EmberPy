@@ -119,13 +119,13 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
                 EmberError.invalid_identifier,
                 value=get_token_repr(_id)
             )
-        if self._consume(Token.Type.SymbolSemicolon):
-            return NodeDeclVariable(_id.value)
         # --Invalid ';' consume
-        code: int = EmberError.invalid_consume_symbol
-        if self.is_at_end:
-            code = EmberError.invalid_consume_symbol_eof
-        return self._error(code, symbol=';')
+        if not self._consume(Token.Type.SymbolSemicolon):
+            code: int = EmberError.invalid_consume_symbol
+            if self.is_at_end:
+                code = EmberError.invalid_consume_symbol_eof
+            _ = self._error(code, symbol=';')
+        return NodeDeclVariable(_id.value)
 
     def _parse_statement(self) -> Node | EmberError:
         '''
@@ -158,13 +158,13 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         expression = self._parse_expression()
         if isinstance(expression, EmberError):
             return expression
-        if self._consume(Token.Type.SymbolSemicolon):
-            return NodeStmtAssignment(_id.value, expression)
         # --Invalid ';' consume
-        code = EmberError.invalid_consume_symbol
-        if self.is_at_end:
-            code = EmberError.invalid_consume_symbol_eof
-        return self._error(code, symbol=';')
+        if not self._consume(Token.Type.SymbolSemicolon):
+            code = EmberError.invalid_consume_symbol
+            if self.is_at_end:
+                code = EmberError.invalid_consume_symbol_eof
+            _ = self._error(code, symbol=';')
+        return NodeStmtAssignment(_id.value, expression)
 
     def _parse_statement_expression(self) -> Node | EmberError:
         '''
@@ -176,13 +176,13 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         node = self._parse_expression()
         if isinstance(node, EmberError):
             return node
-        if self._consume(Token.Type.SymbolSemicolon):
-            return NodeStmtExpression(node)
         # --Invalid ';' consume
-        code: int = EmberError.invalid_consume_symbol
-        if self.is_at_end:
-            code = EmberError.invalid_consume_symbol_eof
-        return self._error(code, symbol=';')
+        if not self._consume(Token.Type.SymbolSemicolon):
+            code: int = EmberError.invalid_consume_symbol
+            if self.is_at_end:
+                code = EmberError.invalid_consume_symbol_eof
+            _ = self._error(code, symbol=';')
+        return NodeStmtExpression(node)
 
     def _parse_expression(self) -> NodeExpr | EmberError:
         '''
