@@ -26,6 +26,8 @@ ERROR_TABLE: tuple[tuple[str, ...], ...] = (
         "'{symbol}' expected",
         "Invalid expression term '{value}'",
         "Expected expression",
+        "Invalid identifier '{value}'",
+        "Expected identifier",
     ),
 )
 
@@ -36,6 +38,8 @@ def parse_debug_level(level: str) -> DebugLevel:
             return DebugLevel.Trace
         case "info":
             return DebugLevel.Info
+        case "warning":
+            return DebugLevel.Warn
         case _:
             return DebugLevel.Off
 
@@ -44,6 +48,7 @@ def parse_debug_level(level: str) -> DebugLevel:
 class DebugLevel(IntEnum):
     Trace = auto()
     Info = auto()
+    Warn = auto()
     Off = auto()
 
 
@@ -85,3 +90,5 @@ class EmberError:
     invalid_consume_symbol_eof: ClassVar[int] = 202
     invalid_expression: ClassVar[int] = 203
     invalid_expression_eof: ClassVar[int] = 204
+    invalid_identifier: ClassVar[int] = 205
+    invalid_identifier_eof: ClassVar[int] = 206

@@ -30,7 +30,7 @@ def _entry() -> None:
         for err in output:
             print(err.message, file=sys.stderr)
         sys.exit(64)
-    Interpreter.run(output)
+    Interpreter.run(output, DebugLevel.Trace)
 
 
 def parse_source(source: Path) -> Node | Sequence[EmberError]:

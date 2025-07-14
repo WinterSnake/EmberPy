@@ -16,7 +16,7 @@ from ..location import Location
 
 ## Constants
 SYMBOLS: tuple[str, ...] = (
-    '+', '-', '*', '/', '%',
+    '=', '+', '-', '*', '/', '%',
     '(', ')', '{', '}', ':', ';',
 )
 KEYWORDS: dict[str, Token.Type] = {
@@ -24,6 +24,7 @@ KEYWORDS: dict[str, Token.Type] = {
     'fn': Token.Type.KeywordFunction,
     # -Types
     'void': Token.Type.KeywordVoid,
+    'int8': Token.Type.KeywordInt8,
 }
 
 
@@ -117,6 +118,8 @@ class Lexer(LookaheadBuffer[str, str]):
             print(f"[Lexer::Symbol] '{buffer}' @ {location}")
         match buffer:
             # -Operators
+            case '=':
+                _type = Token.Type.SymbolEqual
             case '+':
                 _type = Token.Type.SymbolPlus
             case '-':

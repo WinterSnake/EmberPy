@@ -15,13 +15,16 @@ from ..location import Location
 from ..middleware.nodes import (
     LITERAL,
     Node, NodeExpr,
-    NodeDeclModule,
-    NodeStmtExpression,
+    NodeDeclModule, NodeDeclVariable,
+    NodeStmtAssignment, NodeStmtExpression,
     NodeExprBinary,
     NodeExprLiteral,
 )
 
 ## Constants
+TYPES_TABLE: tuple[Token.Type, ...] = (
+    Token.Type.KeywordInt8,
+)
 OPERATOR_BINARY: dict[Token.Type, NodeExprBinary.Operator] = {
     Token.Type.SymbolPlus: NodeExprBinary.Operator.Add,
     Token.Type.SymbolMinus: NodeExprBinary.Operator.Sub,
@@ -64,8 +67,10 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         return value
 
     def _error(
-            self, code: int, location: Location | None = None, **kwargs: Any
+        self, code: int, location: Location | None = None, **kwargs: Any
     ) -> EmberError:
+        if self.debug_level <= DebugLevel.Warn:
+            print(f"[Parser::Error] [{location}] {code}")
         if location is None:
             location = self._last_token.location
         err = EmberError(code, location, **kwargs)
@@ -73,7 +78,11 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         return err
 
     def _sync(self) -> None:
+        if self.debug_level <= DebugLevel.Warn:
+            print(f"[Parser::Sync]")
         while token := self._advance():
+            if self.debug_level <= DebugLevel.Trace:
+                print(f"[Parser::Sync::Iter] {token}")
             if token.type is Token.Type.SymbolSemicolon:
                 break
 
@@ -93,33 +102,93 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             self._sync()
         return NodeDeclModule(nodes)
 
+    def _parse_declaration_variable(self, _type: Token) -> Node | EmberError:
+        '''
+        Grammar[Declaration::Variable]
+        TYPE IDENTIFIER ';';
+        '''
+        if self.debug_level <= DebugLevel.Info:
+            print(f"[Parser::Declaration::Variable]")
+        _id = self._advance()
+        if _id is None:
+            return self._error(EmberError.invalid_identifier_eof)
+        elif _id.type is not Token.Type.Identifier:
+            return self._error(
+                EmberError.invalid_identifier,
+                value=get_token_representation(_id)
+            )
+        if self._consume(Token.Type.SymbolSemicolon):
+            return NodeDeclVariable(_id.value)
+        # --Invalid ';' consume
+        code: int = EmberError.invalid_consume_symbol
+        if self.is_at_end:
+            code = EmberError.invalid_consume_symbol_eof
+        return EmberError(code, symbol=';')
+
     def _parse_statement(self) -> Node | EmberError:
         '''
         Grammar[Statement]
-        statement_expression;
+        declaration_variable | statement_expression | statement_assignment;
         '''
+        if self.debug_level <= DebugLevel.Info:
+            print(f"[Parser::Statement]")
+        # -Rule: Decl Variable
+        if token := self._match(*TYPES_TABLE):
+            return self._parse_declaration_variable(token)
+        # -Rule: Stmt Assignment
+        elif token := self._match(Token.Type.Identifier):
+            return self._parse_statement_assignment(token)
+        # -Rule: Stmt Expression
         return self._parse_statement_expression()
+
+    def _parse_statement_assignment(self, _id: Token) -> Node | EmberError:
+        '''
+        Grammar[Statement::Assignment]
+        IDENTIFIER '=' expression ';';
+        '''
+        code: int
+        # -Invalid '=' consume
+        if not self._consume(Token.Type.SymbolEqual):
+            code = EmberError.invalid_consume_symbol
+            if self.is_at_end:
+                code = EmberError.invalid_consume_symbol_eof
+            return EmberError(code, symbol='=')
+        expression = self._parse_expression()
+        if isinstance(expression, EmberError):
+            return expression
+        if self._consume(Token.Type.SymbolSemicolon):
+            return NodeStmtAssignment(_id.value, expression)
+        # --Invalid ';' consume
+        code = EmberError.invalid_consume_symbol
+        if self.is_at_end:
+            code = EmberError.invalid_consume_symbol_eof
+        return EmberError(code, symbol=';')
 
     def _parse_statement_expression(self) -> Node | EmberError:
         '''
         Grammar[Statement::Expression]
         expression ';';
         '''
-        expression = self._parse_expression()
-        if isinstance(expression, EmberError):
-            return expression
-        if not self._consume(Token.Type.SymbolSemicolon):
-            code: int = EmberError.invalid_consume_symbol
-            if self.is_at_end:
-                code = EmberError.invalid_consume_symbol_eof
-            self._error(code, symbol=';')
-        return NodeStmtExpression(expression)
+        if self.debug_level <= DebugLevel.Info:
+            print(f"[Parser::Statement::Expression]")
+        node = self._parse_expression()
+        if isinstance(node, EmberError):
+            return node
+        if self._consume(Token.Type.SymbolSemicolon):
+            return NodeStmtExpression(node)
+        # --Invalid ';' consume
+        code: int = EmberError.invalid_consume_symbol
+        if self.is_at_end:
+            code = EmberError.invalid_consume_symbol_eof
+        return EmberError(code, symbol=';')
 
     def _parse_expression(self) -> NodeExpr | EmberError:
         '''
         Grammar[Expression]
         expression_binary;
         '''
+        if self.debug_level <= DebugLevel.Info:
+            print(f"[Parser::Expression]")
         return self._parse_expression_binary()
 
     def _parse_expression_binary(self) -> NodeExpr | EmberError:

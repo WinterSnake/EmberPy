@@ -26,7 +26,11 @@ def get_token_representation(token: Token) -> str:
         # -Keyword: Type
         case Token.Type.KeywordVoid:
             return "void"
+        case Token.Type.KeywordInt8:
+            return "int8"
         # -Symbol: Operator
+        case Token.Type.SymbolEqual:
+            return '='
         case Token.Type.SymbolPlus:
             return '+'
         case Token.Type.SymbolMinus:
@@ -87,7 +91,9 @@ class Token:
         KeywordFunction = auto()
         # -Keyword: Type
         KeywordVoid = auto()
+        KeywordInt8 = auto()
         # -Symbol: Operator
+        SymbolEqual = auto()
         SymbolPlus = auto()
         SymbolMinus = auto()
         SymbolStar = auto()

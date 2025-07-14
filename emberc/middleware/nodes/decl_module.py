@@ -2,7 +2,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Node: ExprBinary              ##
+## Node: DeclModule              ##
 ##-------------------------------##
 
 ## Imports
