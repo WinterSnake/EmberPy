@@ -12,7 +12,7 @@ from typing import Any, ClassVar
 from .location import Location
 
 ## Constants
-STEPS: tuple[str, ...] = ("Lexer", "Parser")
+PHASE: tuple[str, ...] = ("Lexer", "Parser")
 ERROR_TABLE: tuple[tuple[str, ...], ...] = (
     # -Lexer
     (
@@ -21,7 +21,12 @@ ERROR_TABLE: tuple[tuple[str, ...], ...] = (
         "Unterminated multiline comment",
     ),
     # -Parser
-    (),
+    (
+        "'{symbol}' expected",
+        "'{symbol}' expected",
+        "Invalid expression term '{value}'",
+        "Expected expression",
+    ),
 )
 
 ## Functions
@@ -59,18 +64,24 @@ class EmberError:
     # -Properties
     @property
     def message(self) -> str:
-        index: int = self.code // 1000 - 1
-        step: str = STEPS[index]
-        message: str = ERROR_TABLE[index][self.code % 1000 - 1]
+        offset: int = 100
+        index: int = self.code // offset - 1
+        phase: str = PHASE[index]
+        message: str = ERROR_TABLE[index][self.code % offset - 1]
         if self.kwargs:
             message = message.format(**self.kwargs)
-        message = f"{step} Error {self.code} {message}"
+        message = f"{phase} error {self.code}: {message}"
         if self.location:
             message = f"[{self.location}] {message}"
         return message
 
     # -Class Properties
     # --Code: Lexer
-    unexpected_character: ClassVar[int] = 1001
-    unknown_symbol: ClassVar[int] = 1002
-    unterminated_comment_multiline: ClassVar[int] = 1003
+    unexpected_character: ClassVar[int] = 101
+    unknown_symbol: ClassVar[int] = 102
+    unterminated_comment_multiline: ClassVar[int] = 103
+    # --Code: Parser
+    invalid_consume_symbol: ClassVar[int] = 201
+    invalid_consume_symbol_eof: ClassVar[int] = 202
+    invalid_expression: ClassVar[int] = 203
+    invalid_expression_eof: ClassVar[int] = 204

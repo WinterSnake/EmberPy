@@ -7,6 +7,7 @@
 
 ## Imports
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from typing import Any
 from .visitor import NodeVisitor
 from ...location import Location
@@ -22,6 +23,17 @@ class Node(ABC):
     # -Instance Methods
     @abstractmethod
     def accept(self, visitor: NodeVisitor) -> Any: ...
+
+
+class NodeContainer(Node):
+    """
+    Ember Node: Container
+    Base class for nodes with an inner collection of nodes
+    """
+
+    # -Constructor
+    def __init__(self, nodes: Sequence[Node]) -> None:
+        self.nodes: Sequence[Node] = nodes
 
 
 class NodeExpr(Node):

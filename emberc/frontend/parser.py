@@ -15,6 +15,8 @@ from ..location import Location
 from ..middleware.nodes import (
     LITERAL,
     Node, NodeExpr,
+    NodeDeclModule,
+    NodeStmtExpression,
     NodeExprBinary,
     NodeExprLiteral,
 )
@@ -61,28 +63,72 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             self.is_at_end = True
         return value
 
+    def _error(
+            self, code: int, location: Location | None = None, **kwargs: Any
+    ) -> EmberError:
+        if location is None:
+            location = self._last_token.location
+        err = EmberError(code, location, **kwargs)
+        self.errors.append(err)
+        return err
+
+    def _sync(self) -> None:
+        while token := self._advance():
+            if token.type is Token.Type.SymbolSemicolon:
+                break
+
     # -Instance Methods: Parse
     def parse(self) -> Node:
         '''
         Grammar[Module]
-        expression;
+        statement*;
         '''
-        return self._parse_expression()
+        nodes: list[Node] = []
+        while self._peek():
+            node = self._parse_statement()
+            if isinstance(node, Node):
+                nodes.append(node)
+                continue
+            # -Error Recovery
+            self._sync()
+        return NodeDeclModule(nodes)
 
-    def _parse_expression(self) -> NodeExpr:
+    def _parse_statement(self) -> Node | EmberError:
+        '''
+        Grammar[Statement]
+        statement_expression;
+        '''
+        return self._parse_statement_expression()
+
+    def _parse_statement_expression(self) -> Node | EmberError:
+        '''
+        Grammar[Statement::Expression]
+        expression ';';
+        '''
+        expression = self._parse_expression()
+        if isinstance(expression, EmberError):
+            return expression
+        if not self._consume(Token.Type.SymbolSemicolon):
+            code: int = EmberError.invalid_consume_symbol
+            if self.is_at_end:
+                code = EmberError.invalid_consume_symbol_eof
+            self._error(code, symbol=';')
+        return NodeStmtExpression(expression)
+
+    def _parse_expression(self) -> NodeExpr | EmberError:
         '''
         Grammar[Expression]
         expression_binary;
         '''
         return self._parse_expression_binary()
 
-    def _parse_expression_binary(self) -> NodeExpr:
+    def _parse_expression_binary(self) -> NodeExpr | EmberError:
         '''
         Grammar[Expression::Binary]
         expression_literal ( ('+' | '-' | '*' | '/' | '%') expression_literal)*;
         '''
         # -Internal Functions
-        def _term() -> NodeExpr:
+        def _term() -> NodeExpr | EmberError:
             '''
             Grammar[Expression::Binary::Term]
             factor ( ('+' | '-') factor)*;
@@ -90,16 +136,20 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             if self.debug_level <= DebugLevel.Info:
                 print(f"[Parser::Expression::Binary::Term]")
             lhs = _factor()
+            if isinstance(lhs, EmberError):
+                return lhs
             while token := self._match(
                 Token.Type.SymbolPlus,
                 Token.Type.SymbolMinus,
             ):
                 operator = OPERATOR_BINARY[token.type]
                 rhs = _factor()
+                if isinstance(rhs, EmberError):
+                    return rhs
                 lhs = NodeExprBinary(token.location, operator, lhs, rhs)
             return lhs
 
-        def _factor() -> NodeExpr:
+        def _factor() -> NodeExpr | EmberError:
             '''
             Grammar[Expression::Binary::Factor]
             expression_literal ( ('*' | '/' | '%') expression_literal)*;
@@ -107,6 +157,8 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             if self.debug_level <= DebugLevel.Info:
                 print(f"[Parser::Expression::Binary::Factor]")
             lhs = self._parse_expression_literal()
+            if isinstance(lhs, EmberError):
+                return lhs
             while token := self._match(
                 Token.Type.SymbolStar,
                 Token.Type.SymbolFSlash,
@@ -114,6 +166,8 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             ):
                 operator = OPERATOR_BINARY[token.type]
                 rhs = self._parse_expression_literal()
+                if isinstance(rhs, EmberError):
+                    return rhs
                 lhs = NodeExprBinary(token.location, operator, lhs, rhs)
             return lhs
         # -Body
@@ -121,27 +175,29 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             print(f"[Parser::Expression::Binary]")
         return _term()
 
-    def _parse_expression_literal(self) -> NodeExpr:
+    def _parse_expression_literal(self) -> NodeExpr | EmberError:
         '''
         Grammar[Expression::Literal]
         NUMBER;
         '''
-        literal = self._advance()
         if self.debug_level <= DebugLevel.Info:
-            print(f"[Parser::Expression::Literal] {literal}")
-        # -TODO: Error Handling
+            print(f"[Parser::Expression::Literal]")
+        literal = self._advance()
         if literal is None:
-            assert False
+            return self._error(EmberError.invalid_expression_eof)
+        _type: NodeExprLiteral.Type
+        value: LITERAL
         match literal.type:
             case Token.Type.Integer:
-                return NodeExprLiteral(
-                    literal.location,
-                    NodeExprLiteral.Type.Integer,
-                    int(literal.value)
-                )
-            # -TODO: Error Handling
+                _type = NodeExprLiteral.Type.Integer
+                value = int(literal.value)
             case _:
-                assert False
+                self._buffer = literal
+                return self._error(
+                    EmberError.invalid_expression,
+                    literal.location, value=literal._get_type_representation()
+                )
+        return NodeExprLiteral(literal.location, _type, value)
 
     # -Properties
     @property
