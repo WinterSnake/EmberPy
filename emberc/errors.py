@@ -12,7 +12,7 @@ from typing import Any, ClassVar
 from .location import Location
 
 ## Constants
-PHASE: tuple[str, ...] = ("Lexer", "Parser")
+PHASE: tuple[str, ...] = ("Lexical", "Syntax")
 ERROR_TABLE: tuple[tuple[str, ...], ...] = (
     # -Lexer
     (
