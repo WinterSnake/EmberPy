@@ -6,24 +6,16 @@
 ##-------------------------------##
 
 ## Imports
-from .core import Node, NodeExpr, NodeModule
-from .statement_control import (
-    NodeStmtBlock, NodeStmtConditional, NodeStmtLoop, NodeStmtReturn,
-)
-from .statement_declaration import (
-    NodeDeclFunction, NodeDeclVariable, NodeStmtExpression
-)
-from .expression_logic import NodeExprAssignment, NodeExprCall, NodeExprLogical
-from .expression_binary import NodeExprBinary
-from .expression_unary import NodeExprUnary
-from .expression_primary import NodeExprGroup, NodeExprVariable, NodeExprLiteral
+from .core import Node, NodeExpr
+from .expr_binary import NodeExprBinary
+from .expr_literal import LITERAL, NodeExprLiteral
+from .visitor import NodeVisitor
 
 ## Constants
 __all__: tuple[str, ...] = (
-    "Node", "NodeExpr", "NodeModule",
-    "NodeStmtBlock", "NodeStmtConditional", "NodeStmtLoop",
-    "NodeDeclFunction", "NodeDeclVariable", "NodeStmtExpression",
-    "NodeExprAssignment", "NodeExprCall",
-    "NodeExprBinary", "NodeExprUnary",
-    "NodeExprGroup", "NodeExprVariable", "NodeExprLiteral",
+    "LITERAL",
+    "Node", "NodeExpr",
+    "NodeExprBinary",
+    "NodeExprLiteral",
+    "NodeVisitor",
 )

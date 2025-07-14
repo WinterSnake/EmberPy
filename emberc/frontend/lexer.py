@@ -33,7 +33,8 @@ class Lexer(LookaheadBuffer[str, str]):
     Ember Language Lexer
     Lookahead(1)
 
-    Iterates over given source file and yields Ember tokens while lexing
+    Iterates over source file and yields a token where
+    each lexer state is represented as an internal method.
     """
 
     # -Constructor
