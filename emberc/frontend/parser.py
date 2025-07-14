@@ -9,7 +9,7 @@
 from __future__ import annotations
 from typing import Any, Iterator
 from .lookahead_buffer import LookaheadBuffer
-from .token import Token
+from .token import Token, get_token_representation
 from ..errors import DebugLevel, EmberError
 from ..location import Location
 from ..middleware.nodes import (
@@ -195,7 +195,8 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
                 self._buffer = literal
                 return self._error(
                     EmberError.invalid_expression,
-                    literal.location, value=literal._get_type_representation()
+                    literal.location,
+                    value=get_token_representation(literal),
                 )
         return NodeExprLiteral(literal.location, _type, value)
 
