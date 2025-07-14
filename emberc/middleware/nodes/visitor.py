@@ -17,6 +17,8 @@ if TYPE_CHECKING:
 ## Classes
 class NodeVisitor(Protocol):
     """
+    Ember Node Visitor
+    Protocol interface for walking through an AST tree
     """
     
     # -Instance Methods
