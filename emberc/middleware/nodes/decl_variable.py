@@ -21,7 +21,7 @@ class NodeDeclVariable(Node):
     # -Constructor
     def __init__(self, _id: str, initializer: NodeExpr | None) -> None:
         self.id: str = _id
-        self.initializer: NodeExpr = initializer
+        self.initializer: NodeExpr | None = initializer
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:

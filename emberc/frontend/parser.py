@@ -120,7 +120,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
                 EmberError.invalid_identifier,
                 value=get_token_repr(_id)
             )
-        initializer: NodeExpr | None = None
+        initializer: NodeExpr | EmberError | None = None
         if self._consume(Token.Type.SymbolEq):
             initializer = self._parse_expression()
         if isinstance(initializer, EmberError):

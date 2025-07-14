@@ -2,7 +2,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Node Visitor                  ##
+## Tree Walker: Interpreter      ##
 ##-------------------------------##
 
 ## Imports
@@ -13,7 +13,7 @@ from .nodes import (
     NodeDeclModule, NodeDeclVariable,
     NodeStmtAssignment, NodeStmtExpression,
     NodeExprBinary,
-    NodeExprGroup, NodeExprLiteral,
+    NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
 from ..errors import DebugLevel
 
@@ -83,7 +83,7 @@ class Interpreter:
             print(f"[Interpreter::Expression::Group]")
         return node.expression.accept(self)
 
-    def visit_expression_variable(self, node: NodeExprVariable) -> Literal:
+    def visit_expression_variable(self, node: NodeExprVariable) -> LITERAL:
         if self.debug_level <= DebugLevel.Info:
             print(f"[Interpreter::Expression::Variable] {node.id}")
         env = self.current
