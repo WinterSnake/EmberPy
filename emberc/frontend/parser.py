@@ -9,7 +9,7 @@
 from __future__ import annotations
 from typing import Any, Iterator
 from .lookahead_buffer import LookaheadBuffer
-from .token import Token, get_token_representation
+from .token import Token, get_token_repr
 from ..errors import DebugLevel, EmberError
 from ..location import Location
 from ..middleware.nodes import (
@@ -93,7 +93,9 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         statement*;
         '''
         nodes: list[Node] = []
-        while self._peek():
+        while token := self._peek():
+            if self.debug_level <= DebugLevel.Trace:
+                print(f"[[Parser::Iter]{token}")
             node = self._parse_statement()
             if isinstance(node, Node):
                 nodes.append(node)
@@ -115,7 +117,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         elif _id.type is not Token.Type.Identifier:
             return self._error(
                 EmberError.invalid_identifier,
-                value=get_token_representation(_id)
+                value=get_token_repr(_id)
             )
         if self._consume(Token.Type.SymbolSemicolon):
             return NodeDeclVariable(_id.value)
@@ -123,7 +125,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         code: int = EmberError.invalid_consume_symbol
         if self.is_at_end:
             code = EmberError.invalid_consume_symbol_eof
-        return EmberError(code, symbol=';')
+        return self._error(code, symbol=';')
 
     def _parse_statement(self) -> Node | EmberError:
         '''
@@ -148,11 +150,11 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         '''
         code: int
         # -Invalid '=' consume
-        if not self._consume(Token.Type.SymbolEqual):
+        if not self._consume(Token.Type.SymbolEq):
             code = EmberError.invalid_consume_symbol
             if self.is_at_end:
                 code = EmberError.invalid_consume_symbol_eof
-            return EmberError(code, symbol='=')
+            return self._error(code, symbol='=')
         expression = self._parse_expression()
         if isinstance(expression, EmberError):
             return expression
@@ -162,7 +164,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         code = EmberError.invalid_consume_symbol
         if self.is_at_end:
             code = EmberError.invalid_consume_symbol_eof
-        return EmberError(code, symbol=';')
+        return self._error(code, symbol=';')
 
     def _parse_statement_expression(self) -> Node | EmberError:
         '''
@@ -180,7 +182,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         code: int = EmberError.invalid_consume_symbol
         if self.is_at_end:
             code = EmberError.invalid_consume_symbol_eof
-        return EmberError(code, symbol=';')
+        return self._error(code, symbol=';')
 
     def _parse_expression(self) -> NodeExpr | EmberError:
         '''
@@ -264,8 +266,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
                 self._buffer = literal
                 return self._error(
                     EmberError.invalid_expression,
-                    literal.location,
-                    value=get_token_representation(literal),
+                    literal.location, value=get_token_repr(literal),
                 )
         return NodeExprLiteral(literal.location, _type, value)
 

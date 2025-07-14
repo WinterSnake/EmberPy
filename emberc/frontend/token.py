@@ -12,7 +12,7 @@ from ..location import Location
 
 
 ## Functions
-def get_token_representation(token: Token) -> str:
+def get_token_repr(token: Token) -> str:
     """Returns a str that represents the type or value of given Token"""
     match token.type:
         # -Literal
@@ -29,7 +29,7 @@ def get_token_representation(token: Token) -> str:
         case Token.Type.KeywordInt8:
             return "int8"
         # -Symbol: Operator
-        case Token.Type.SymbolEqual:
+        case Token.Type.SymbolEq:
             return '='
         case Token.Type.SymbolPlus:
             return '+'
@@ -93,7 +93,7 @@ class Token:
         KeywordVoid = auto()
         KeywordInt8 = auto()
         # -Symbol: Operator
-        SymbolEqual = auto()
+        SymbolEq = auto()
         SymbolPlus = auto()
         SymbolMinus = auto()
         SymbolStar = auto()

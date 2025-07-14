@@ -72,6 +72,8 @@ class Lexer(LookaheadBuffer[str, str]):
         return c
 
     def _error(self, code: int, **kwargs: Any) -> None:
+        if self.debug_level <= DebugLevel.Warn:
+            print(f"[Lexer::Error] [{self.location}] {code}")
         err = EmberError(code, self.location, **kwargs)
         self.errors.append(err)
 
@@ -119,7 +121,7 @@ class Lexer(LookaheadBuffer[str, str]):
         match buffer:
             # -Operators
             case '=':
-                _type = Token.Type.SymbolEqual
+                _type = Token.Type.SymbolEq
             case '+':
                 _type = Token.Type.SymbolPlus
             case '-':
