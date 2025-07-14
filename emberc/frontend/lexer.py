@@ -30,6 +30,13 @@ KEYWORDS: dict[str, Token.Type] = {
     'void': Token.Type.KeywordVoid,
     'bool': Token.Type.KeywordBool,
     'int8': Token.Type.KeywordInt8,
+    'int16': Token.Type.KeywordInt16,
+    'int32': Token.Type.KeywordInt32,
+    'int64': Token.Type.KeywordInt64,
+    'uint8': Token.Type.KeywordUInt8,
+    'uint16': Token.Type.KeywordUInt16,
+    'uint32': Token.Type.KeywordUInt32,
+    'uint64': Token.Type.KeywordUInt64,
 }
 
 

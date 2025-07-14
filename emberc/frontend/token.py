@@ -34,6 +34,20 @@ def get_token_repr(token: Token) -> str:
             return "bool"
         case Token.Type.KeywordInt8:
             return "int8"
+        case Token.Type.KeywordInt16:
+            return "int16"
+        case Token.Type.KeywordInt32:
+            return "int32"
+        case Token.Type.KeywordInt64:
+            return "int64"
+        case Token.Type.KeywordUInt8:
+            return "uint8"
+        case Token.Type.KeywordUInt16:
+            return "uint16"
+        case Token.Type.KeywordUInt32:
+            return "uint32"
+        case Token.Type.KeywordUInt64:
+            return "uint64"
         # -Symbol: Operator
         case Token.Type.SymbolEq:
             return '='
@@ -114,6 +128,13 @@ class Token:
         KeywordVoid = auto()
         KeywordBool = auto()
         KeywordInt8 = auto()
+        KeywordInt16 = auto()
+        KeywordInt32 = auto()
+        KeywordInt64 = auto()
+        KeywordUInt8 = auto()
+        KeywordUInt16 = auto()
+        KeywordUInt32 = auto()
+        KeywordUInt64 = auto()
         # -Symbol: Operator
         SymbolEq = auto()
         SymbolPlus = auto()

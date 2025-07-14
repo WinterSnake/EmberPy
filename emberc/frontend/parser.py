@@ -26,8 +26,16 @@ TYPES_TABLE: tuple[Token.Type, ...] = (
     Token.Type.KeywordVoid,
     Token.Type.KeywordBool,
     Token.Type.KeywordInt8,
+    Token.Type.KeywordInt16,
+    Token.Type.KeywordInt32,
+    Token.Type.KeywordInt64,
+    Token.Type.KeywordUInt8,
+    Token.Type.KeywordUInt16,
+    Token.Type.KeywordUInt32,
+    Token.Type.KeywordUInt64,
 )
-OPERATOR_BINARY: dict[Token.Type, NodeExprBinary.Operator] = {
+# BINARY_OPERATORS: '+' | '-' | '*' | '/' | '%' | '<' | '>' | '<=' | '>=' | '==' | '!=';
+OPERATOR_BINARY_TABLE: dict[Token.Type, NodeExprBinary.Operator] = {
     # -Math
     Token.Type.SymbolPlus: NodeExprBinary.Operator.Add,
     Token.Type.SymbolMinus: NodeExprBinary.Operator.Sub,
@@ -230,7 +238,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
                 Token.Type.SymbolEqEq,
                 Token.Type.SymbolBangEq,
             ):
-                operator = OPERATOR_BINARY[token.type]
+                operator = OPERATOR_BINARY_TABLE[token.type]
                 rhs = _comparison()
                 if isinstance(rhs, EmberError):
                     return rhs
@@ -253,7 +261,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
                 Token.Type.SymbolLtEq,
                 Token.Type.SymbolGtEq,
             ):
-                operator = OPERATOR_BINARY[token.type]
+                operator = OPERATOR_BINARY_TABLE[token.type]
                 rhs = _term()
                 if isinstance(rhs, EmberError):
                     return rhs
@@ -274,7 +282,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
                 Token.Type.SymbolPlus,
                 Token.Type.SymbolMinus,
             ):
-                operator = OPERATOR_BINARY[token.type]
+                operator = OPERATOR_BINARY_TABLE[token.type]
                 rhs = _factor()
                 if isinstance(rhs, EmberError):
                     return rhs
@@ -296,7 +304,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
                 Token.Type.SymbolFSlash,
                 Token.Type.SymbolPercent,
             ):
-                operator = OPERATOR_BINARY[token.type]
+                operator = OPERATOR_BINARY_TABLE[token.type]
                 rhs = self._parse_expression_primary()
                 if isinstance(rhs, EmberError):
                     return rhs

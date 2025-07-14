@@ -11,6 +11,7 @@ expression_primary: IDENTIFIER | NUMBER | '(' expression ')';
 BINARY_OPERATORS: '+' | '-' | '*' | '/' | '%' | '<' | '>' | '<=' | '>=' | '==' | '!=';
 
 # -Keywords
-INTS: "int8";
-BUILTIN_TYPE: "void" | INTS;
+INTS: "int8" | "int16" | "int32" | "int64";
+UINTS: "uint8" | "uint16" | "uint32" | "uint64";
+BUILTIN_TYPE: "void" | "bool" | INTS | UINTS;
 TYPE: BUILTIN_TYPE;
