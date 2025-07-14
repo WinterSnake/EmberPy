@@ -11,20 +11,26 @@ from pathlib import Path
 from .errors import DebugLevel, EmberError
 from .frontend import Lexer, Parser, Token
 from .middleware.nodes import Node
+from .middleware.interpreter import Interpreter
 
 ## Constants
 LEXER_LEVEL: DebugLevel = DebugLevel.Off
-PARSER_LEVEL: DebugLevel = DebugLevel.Trace
+PARSER_LEVEL: DebugLevel = DebugLevel.Off
 
 
 ## Functions
 def _entry() -> None:
-    source: Path = Path("tests/00-start.ember")
+    if len(sys.argv) < 2:
+        print("No source file provided", file=sys.stderr)
+        usage()
+        return
+    source: Path = Path(sys.argv[1])
     output = parse_source(source)
     if isinstance(output, Sequence):
         for err in output:
             print(err.message, file=sys.stderr)
         sys.exit(64)
+    Interpreter.run(output)
 
 
 def parse_source(source: Path) -> Node | Sequence[EmberError]:
