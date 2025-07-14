@@ -24,6 +24,8 @@ SYMBOLS: tuple[str, ...] = (
 KEYWORDS: dict[str, Token.Type] = {
     # -Keywords
     'fn': Token.Type.KeywordFunction,
+    'true': Token.Type.KeywordTrue,
+    'false': Token.Type.KeywordFalse,
     # -Types
     'void': Token.Type.KeywordVoid,
     'int8': Token.Type.KeywordInt8,

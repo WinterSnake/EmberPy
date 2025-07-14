@@ -14,7 +14,7 @@ from .visitor import NodeVisitor
 from ...location import Location
 
 ## Constants
-LITERAL = int
+LITERAL = bool | int
 
 
 ## Classes
@@ -39,3 +39,4 @@ class NodeExprLiteral(NodeExpr):
     # -Sub-Classes
     class Type(IntEnum):
         Integer = auto()
+        Boolean = auto()

@@ -331,6 +331,12 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         _type: NodeExprLiteral.Type
         value: LITERAL
         match literal.type:
+            case Token.Type.KeywordTrue:
+                _type = NodeExprLiteral.Type.Boolean
+                value = True
+            case Token.Type.KeywordFalse:
+                _type = NodeExprLiteral.Type.Boolean
+                value = False
             case Token.Type.Integer:
                 _type = NodeExprLiteral.Type.Integer
                 value = int(literal.value)

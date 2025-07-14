@@ -1,3 +1,7 @@
+true == true; // Output: true
+false == false; // Output: true
+true == false; // Output: false
+true != true;  // Output: false
 95 < 200;  // Output: true
 10 > 85;  // Output: false
 45 <= 45;  // Output: true
