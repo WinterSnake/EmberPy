@@ -1,0 +1,6 @@
+95 < 200;  // Output: true
+10 > 85;  // Output: false
+45 <= 45;  // Output: true
+54 >= 100;  // Output: false
+6 == 8;  // Output: false
+9 != 10;  // Output: true

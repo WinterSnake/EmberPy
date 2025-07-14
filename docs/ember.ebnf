@@ -4,8 +4,11 @@ statement: declaration_variable | statement_expression | statement_assignment;
 statement_assignment: IDENTIFIER '=' expression ';';
 statement_expression: expression ';';
 expression: expression_literal;
-expression_binary: expression_literal ( ('+' | '-' | '*' | '/' | '%') expression_literal)*;
+expression_binary: expression_primary (BINARY_OPERATOR expression_primary)*;
 expression_primary: IDENTIFIER | NUMBER | '(' expression ')';
+
+# -Symbols
+BINARY_OPERATORS: '+' | '-' | '*' | '/' | '%' | '<' | '>' | '<=' | '>=' | '==' | '!=';
 
 # -Keywords
 INTS: "int8";

@@ -77,6 +77,18 @@ class Interpreter:
                 return lhs // rhs
             case NodeExprBinary.Operator.Mod:
                 return lhs % rhs
+            case NodeExprBinary.Operator.Lt:
+                return lhs < rhs
+            case NodeExprBinary.Operator.Gt:
+                return lhs > rhs
+            case NodeExprBinary.Operator.LtEq:
+                return lhs <= rhs
+            case NodeExprBinary.Operator.GtEq:
+                return lhs >= rhs
+            case NodeExprBinary.Operator.EqEq:
+                return lhs == rhs
+            case NodeExprBinary.Operator.NtEq:
+                return lhs != rhs
 
     def visit_expression_group(self, node: NodeExprGroup) -> LITERAL:
         if self.debug_level <= DebugLevel.Info:

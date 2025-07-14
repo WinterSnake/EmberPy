@@ -37,8 +37,16 @@ class NodeExprBinary(NodeExpr):
 
     # -Sub-Classes
     class Operator(IntEnum):
+        # -Math
         Add = auto()
         Sub = auto()
         Mul = auto()
         Div = auto()
         Mod = auto()
+        # -Comparisons
+        Lt = auto()
+        Gt = auto()
+        LtEq = auto()
+        GtEq = auto()
+        EqEq = auto()
+        NtEq = auto()

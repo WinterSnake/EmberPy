@@ -16,7 +16,9 @@ from ..location import Location
 
 ## Constants
 SYMBOLS: tuple[str, ...] = (
+    '!',
     '=', '+', '-', '*', '/', '%',
+    '<', '>',
     '(', ')', '{', '}', ':', ';',
 )
 KEYWORDS: dict[str, Token.Type] = {
@@ -122,6 +124,14 @@ class Lexer(LookaheadBuffer[str, str]):
             # -Operators
             case '=':
                 _type = Token.Type.SymbolEq
+                if self._consume('='):
+                    _type = Token.Type.SymbolEqEq
+            case '!':
+                if self._consume('='):
+                    _type = Token.Type.SymbolBangEq
+                else:
+                    self._error(EmberError.unknown_symbol, char=buffer)
+                    return None
             case '+':
                 _type = Token.Type.SymbolPlus
             case '-':
@@ -138,6 +148,15 @@ class Lexer(LookaheadBuffer[str, str]):
                     return None
             case '%':
                 _type = Token.Type.SymbolPercent
+            # -Comparisons
+            case '<':
+                _type = Token.Type.SymbolLt
+                if self._consume('='):
+                    _type = Token.Type.SymbolLtEq
+            case '>':
+                _type = Token.Type.SymbolGt
+                if self._consume('='):
+                    _type = Token.Type.SymbolGtEq
             # -Misc
             case '(':
                 _type = Token.Type.SymbolLParen

@@ -41,6 +41,19 @@ def get_token_repr(token: Token) -> str:
             return '/'
         case Token.Type.SymbolPercent:
             return '%'
+        # -Symbol: Comparison
+        case Token.Type.SymbolEqEq:
+            return "=="
+        case Token.Type.SymbolBangEq:
+            return "!="
+        case Token.Type.SymbolLt:
+            return '<'
+        case Token.Type.SymbolGt:
+            return '>'
+        case Token.Type.SymbolLtEq:
+            return "<="
+        case Token.Type.SymbolGtEq:
+            return ">="
         # -Symbol: Misc
         case Token.Type.SymbolLParen:
             return '('
@@ -99,7 +112,14 @@ class Token:
         SymbolStar = auto()
         SymbolFSlash = auto()
         SymbolPercent = auto()
-        # -Symbol: Misc
+        # -Symbol: Comparison
+        SymbolEqEq = auto()
+        SymbolBangEq = auto()
+        SymbolLt = auto()
+        SymbolGt = auto()
+        SymbolLtEq = auto()
+        SymbolGtEq = auto()
+        # -Symbtl: Misc
         SymbolLParen = auto()
         SymbolRParen = auto()
         SymbolLBrace = auto()
