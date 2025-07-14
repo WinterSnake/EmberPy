@@ -1,29 +1,13 @@
-module: declaration*;
-declaration: declaration_function | declaration_variable | statement;
-declaration_function: 'fn' IDENTIFIER '(' (TYPE IDENTIFIER (',' TYPE IDENTIFIER)*)? ')' ':' TYPE '{' declaration* '}';
-declaration_variable: TYPE IDENTIFIER ('=' expression)? ';';
-statement: statement_if | statement_while | statement_for | statement_block | statement_return | statment_expression;
-statement_if: 'if' '(' expression ')' statement ('else' statement)?;
-statement_while: 'while' '(' expression ')' statement;
-statement_do: 'do' '{' declaration* '}' 'while' '(' expression ')' ';';
-statement_for: 'for' '(' (declaration_variable | statement_expression | ';') expression? ';' expression? ')' statement;
-statement_block: '{' declaration* '}';
-statement_return: 'return' expression? ';';
+module: statement*;
+declaration_variable: TYPE IDENTIFIER ';';
+statement: declaration_variable | statement_expression | statement_assignment;
+statement_assignment: IDENTIFIER '=' expression ';';
 statement_expression: expression ';';
-expression: expression_assignment;
-expression_assignment: IDENTIFIER '=' expression_assignment | expression_binary;
-expression_logical: expression_binary ( ('and' | 'or) expression_binary)*;
-expression_binary: expression_unary_prefix ( ('+' | '-' | '*' | '/' | '%' | '<' | '>' | '>=' | '<=' | '==' | '!=') expression_unary_prefix)*;
-expression_unary_prefix: ('-' | '!') expression_unary_prefix | expression_unary_postfix;
-expression_unary_postfix: expression_primary (expression_unary_postfix_call)*;
-expression_unary_postfix_call: ( '(' (expression (',' expression)*)? ')' );
-expression_primary: IDENTIFIER | expression_literal | '(' expression ')';
-expression_literal: BOOLEAN | NUMBER;
+expression: expression_literal;
+expression_binary: expression_literal ( ('+' | '-' | '*' | '/' | '%') expression_literal)*;
+expression_primary: IDENTIFIER | NUMBER | '(' expression ')';
 
-INTS: "int8" | "int16" | "int32" | "int64";
-UINTS: "uint8" | "uint16" | "uint32" | "uint64";
-BUILTIN_TYPES: "bool" | INTS | UINTS;
-TYPE: BUILTIN_TYPES;
-
-# Literals
-BOOLEAN: "true" | "false";
+# -Keywords
+INTS: "int8";
+BUILTIN_TYPE: "void" | INTS;
+TYPE: BUILTIN_TYPE;
