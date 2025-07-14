@@ -32,12 +32,6 @@ class NodeExprLiteral(NodeExpr):
         self.type: NodeExprLiteral.Type = _type
         self.value: LITERAL = value
 
-    # -Dunder Method
-    def __str__(self) -> str:
-        match self.type:
-            case NodeExprLiteral.Type.Integer:
-                return str(self.value)
-
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:
         return visitor.visit_expression_literal(self)

@@ -83,6 +83,12 @@ class Interpreter:
             print(f"[Interpreter::Expression::Group]")
         return node.expression.accept(self)
 
+    def visit_expression_variable(self, node: NodeExprVariable) -> Literal:
+        if self.debug_level <= DebugLevel.Info:
+            print(f"[Interpreter::Expression::Variable] {node.id}")
+        env = self.current
+        return env[node.id]
+
     def visit_expression_literal(self, node: NodeExprLiteral) -> LITERAL:
         if self.debug_level <= DebugLevel.Info:
             print(f"[Interpreter::Expression::Literal] {node.value}")

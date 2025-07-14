@@ -18,7 +18,7 @@ from ..middleware.nodes import (
     NodeDeclModule, NodeDeclVariable,
     NodeStmtAssignment, NodeStmtExpression,
     NodeExprBinary,
-    NodeExprGroup, NodeExprLiteral,
+    NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
 
 ## Constants
@@ -282,6 +282,8 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             case Token.Type.Integer:
                 _type = NodeExprLiteral.Type.Integer
                 value = int(literal.value)
+            case Token.Type.Identifier:
+                return NodeExprVariable(literal.location, literal.value)
             case _:
                 self._buffer = literal
                 return self._error(
