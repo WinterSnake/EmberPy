@@ -12,6 +12,7 @@ from .decl_variable import NodeDeclVariable
 from .stmt_assignment import NodeStmtAssignment
 from .stmt_expression import NodeStmtExpression
 from .expr_binary import NodeExprBinary
+from .expr_group import NodeExprGroup
 from .expr_literal import LITERAL, NodeExprLiteral
 from .visitor import NodeVisitor
 
@@ -22,6 +23,6 @@ __all__: tuple[str, ...] = (
     "NodeDeclModule", "NodeDeclVariable",
     "NodeStmtAssignment", "NodeStmtExpression",
     "NodeExprBinary",
-    "NodeExprLiteral",
+    "NodeExprGroup", "NodeExprLiteral",
     "NodeVisitor",
 )

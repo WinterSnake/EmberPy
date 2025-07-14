@@ -18,7 +18,7 @@ from ..middleware.nodes import (
     NodeDeclModule, NodeDeclVariable,
     NodeStmtAssignment, NodeStmtExpression,
     NodeExprBinary,
-    NodeExprLiteral,
+    NodeExprGroup, NodeExprLiteral,
 )
 
 ## Constants
@@ -104,13 +104,14 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             self._sync()
         return NodeDeclModule(nodes)
 
-    def _parse_declaration_variable(self, _type: Token) -> Node | EmberError:
+    def _parse_declaration_variable(self) -> Node | EmberError:
         '''
         Grammar[Declaration::Variable]
         TYPE IDENTIFIER ';';
         '''
         if self.debug_level <= DebugLevel.Info:
             print(f"[Parser::Declaration::Variable]")
+        _type = self._last_token
         _id = self._advance()
         if _id is None:
             return self._error(EmberError.invalid_identifier_eof)
@@ -135,19 +136,20 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         if self.debug_level <= DebugLevel.Info:
             print(f"[Parser::Statement]")
         # -Rule: Decl Variable
-        if token := self._match(*TYPES_TABLE):
-            return self._parse_declaration_variable(token)
+        if self._match(*TYPES_TABLE):
+            return self._parse_declaration_variable()
         # -Rule: Stmt Assignment
-        elif token := self._match(Token.Type.Identifier):
-            return self._parse_statement_assignment(token)
+        elif self._match(Token.Type.Identifier):
+            return self._parse_statement_assignment()
         # -Rule: Stmt Expression
         return self._parse_statement_expression()
 
-    def _parse_statement_assignment(self, _id: Token) -> Node | EmberError:
+    def _parse_statement_assignment(self) -> Node | EmberError:
         '''
         Grammar[Statement::Assignment]
         IDENTIFIER '=' expression ';';
         '''
+        _id = self._last_token
         code: int
         # -Invalid '=' consume
         if not self._consume(Token.Type.SymbolEq):
@@ -223,11 +225,11 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         def _factor() -> NodeExpr | EmberError:
             '''
             Grammar[Expression::Binary::Factor]
-            expression_literal ( ('*' | '/' | '%') expression_literal)*;
+            expression_primary ( ('*' | '/' | '%') expression_primary)*;
             '''
             if self.debug_level <= DebugLevel.Info:
                 print(f"[Parser::Expression::Binary::Factor]")
-            lhs = self._parse_expression_literal()
+            lhs = self._parse_expression_primary()
             if isinstance(lhs, EmberError):
                 return lhs
             while token := self._match(
@@ -236,7 +238,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
                 Token.Type.SymbolPercent,
             ):
                 operator = OPERATOR_BINARY[token.type]
-                rhs = self._parse_expression_literal()
+                rhs = self._parse_expression_primary()
                 if isinstance(rhs, EmberError):
                     return rhs
                 lhs = NodeExprBinary(token.location, operator, lhs, rhs)
@@ -246,13 +248,26 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             print(f"[Parser::Expression::Binary]")
         return _term()
 
-    def _parse_expression_literal(self) -> NodeExpr | EmberError:
+    def _parse_expression_primary(self) -> NodeExpr | EmberError:
         '''
-        Grammar[Expression::Literal]
-        NUMBER;
+        Grammar[Expression::Primary]
+        IDENTIFIER | NUMBER | '(' expression ')';
         '''
         if self.debug_level <= DebugLevel.Info:
-            print(f"[Parser::Expression::Literal]")
+            print(f"[Parser::Expression::Primary]")
+        # - Rule: Grouping
+        code: int
+        if self._consume(Token.Type.SymbolLParen):
+            node = self._parse_expression()
+            if isinstance(node, EmberError):
+                return node
+            if self._consume(Token.Type.SymbolRParen):
+                return NodeExprGroup(node)
+            code = EmberError.invalid_consume_symbol
+            if self.is_at_end:
+                code = EmberError.invalid_consume_symbol_eof
+            return self._error(code, symbol=')')
+        # - Rule: Literal
         literal = self._advance()
         if literal is None:
             return self._error(EmberError.invalid_expression_eof)

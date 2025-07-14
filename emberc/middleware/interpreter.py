@@ -13,7 +13,7 @@ from .nodes import (
     NodeDeclModule, NodeDeclVariable,
     NodeStmtAssignment, NodeStmtExpression,
     NodeExprBinary,
-    NodeExprLiteral,
+    NodeExprGroup, NodeExprLiteral,
 )
 from ..errors import DebugLevel
 
@@ -73,6 +73,11 @@ class Interpreter:
                 return lhs // rhs
             case NodeExprBinary.Operator.Mod:
                 return lhs % rhs
+
+    def visit_expression_group(self, node: NodeExprGroup) -> LITERAL:
+        if self.debug_level <= DebugLevel.Info:
+            print(f"[Interpreter::Expression::Group]")
+        return node.expression.accept(self)
 
     def visit_expression_literal(self, node: NodeExprLiteral) -> LITERAL:
         if self.debug_level <= DebugLevel.Info:
