@@ -5,9 +5,14 @@ fn test() : void
 	b * 5;
 }
 int8 c = 10;
-fn area() : int32
+fn area(int32 shape) : int32
 {
 	int8 a = 10;
 	int64 b = 2555;
 	a + b;
+}
+
+fn beetle(uint32 t, uint64 value):bool
+{
+
 }

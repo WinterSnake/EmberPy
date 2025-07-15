@@ -16,10 +16,10 @@ from ..location import Location
 
 ## Constants
 SYMBOLS: tuple[str, ...] = (
-    '!',
-    '=', '+', '-', '*', '/', '%',
-    '<', '>',
-    '(', ')', '{', '}', ':', ';',
+    '+', '-', '*', '/', '%',
+    '<', '>', '=', '!',
+    '(', ')', '{', '}',
+    ',', ':', ';',
 )
 KEYWORDS: dict[str, Token.Type] = {
     # -Literals
@@ -174,6 +174,8 @@ class Lexer(LookaheadBuffer[str, str]):
                 _type = Token.Type.SymbolLBrace
             case '}':
                 _type = Token.Type.SymbolRBrace
+            case ',':
+                _type = Token.Type.SymbolComma
             case ':':
                 _type = Token.Type.SymbolColon
             case ';':

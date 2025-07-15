@@ -20,10 +20,20 @@ class NodeDeclFunction(NodeContainer):
     """
 
     # -Constructor
-    def __init__(self, _id: int, body: Sequence[Node]) -> None:
+    def __init__(
+        self, _id: int, parameters: Sequence[int] | None, body: Sequence[Node]
+    ) -> None:
         super().__init__(body)
         self.id: int = _id
+        self.parameters: Sequence[int] | None = parameters
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:
         return visitor.visit_declaration_function(self)
+
+    # -Properties
+    @property
+    def parameter_count(self) -> int:
+        if self.parameters is None:
+            return 0
+        return len(self.parameters)

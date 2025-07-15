@@ -77,6 +77,37 @@ def _parse_condition_expression(parser: Parser) -> NodeExpr | EmberError:
     return condition
 
 
+def _get_type_or_error(parser: Parser) -> Token | EmberError:
+    """Helper function for getting a typed token or returning error"""
+    _type: Token | Literal[False]
+    if not (_type := parser._match(*TYPES_TABLE)):
+        if parser.is_at_end:
+            return parser._error(EmberError.invalid_type_eof)
+        else:
+            assert not isinstance(_type, bool)
+            return parser._error(
+                EmberError.invalid_type, _type.location,
+                value=get_token_repr(_type)
+            )
+    assert isinstance(_type, Token)
+    return _type
+
+
+def _get_identifier_or_error(parser: Parser) -> Token | EmberError:
+    """Helper function for getting an identifier token or returning error"""
+    _id: Token | None = parser._advance()
+    # -Invalid {Identifier} consume (end of stream)
+    if _id is None:
+        return parser._error(EmberError.invalid_identifier_eof)
+    # -Invalid {Identifier} consume
+    elif _id.type is not Token.Type.Identifier:
+        return parser._error(
+            EmberError.invalid_identifier, value=get_token_repr(_id)
+        )
+    assert isinstance(_id, Token)
+    return _id
+
+
 ## Classes
 class Parser(LookaheadBuffer[Token, Token.Type]):
     """
@@ -155,41 +186,64 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _parse_declaration_function(self) -> Node | EmberError:
         '''
         Grammar[Declaration::Function]
-        'fn' IDENTIFIER '(' ')' ':' TYPE '{' declaration_statement* '}';
+        'fn' IDENTIFIER '(' (parameter (',' parameter)*)? ')' ':' TYPE '{' declaration_statement* '}';
         '''
-        _id = self._advance()
-        # -Invalid {Identifier} consume (end of stream)
-        if _id is None:
-            return self._error(EmberError.invalid_identifier_eof)
-        # -Invalid {Identifier} consume
-        elif _id.type is not Token.Type.Identifier:
-            return self._error(
-                EmberError.invalid_identifier,
-                value=get_token_repr(_id)
-            )
+        # -Internal Functions
+        def _parameter() -> int | EmberError:
+            '''
+            Grammar[Function::Parameter]
+            TYPE IDENTIFIER;
+            '''
+            _type = _get_type_or_error(self)
+            # --Invalid [Type] consume
+            if isinstance(_type, EmberError):
+                return _type
+            _id = _get_identifier_or_error(self)
+            # --Invalid {Identifier} consume
+            if isinstance(_id, EmberError):
+                return _id
+            return self._table.add(_id.value)
+
+        # -Body
+        _id = _get_identifier_or_error(self)
+        # --Invalid {Identifier} consume
+        if isinstance(_id, EmberError):
+            return _id
         entry: int = self._table.add(_id.value)
+        # --Invalid '(' consume
         if not self._consume(Token.Type.SymbolLParen):
             return self._error(EmberError.invalid_symbol, symbol='(')
+        parameters: list[int] | None = None
+        # -Parameters 0
         if not self._consume(Token.Type.SymbolRParen):
-            return self._error(EmberError.invalid_symbol, symbol=')')
+            # -Parameters 1
+            _entry = _parameter()
+            # --Invalid [Parameter] consume
+            if isinstance(_entry, EmberError):
+                return _entry
+            parameters = [_entry]
+            # -Parameters 2+
+            while self._consume(Token.Type.SymbolComma):
+                _entry = _parameter()
+                # --Invalid [Parameter] consume
+                if isinstance(_entry, EmberError):
+                    return _entry
+                parameters.append(entry)
+            # --Invalid ')' consume
+            if not self._consume(Token.Type.SymbolRParen):
+                return self._error(EmberError.invalid_symbol, symbol=')')
+        # --Invalid ':' consume
         if not self._consume(Token.Type.SymbolColon):
             return self._error(EmberError.invalid_symbol, symbol=':')
-        _type: Token | Literal[False]
-        # -Invalid [Type] consume
-        if not (_type := self._match(*TYPES_TABLE)):
-            if self.is_at_end:
-                return self._error(EmberError.invalid_type_eof)
-            else:
-                assert not isinstance(_type, bool)
-                return self._error(
-                    EmberError.invalid_type,
-                    _type.location,
-                    value=get_token_repr(_type),
-                )
+        _type = _get_type_or_error(self)
+        # --Invalid [Type] consume
+        if isinstance(_type, EmberError):
+            return _type
+        # --Invalid '{' consume
         if not self._consume(Token.Type.SymbolLBrace):
             return self._error(EmberError.invalid_symbol, symbol='{')
         body = self._parse_statement_block()
-        return NodeDeclFunction(entry, body)
+        return NodeDeclFunction(entry, parameters, body)
 
     def _parse_declaration_statement(self) -> Node | EmberError:
         '''
@@ -207,16 +261,10 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         Grammar[Declaration::Variable]
         TYPE IDENTIFIER ('=' expression)? ';';
         '''
-        _id = self._advance()
-        # -Invalid {Identifier} consume (end of stream)
-        if _id is None:
-            return self._error(EmberError.invalid_identifier_eof)
+        _id = _get_identifier_or_error(self)
         # -Invalid {Identifier} consume
-        elif _id.type is not Token.Type.Identifier:
-            return self._error(
-                EmberError.invalid_identifier,
-                value=get_token_repr(_id)
-            )
+        if isinstance(_id, EmberError):
+            return _id
         entry: int = self._table.add(_id.value)
         initializer: NodeExpr | None = None
         if self._consume(Token.Type.SymbolEq):
@@ -264,6 +312,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             # --Invalid '}' consume
             if self.is_at_end:
                 _ = self._error(EmberError.invalid_symbol, symbol='}')
+                break
             node = self._parse_declaration_statement()
             # -Error Recovery
             if isinstance(node, EmberError):

@@ -2,7 +2,8 @@ module: declaration*;
 
 # Declarations
 declaration: declaration_function | declaration_statement;
-declaration_function: 'fn' IDENTIFIER '(' ')' ':' TYPE '{' declaration_statement* '}';
+declaration_function: 'fn' IDENTIFIER '(' (parameter (',' parameter)*)? ')' ':' TYPE '{' declaration_statement* '}';
+	parameter: TYPE IDENTIFIER
 declaration_statement: declaration_variable | statement;
 declaration_variable: TYPE IDENTIFIER ('=' expression)? ';';
 

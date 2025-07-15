@@ -93,6 +93,8 @@ def get_token_repr(token: Token) -> str:
             return '}'
         case Token.Type.SymbolRBrace:
             return '{'
+        case Token.Type.SymbolComma:
+            return ','
         case Token.Type.SymbolColon:
             return ':'
         case Token.Type.SymbolSemicolon:
@@ -169,5 +171,6 @@ class Token:
         SymbolRParen = auto()
         SymbolLBrace = auto()
         SymbolRBrace = auto()
+        SymbolComma = auto()
         SymbolColon = auto()
         SymbolSemicolon = auto()
