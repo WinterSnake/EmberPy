@@ -14,5 +14,7 @@ fn area(int32 shape) : int32
 
 fn beetle(uint32 t, uint64 value):bool
 {
-
+	area(93);
 }
+
+beetle(9, 10);

@@ -25,7 +25,7 @@ class NodeDeclFunction(NodeContainer):
     ) -> None:
         super().__init__(body)
         self.id: int = _id
-        self.parameters: Sequence[int] | None = parameters
+        self._parameters: Sequence[int] | None = parameters
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:
@@ -33,7 +33,12 @@ class NodeDeclFunction(NodeContainer):
 
     # -Properties
     @property
-    def parameter_count(self) -> int:
-        if self.parameters is None:
-            return 0
-        return len(self.parameters)
+    def has_parameters(self) -> bool:
+        if self._parameters is None:
+            return False
+        return True
+
+    @property
+    def parameters(self) -> Sequence[int]:
+        assert self._parameters is not None
+        return self._parameters

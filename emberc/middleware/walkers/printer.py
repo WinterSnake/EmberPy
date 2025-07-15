@@ -11,7 +11,7 @@ from ..nodes import (
     Node,
     NodeDeclModule, NodeDeclFunction, NodeDeclVariable,
     NodeStmtBlock, NodeStmtCondition, NodeStmtLoop, NodeStmtExpression,
-    NodeExprAssignment, NodeExprBinary, NodeExprUnary,
+    NodeExprAssignment, NodeExprBinary, NodeExprUnary, NodeExprCall,
     NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
 
@@ -91,6 +91,13 @@ class PrinterWalker:
         match node.operator:
             case NodeExprUnary.Operator.Minus:
                 return f"(-{expression})"
+
+    def visit_expression_call(self, node: NodeExprCall) -> str:
+        _id = node.callee.accept(self)
+        args = f""
+        if node.has_arguments:
+            args = ", ".join(child.accept(self) for child in node.arguments)
+        return f"{_id}({args})"
 
     def visit_expression_group(self, node: NodeExprGroup) -> str:
         return f"({node.expression.accept(self)})"

@@ -18,7 +18,7 @@ from ..middleware.nodes import (
     Node, NodeExpr,
     NodeDeclModule, NodeDeclFunction, NodeDeclVariable,
     NodeStmtBlock, NodeStmtCondition, NodeStmtLoop, NodeStmtExpression,
-    NodeExprAssignment, NodeExprBinary, NodeExprUnary,
+    NodeExprAssignment, NodeExprBinary, NodeExprUnary, NodeExprCall,
     NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
 from ..middleware import Datatype, SymbolTable, get_datatype_from_token
@@ -218,18 +218,18 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         # -Parameters 0
         if not self._consume(Token.Type.SymbolRParen):
             # -Parameters 1
-            _entry = _parameter()
+            _param = _parameter()
             # --Invalid [Parameter] consume
-            if isinstance(_entry, EmberError):
-                return _entry
-            parameters = [_entry]
+            if isinstance(_param, EmberError):
+                return _param
+            parameters = [_param]
             # -Parameters 2+
             while self._consume(Token.Type.SymbolComma):
-                _entry = _parameter()
+                _param = _parameter()
                 # --Invalid [Parameter] consume
-                if isinstance(_entry, EmberError):
-                    return _entry
-                parameters.append(entry)
+                if isinstance(_param, EmberError):
+                    return _param
+                parameters.append(_param)
             # --Invalid ')' consume
             if not self._consume(Token.Type.SymbolRParen):
                 return self._error(EmberError.invalid_symbol, symbol=')')
@@ -378,7 +378,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         # --Invalid '(' consume
         if not self._consume(Token.Type.SymbolLParen):
             return self._error(EmberError.invalid_symbol, symbol='(')
-        # -<<Initializer>>-
+        # -<Initializer>-
         initializer: Node | None = None
         if not self._consume(Token.Type.SymbolSemicolon):
             # -Rule: Variable Declaration
@@ -391,7 +391,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             if isinstance(_initializer, EmberError):
                 return _initializer
             initializer = _initializer
-        # -<<Condition>>-
+        # -<Condition>-
         condition: NodeExpr
         # --Expression
         if not self._consume(Token.Type.SymbolSemicolon):
@@ -409,7 +409,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             condition = NodeExprLiteral(
                 location, NodeExprLiteral.Type.Boolean, True
             )
-        # -<<Increment>>-
+        # -<Increment>-
         increment: NodeExpr | None = None
         if not self._consume(Token.Type.SymbolRParen):
             _increment = self._parse_expression()
@@ -480,7 +480,6 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             l_value = NodeExprAssignment(location, l_value, r_value)
         return l_value
 
-
     def _parse_expression_binary(
         self, current_precedence: int = 0
     ) -> NodeExpr | EmberError:
@@ -508,9 +507,37 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _parse_expression_unary(self) -> NodeExpr | EmberError:
         '''
         Grammar[Expression::Unary]
-        UNARY_PREFIX_OPERATOR expression_unary | expression_primary;
+        UNARY_PREFIX_OPERATOR expression_unary | expression_primary unary_postfix;
         '''
-        # -Prefix
+        # -Internal Methods
+        def _function_call() -> list[NodeExpr] | EmberError | None:
+            '''
+            Grammar[Unary::Postfix::Call]
+            '(' (expression (',' expression)*)? ')';
+            '''
+            arguments: list[NodeExpr] | None = None
+            # --Arguments: 0
+            if not self._consume(Token.Type.SymbolRParen):
+                # --Arguments: 1
+                _arg = self._parse_expression()
+                # --Invalid <expression> consume
+                if isinstance(_arg, EmberError):
+                    return _arg
+                arguments = [_arg]
+                # --Arguments: 2+
+                while self._consume(Token.Type.SymbolComma):
+                    _arg = self._parse_expression()
+                    # --Invalid <expression> consume
+                    if isinstance(_arg, EmberError):
+                        return _arg
+                    arguments.append(_arg)
+                # --Invalid ')' consume
+                if not self._consume(Token.Type.SymbolRParen):
+                    return self._error(EmberError.invalid_symbol, symbol=')')
+            return arguments
+
+        # -Body
+        # -<Prefix>-
         if token := self._match(*UNARY_OPERATOR.keys()):
             operator = UNARY_OPERATOR[token.type]
             expression = self._parse_expression_unary()
@@ -518,10 +545,19 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             if isinstance(expression, EmberError):
                 return expression
             return NodeExprUnary(token.location, operator, expression)
-        # -Primary
-        return self._parse_expression_primary()
-
-
+        # -<Primary>-
+        node = self._parse_expression_primary()
+        # --Invalid <expression> consume
+        if isinstance(node, EmberError):
+            return node
+        # -<Postfix>-
+        # --Rule: Function Call
+        while self._consume(Token.Type.SymbolLParen):
+            arguments = _function_call()
+            if isinstance(arguments, EmberError):
+                return arguments
+            node = NodeExprCall(node, arguments)
+        return node
 
     def _parse_expression_primary(self) -> NodeExpr | EmberError:
         '''

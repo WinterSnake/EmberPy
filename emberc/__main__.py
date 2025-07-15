@@ -28,7 +28,6 @@ def _entry() -> None:
         for err in output:
             print(err.message, file=sys.stderr)
         sys.exit(64)
-    print(table.entries)
     PrinterWalker.run(output)
     InterpreterWalker.run(output, table)
 
