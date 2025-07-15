@@ -1,17 +1,28 @@
-module: statement*;
-declaration_variable: TYPE IDENTIFIER ';';
-statement: declaration_variable | statement_expression | statement_assignment;
-statement_assignment: IDENTIFIER '=' expression ';';
-statement_expression: expression ';';
-expression: expression_literal;
-expression_binary: expression_primary (BINARY_OPERATOR expression_primary)*;
-expression_primary: IDENTIFIER | NUMBER | '(' expression ')';
+module: declaration*;
 
-# -Symbols
+# Declarations
+declaration: declaration_function | statement;
+declaration_function: 'fn' IDENTIFIER '(' ')' ':' TYPE '{' statement* '}';
+declaration_variable: TYPE IDENTIFIER ('=' expression)? ';';
+
+# Statements
+statement: declaration_variable | statement_block | statement_expression;
+statement_block: '{' statement* '}';
+statement_expression: expression ';';
+
+# Expressions
+expression: expression_binary;
+expression_binary: expression_primary (BINARY_OPERATOR expression_primary)*;
+expression_primary: IDENTIFIER | BOOLEAN | NUMBER | '(' expression ')';
+
+# Symbols
 BINARY_OPERATORS: '+' | '-' | '*' | '/' | '%' | '<' | '>' | '<=' | '>=' | '==' | '!=';
 
-# -Keywords
+# Keywords
 INTS: "int8" | "int16" | "int32" | "int64";
 UINTS: "uint8" | "uint16" | "uint32" | "uint64";
 BUILTIN_TYPE: "void" | "bool" | INTS | UINTS;
 TYPE: BUILTIN_TYPE;
+
+# Literals
+BOOLEAN: "true" | "false";

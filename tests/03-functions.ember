@@ -1,0 +1,13 @@
+6 + 1;
+fn test() : void
+{
+	int16 b = 24;
+	b * 5;
+}
+int8 c = 10;
+fn area() : int32
+{
+	int8 a = 10;
+	int64 b = 2555;
+	a + b;
+}

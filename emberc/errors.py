@@ -23,11 +23,12 @@ ERROR_TABLE: tuple[tuple[str, ...], ...] = (
     # -Parser
     (
         "'{symbol}' expected",
-        "'{symbol}' expected",
         "Invalid expression term '{value}'",
         "Expected expression",
         "Invalid identifier '{value}'",
         "Expected identifier",
+        "Invalid type '{value}'",
+        "Type expected",
     ),
 )
 
@@ -87,8 +88,9 @@ class EmberError:
     unterminated_comment_multiline: ClassVar[int] = 103
     # --Code: Parser
     invalid_consume_symbol: ClassVar[int] = 201
-    invalid_consume_symbol_eof: ClassVar[int] = 202
-    invalid_expression: ClassVar[int] = 203
-    invalid_expression_eof: ClassVar[int] = 204
-    invalid_identifier: ClassVar[int] = 205
-    invalid_identifier_eof: ClassVar[int] = 206
+    invalid_expression: ClassVar[int] = 202
+    invalid_expression_eof: ClassVar[int] = 203
+    invalid_identifier: ClassVar[int] = 204
+    invalid_identifier_eof: ClassVar[int] = 205
+    invalid_type: ClassVar[int] = 206
+    invalid_type_eof: ClassVar[int] = 207

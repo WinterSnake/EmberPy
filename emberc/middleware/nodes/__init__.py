@@ -8,8 +8,9 @@
 ## Imports
 from .core import Node, NodeExpr
 from .decl_module import NodeDeclModule
+from .decl_function import NodeDeclFunction
 from .decl_variable import NodeDeclVariable
-from .stmt_assignment import NodeStmtAssignment
+from .stmt_block import NodeStmtBlock
 from .stmt_expression import NodeStmtExpression
 from .expr_binary import NodeExprBinary
 from .expr_group import NodeExprGroup
@@ -21,8 +22,8 @@ from .visitor import NodeVisitor
 __all__: tuple[str, ...] = (
     "LITERAL",
     "Node", "NodeExpr",
-    "NodeDeclModule", "NodeDeclVariable",
-    "NodeStmtAssignment", "NodeStmtExpression",
+    "NodeDeclModule", "NodeDeclFunction", "NodeDeclVariable",
+    "NodeStmtBlock", "NodeStmtExpression",
     "NodeExprBinary",
     "NodeExprGroup", "NodeExprVariable", "NodeExprLiteral",
     "NodeVisitor",
