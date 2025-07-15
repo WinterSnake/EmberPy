@@ -94,10 +94,10 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
 
     def _sync(self) -> None:
         while token := self._advance():
+            # -Break on statement ';' boundry
             if token.type is Token.Type.SymbolSemicolon:
-                token = self._peek()
-                if token is not None and token.type is Token.Type.SymbolRBrace:
-                    _ = self._advance()
+                # -Consume '}' if applicable
+                _ = self._consume(Token.Type.SymbolRBrace)
                 break
 
     # -Instance Methods: Parse

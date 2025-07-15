@@ -2,7 +2,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Symbo Table                   ##
+## Symbol Table                  ##
 ##-------------------------------##
 
 
@@ -20,7 +20,11 @@ class SymbolTable:
 
     # -Instance Methods
     def add(self, name: str) -> int:
-        index: int = len(self.entries)
+        index: int
+        index = self.get(name)
+        if index >= 0:
+            return index
+        index = len(self.entries)
         self.entries.append(name)
         return index
 
