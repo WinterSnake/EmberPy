@@ -10,11 +10,12 @@ from __future__ import annotations
 from .nodes import (
     LITERAL,
     Node,
-    NodeDeclModule, NodeDeclVariable,
-    NodeStmtAssignment, NodeStmtExpression,
+    NodeDeclModule, NodeDeclFunction, NodeDeclVariable,
+    NodeStmtBlock, NodeStmtExpression,
     NodeExprBinary,
     NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
+from .symbol_table import SymbolTable
 from ..errors import DebugLevel
 
 
@@ -27,33 +28,41 @@ class Interpreter:
     """
 
     # -Constructor
-    def __init__(self) -> None:
+    def __init__(self, table: SymbolTable) -> None:
         self.debug_level: DebugLevel = DebugLevel.Off
         # -Environment
+        self._table: SymbolTable = table
         self.environments: list[dict[str, LITERAL]] = [{}]
     
     # -Instance Methods
     def visit_declaration_module(self, node: NodeDeclModule) -> None:
         if self.debug_level <= DebugLevel.Info:
             print(f"[Interpreter::Declaration::Module]")
-        for child in node.nodes:
+        for child in node.body:
+            child.accept(self)
+
+    def visit_declaration_function(self, node: NodeDeclFunction) -> None:
+        entry = self._table.lookup(node.id)
+        if self.debug_level <= DebugLevel.Info:
+            print(f"[Interpreter::Declaration::Function] {entry}")
+        for child in node.body:
             child.accept(self)
 
     def visit_declaration_variable(self, node: NodeDeclVariable) -> None:
-        value: LITERAL | None = None
-        if node.initializer is not None:
+        entry = self._table.lookup(node.id)
+        value: LITERAL = None  # type: ignore
+        if node.has_initializer:
             value = node.initializer.accept(self)
         if self.debug_level <= DebugLevel.Info:
-            print(f"[Interpreter::Declaration::Variable] {node.id} = {value}")
+            print(f"[Interpreter::Declaration::Variable] {entry} = {value}")
         env = self.current
-        env[node.id] = value  # type: ignore
+        env[entry] = value
 
-    def visit_statement_assignment(self, node: NodeStmtAssignment) -> None:
-        value = node.expression.accept(self)
+    def visit_statement_block(self, node: NodeStmtBlock) -> None:
         if self.debug_level <= DebugLevel.Info:
-            print(f"[Interpreter::Statement::Assignment] {node.id} = {value}")
-        env = self.current
-        env[node.id] = value
+            print(f"[Interpreter::Statement::Block]")
+        for child in node.body:
+            child.accept(self)
 
     def visit_statement_expression(self, node: NodeStmtExpression) -> None:
         if self.debug_level <= DebugLevel.Info:
@@ -99,7 +108,8 @@ class Interpreter:
         if self.debug_level <= DebugLevel.Info:
             print(f"[Interpreter::Expression::Variable] {node.id}")
         env = self.current
-        return env[node.id]
+        entry = self._table.lookup(node.id)
+        return env[entry]
 
     def visit_expression_literal(self, node: NodeExprLiteral) -> LITERAL:
         if self.debug_level <= DebugLevel.Info:
@@ -108,8 +118,11 @@ class Interpreter:
 
     # -Static Methods
     @staticmethod
-    def run(node: Node, debug_level: DebugLevel = DebugLevel.Off) -> None:
-        interpreter = Interpreter()
+    def run(
+        node: Node, table: SymbolTable,
+        debug_level: DebugLevel = DebugLevel.Off
+    ) -> None:
+        interpreter = Interpreter(table)
         interpreter.debug_level = debug_level
         node.accept(interpreter)
 
