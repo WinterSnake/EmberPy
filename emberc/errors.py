@@ -29,6 +29,7 @@ ERROR_TABLE: tuple[tuple[str, ...], ...] = (
         "Expected identifier",
         "Invalid type '{value}'",
         "Type expected",
+        "Expected keyword '{word}'",
     ),
 )
 
@@ -68,10 +69,11 @@ class EmberError:
     unknown_symbol: ClassVar[int] = 102
     unterminated_comment_multiline: ClassVar[int] = 103
     # --Code: Parser
-    invalid_consume_symbol: ClassVar[int] = 201
+    invalid_symbol: ClassVar[int] = 201
     invalid_expression: ClassVar[int] = 202
     invalid_expression_eof: ClassVar[int] = 203
     invalid_identifier: ClassVar[int] = 204
     invalid_identifier_eof: ClassVar[int] = 205
     invalid_type: ClassVar[int] = 206
     invalid_type_eof: ClassVar[int] = 207
+    invalid_keyword: ClassVar[int] = 208

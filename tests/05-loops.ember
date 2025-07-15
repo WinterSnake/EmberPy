@@ -1,6 +1,11 @@
 int8 a = 0;
 while(a < 10)
 {
-	a;
 	a = a + 1;
 }
+
+int16 c = 0;
+do
+{
+	c;
+} while(c > 0);

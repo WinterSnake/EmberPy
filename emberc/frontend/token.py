@@ -31,6 +31,8 @@ def get_token_repr(token: Token) -> str:
             return "if"
         case Token.Type.KeywordElse:
             return "else"
+        case Token.Type.KeywordDo:
+            return "do"
         case Token.Type.KeywordWhile:
             return "while"
         # -Keyword: Type
@@ -132,6 +134,7 @@ class Token:
         KeywordFunction = auto()
         KeywordIf = auto()
         KeywordElse = auto()
+        KeywordDo = auto()
         KeywordWhile = auto()
         # -Keyword: Type
         KeywordVoid = auto()
