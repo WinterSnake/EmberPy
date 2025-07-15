@@ -17,7 +17,7 @@ from ..middleware.nodes import (
     LITERAL,
     Node, NodeExpr,
     NodeDeclModule, NodeDeclFunction, NodeDeclVariable,
-    NodeStmtBlock, NodeStmtCondition, NodeStmtExpression,
+    NodeStmtBlock, NodeStmtCondition, NodeStmtLoop, NodeStmtExpression,
     NodeExprAssignment, NodeExprBinary,
     NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
@@ -208,7 +208,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _parse_statement(self) -> Node | EmberError:
         '''
         Grammar[Statement]
-        statement_block | statement_conditional | statement_expression;
+        statement_block | statement_conditional | statement_loop_while | statement_expression;
         '''
         # -Rule: Block
         if self._consume(Token.Type.SymbolLBrace):
@@ -217,6 +217,9 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         # -Rule: Condition
         elif self._consume(Token.Type.KeywordIf):
             return self._parse_statement_condition()
+        # -Rule: Loop :: While
+        elif self._consume(Token.Type.KeywordWhile):
+            return self._parse_statement_loop_while()
         # -Rule: Expression
         return self._parse_statement_expression()
 
@@ -260,6 +263,23 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
                 return _branch
             branch = _branch
         return NodeStmtCondition(condition, body, branch)
+
+    def _parse_statement_loop_while(self) -> Node | EmberError:
+        '''
+        Grammar[Statement::Loop::While]
+        'while' '(' expression ')' statement;
+        '''
+        if not self._consume(Token.Type.SymbolLParen):
+            return self._error(EmberError.invalid_consume_symbol, symbol='(')
+        condition = self._parse_expression()
+        if isinstance(condition, EmberError):
+            return condition
+        if not self._consume(Token.Type.SymbolRParen):
+            return self._error(EmberError.invalid_consume_symbol, symbol=')')
+        body = self._parse_statement()
+        if isinstance(body, EmberError):
+            return body
+        return NodeStmtLoop(condition, body)
 
     def _parse_statement_expression(self) -> Node | EmberError:
         '''

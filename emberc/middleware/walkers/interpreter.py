@@ -10,7 +10,7 @@ from ..nodes import (
     LITERAL,
     Node,
     NodeDeclModule, NodeDeclFunction, NodeDeclVariable,
-    NodeStmtBlock, NodeStmtCondition, NodeStmtExpression,
+    NodeStmtBlock, NodeStmtCondition, NodeStmtLoop, NodeStmtExpression,
     NodeExprAssignment, NodeExprBinary,
     NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
@@ -58,6 +58,10 @@ class InterpreterWalker:
             node.body.accept(self)
         elif node.has_branch:
             node.branch.accept(self)
+
+    def visit_statement_loop(self, node: NodeStmtLoop) -> None:
+        while node.condition.accept(self):
+            node.body.accept(self)
 
     def visit_statement_expression(self, node: NodeStmtExpression) -> None:
         value = node.expression.accept(self)

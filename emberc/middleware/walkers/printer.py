@@ -10,7 +10,7 @@ from ..nodes import (
     LITERAL,
     Node,
     NodeDeclModule, NodeDeclFunction, NodeDeclVariable,
-    NodeStmtBlock, NodeStmtCondition, NodeStmtExpression,
+    NodeStmtBlock, NodeStmtCondition, NodeStmtLoop, NodeStmtExpression,
     NodeExprAssignment, NodeExprBinary,
     NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
@@ -40,6 +40,9 @@ class PrinterWalker:
             child.accept(self)
 
     def visit_statement_condition(self, node: NodeStmtCondition) -> None:
+        pass
+
+    def visit_statement_loop(self, node: NodeStmtLoop) -> None:
         pass
 
     def visit_statement_expression(self, node: NodeStmtExpression) -> None:
