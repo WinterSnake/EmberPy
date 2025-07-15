@@ -33,7 +33,7 @@ def _entry() -> None:
             print(err.message, file=sys.stderr)
         sys.exit(64)
     print(table.entries)
-    Interpreter.run(output, table, DebugLevel.Info)
+    Interpreter.run(output, table, DebugLevel.Off)
 
 
 def parse_source(

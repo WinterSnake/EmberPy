@@ -26,7 +26,7 @@ from ..middleware.symbol_table import SymbolTable
 ## Constants
 TYPES_TABLE: tuple[Token.Type, ...] = (
     Token.Type.KeywordVoid,
-    Token.Type.KeywordBool,
+    Token.Type.KeywordBoolean,
     Token.Type.KeywordInt8,
     Token.Type.KeywordInt16,
     Token.Type.KeywordInt32,
@@ -201,11 +201,12 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
                 value=get_token_repr(_id)
             )
         entry: int = self._table.add(_id.value)
-        initializer: NodeExpr | EmberError | None = None
+        initializer: NodeExpr | None = None
         if self._consume(Token.Type.SymbolEq):
-            initializer = self._parse_expression()
-        if isinstance(initializer, EmberError):
-            return initializer
+            _initializer = self._parse_expression()
+            if isinstance(_initializer, EmberError):
+                return _initializer
+            initializer = _initializer
         # --Invalid ';' consume
         if not self._consume(Token.Type.SymbolSemicolon):
             _ = self._error(EmberError.invalid_consume_symbol, symbol=';')

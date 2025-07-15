@@ -30,7 +30,7 @@ def get_token_repr(token: Token) -> str:
         # -Keyword: Type
         case Token.Type.KeywordVoid:
             return "void"
-        case Token.Type.KeywordBool:
+        case Token.Type.KeywordBoolean:
             return "bool"
         case Token.Type.KeywordInt8:
             return "int8"
@@ -126,7 +126,7 @@ class Token:
         KeywordFalse = auto()
         # -Keyword: Type
         KeywordVoid = auto()
-        KeywordBool = auto()
+        KeywordBoolean = auto()
         KeywordInt8 = auto()
         KeywordInt16 = auto()
         KeywordInt32 = auto()
