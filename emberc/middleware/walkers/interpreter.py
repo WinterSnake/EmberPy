@@ -10,7 +10,7 @@ from ..nodes import (
     LITERAL,
     Node,
     NodeDeclModule, NodeDeclFunction, NodeDeclVariable,
-    NodeStmtBlock, NodeStmtExpression,
+    NodeStmtBlock, NodeStmtCondition, NodeStmtExpression,
     NodeExprBinary,
     NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
@@ -51,6 +51,13 @@ class InterpreterWalker:
     def visit_statement_block(self, node: NodeStmtBlock) -> None:
         for child in node.body:
             child.accept(self)
+
+    def visit_statement_condition(self, node: NodeStmtCondition) -> None:
+        condition = node.condition.accept(self)
+        if condition:
+            node.body.accept(self)
+        elif node.has_branch:
+            node.branch.accept(self)
 
     def visit_statement_expression(self, node: NodeStmtExpression) -> None:
         value = node.expression.accept(self)

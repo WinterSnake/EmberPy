@@ -3,12 +3,13 @@ module: declaration*;
 # Declarations
 declaration: declaration_function | declaration_statement;
 declaration_function: 'fn' IDENTIFIER '(' ')' ':' TYPE '{' declaration_statement* '}';
-declaration_variable: TYPE IDENTIFIER ('=' expression)? ';';
 declaration_statement: declaration_variable | statement;
+declaration_variable: TYPE IDENTIFIER ('=' expression)? ';';
 
 # Statements
-statement: statement_block | statement_expression;
+statement: statement_block | statement_condition | statement_expression;
 statement_block: '{' declaration_statement* '}';
+statement_condition: 'if' '(' expression ')' statement ('else' statement)?;
 statement_expression: expression ';';
 
 # Expressions

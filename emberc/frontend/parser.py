@@ -17,7 +17,7 @@ from ..middleware.nodes import (
     LITERAL,
     Node, NodeExpr,
     NodeDeclModule, NodeDeclFunction, NodeDeclVariable,
-    NodeStmtBlock, NodeStmtExpression,
+    NodeStmtBlock, NodeStmtCondition, NodeStmtExpression,
     NodeExprBinary,
     NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
@@ -167,6 +167,17 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         body = self._parse_statement_block()
         return NodeDeclFunction(entry, body)
 
+    def _parse_declaration_statement(self) -> Node | EmberError:
+        '''
+        Grammar[Declaration::Statement]
+        declaration_variable | statement;
+        '''
+        # -Rule: Variable Declaration
+        if token := self._match(*TYPES_TABLE):
+            return self._parse_declaration_variable(token)
+        # -Rule: Statement
+        return self._parse_statement()
+
     def _parse_declaration_variable(self, type_token: Token) -> Node | EmberError:
         '''
         Grammar[Declaration::Variable]
@@ -194,26 +205,18 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             _ = self._error(EmberError.invalid_consume_symbol, symbol=';')
         return NodeDeclVariable(entry, initializer)
 
-    def _parse_declaration_statement(self) -> Node | EmberError:
-        '''
-        Grammar[Declaration::Statement]
-        declaration_variable | statement;
-        '''
-        # -Rule: Variable Declaration
-        if token := self._match(*TYPES_TABLE):
-            return self._parse_declaration_variable(token)
-        # -Rule: Statement
-        return self._parse_statement()
-
     def _parse_statement(self) -> Node | EmberError:
         '''
         Grammar[Statement]
-        statement_block | statement_expression;
+        statement_block | statement_conditional | statement_expression;
         '''
         # -Rule: Block
         if self._consume(Token.Type.SymbolLBrace):
             body = self._parse_statement_block()
             return NodeStmtBlock(body)
+        # -Rule: Condition
+        elif self._consume(Token.Type.KeywordIf):
+            return self._parse_statement_condition()
         # -Rule: Expression
         return self._parse_statement_expression()
 
@@ -234,6 +237,29 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             else:
                 nodes.append(node)
         return nodes
+
+    def _parse_statement_condition(self) -> Node | EmberError:
+        '''
+        Grammar[Statement::Condition]
+        'if' '(' expression ')' statement ('else' statement)?
+        '''
+        if not self._consume(Token.Type.SymbolLParen):
+            return self._error(EmberError.invalid_consume_symbol, symbol='(')
+        condition = self._parse_expression()
+        if isinstance(condition, EmberError):
+            return condition
+        if not self._consume(Token.Type.SymbolRParen):
+            return self._error(EmberError.invalid_consume_symbol, symbol=')')
+        body = self._parse_statement()
+        if isinstance(body, EmberError):
+            return body
+        branch: Node | None = None
+        if self._consume(Token.Type.KeywordElse):
+            _branch = self._parse_statement()
+            if isinstance(_branch, EmberError):
+                return _branch
+            branch = _branch
+        return NodeStmtCondition(condition, body, branch)
 
     def _parse_statement_expression(self) -> Node | EmberError:
         '''

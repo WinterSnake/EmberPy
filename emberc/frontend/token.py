@@ -20,13 +20,17 @@ def get_token_repr(token: Token) -> str:
             return token.value
         case Token.Type.Integer:
             return token.value
-        # -Keyword
-        case Token.Type.KeywordFunction:
-            return "fn"
         case Token.Type.KeywordTrue:
             return "true"
         case Token.Type.KeywordFalse:
             return "false"
+        # -Keyword
+        case Token.Type.KeywordFunction:
+            return "fn"
+        case Token.Type.KeywordIf:
+            return "if"
+        case Token.Type.KeywordElse:
+            return "else"
         # -Keyword: Type
         case Token.Type.KeywordVoid:
             return "void"
@@ -120,10 +124,12 @@ class Token:
         # -Literal
         Identifier = auto()
         Integer = auto()
-        # -Keyword
-        KeywordFunction = auto()
         KeywordTrue = auto()
         KeywordFalse = auto()
+        # -Keyword
+        KeywordFunction = auto()
+        KeywordIf = auto()
+        KeywordElse = auto()
         # -Keyword: Type
         KeywordVoid = auto()
         KeywordBoolean = auto()

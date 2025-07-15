@@ -22,10 +22,13 @@ SYMBOLS: tuple[str, ...] = (
     '(', ')', '{', '}', ':', ';',
 )
 KEYWORDS: dict[str, Token.Type] = {
-    # -Keywords
-    'fn': Token.Type.KeywordFunction,
+    # -Literals
     'true': Token.Type.KeywordTrue,
     'false': Token.Type.KeywordFalse,
+    # -Keywords
+    'fn': Token.Type.KeywordFunction,
+    'if': Token.Type.KeywordIf,
+    'else': Token.Type.KeywordElse,
     # -Types
     'void': Token.Type.KeywordVoid,
     'bool': Token.Type.KeywordBoolean,
