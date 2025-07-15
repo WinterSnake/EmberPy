@@ -11,7 +11,7 @@ from ..nodes import (
     Node,
     NodeDeclModule, NodeDeclFunction, NodeDeclVariable,
     NodeStmtBlock, NodeStmtCondition, NodeStmtLoop, NodeStmtExpression,
-    NodeExprAssignment, NodeExprBinary,
+    NodeExprAssignment, NodeExprBinary, NodeExprUnary,
     NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
 
@@ -33,24 +33,29 @@ class PrinterWalker:
             child.accept(self)
 
     def visit_declaration_variable(self, node: NodeDeclVariable) -> None:
-        pass
+        value = "None"
+        if node.has_initializer:
+            value = node.initializer.accept(self)
+        print(f"{{Id({node.id}) = {value}}}")
 
     def visit_statement_block(self, node: NodeStmtBlock) -> None:
         for child in node.body:
             child.accept(self)
 
     def visit_statement_condition(self, node: NodeStmtCondition) -> None:
-        pass
+        node.body.accept(self)
 
     def visit_statement_loop(self, node: NodeStmtLoop) -> None:
-        pass
+        node.body.accept(self)
 
     def visit_statement_expression(self, node: NodeStmtExpression) -> None:
         value = node.expression.accept(self)
         print(value)
 
     def visit_expression_assignment(self, node: NodeExprAssignment) -> str:
-        return ""
+        assert isinstance(node.l_value, NodeExprVariable)
+        value = node.r_value.accept(self)
+        return f"(Id({node.l_value.id}) = {value})"
 
     def visit_expression_binary(self, node: NodeExprBinary) -> str:
         lhs = node.lhs.accept(self)
@@ -80,6 +85,12 @@ class PrinterWalker:
             case NodeExprBinary.Operator.NtEq:
                 operator = "!="
         return f"({lhs} {operator} {rhs})"
+
+    def visit_expression_unary(self, node: NodeExprUnary) -> str:
+        expression = node.expression.accept(self)
+        match node.operator:
+            case NodeExprUnary.Operator.Minus:
+                return f"(-{expression})"
 
     def visit_expression_group(self, node: NodeExprGroup) -> str:
         return f"({node.expression.accept(self)})"

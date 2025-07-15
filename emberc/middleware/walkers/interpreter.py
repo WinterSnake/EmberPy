@@ -11,7 +11,7 @@ from ..nodes import (
     Node,
     NodeDeclModule, NodeDeclFunction, NodeDeclVariable,
     NodeStmtBlock, NodeStmtCondition, NodeStmtLoop, NodeStmtExpression,
-    NodeExprAssignment, NodeExprBinary,
+    NodeExprAssignment, NodeExprBinary, NodeExprUnary,
     NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
 from ..symbol_table import SymbolTable
@@ -101,6 +101,12 @@ class InterpreterWalker:
                 return lhs == rhs
             case NodeExprBinary.Operator.NtEq:
                 return lhs != rhs
+
+    def visit_expression_unary(self, node: NodeExprUnary) -> LITERAL:
+        expression = node.expression.accept(self)
+        match node.operator:
+            case NodeExprUnary.Operator.Minus:
+                return -expression
 
     def visit_expression_group(self, node: NodeExprGroup) -> LITERAL:
         return node.expression.accept(self)

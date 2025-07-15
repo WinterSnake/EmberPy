@@ -18,7 +18,7 @@ from ..middleware.nodes import (
     Node, NodeExpr,
     NodeDeclModule, NodeDeclFunction, NodeDeclVariable,
     NodeStmtBlock, NodeStmtCondition, NodeStmtLoop, NodeStmtExpression,
-    NodeExprAssignment, NodeExprBinary,
+    NodeExprAssignment, NodeExprBinary, NodeExprUnary,
     NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
 from ..middleware.symbol_table import SymbolTable
@@ -36,6 +36,9 @@ TYPES_TABLE: tuple[Token.Type, ...] = (
     Token.Type.KeywordUInt32,
     Token.Type.KeywordUInt64,
 )
+UNARY_OPERATOR: dict[Token.Type, NodeExprUnary.Operator] = {
+    Token.Type.SymbolMinus: NodeExprUnary.Operator.Minus,  # '-'
+}
 BINARY_OPERATOR: dict[Token.Type, tuple[NodeExprBinary.Operator, int]] = {
     # -Comparisons
     Token.Type.SymbolEqEq:   (NodeExprBinary.Operator.EqEq, 1),  # '=='
@@ -430,9 +433,9 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     ) -> NodeExpr | EmberError:
         '''
         Grammar[Expression::Binary]
-        expression_primary (BINARY_OPERATOR expression_primary)*;
+        expression_primary (BINARY_OPERATOR expression_binary)*;
         '''
-        lhs = self._parse_expression_primary()
+        lhs = self._parse_expression_unary()
         # --Invalid <expression> consume
         if isinstance(lhs, EmberError):
             return lhs
@@ -448,6 +451,24 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
                 return rhs
             lhs = NodeExprBinary(token.location, operator, lhs, rhs)
         return lhs
+
+    def _parse_expression_unary(self) -> NodeExpr | EmberError:
+        '''
+        Grammar[Expression::Unary]
+        UNARY_PREFIX_OPERATOR expression_unary | expression_primary;
+        '''
+        # -Prefix
+        if token := self._match(*UNARY_OPERATOR.keys()):
+            operator = UNARY_OPERATOR[token.type]
+            expression = self._parse_expression_unary()
+            # --Invalid <expression> consume
+            if isinstance(expression, EmberError):
+                return expression
+            return NodeExprUnary(token.location, operator, expression)
+        # -Primary
+        return self._parse_expression_primary()
+
+
 
     def _parse_expression_primary(self) -> NodeExpr | EmberError:
         '''
