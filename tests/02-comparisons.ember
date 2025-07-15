@@ -8,5 +8,8 @@ true != true;  // Output: false
 54 >= 100;  // Output: false
 6 == 8;  // Output: false
 9 != 10;  // Output: true
+299 > 61 == 61 > 62;  // Output: false
+17 < 29 == 31 > 11;  // Output: true
+10 + 50 > 15 - 2 * 2 == 18 * (4 - 3) < (54 * 4 * (20 - 19)); // Output: true
 bool c = false;
 true != c;  // Output: true

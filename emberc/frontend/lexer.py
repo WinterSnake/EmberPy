@@ -11,7 +11,7 @@ from collections.abc import Iterator
 from typing import Any, TextIO
 from .lookahead_buffer import LookaheadBuffer
 from .token import Token
-from ..errors import DebugLevel, EmberError
+from ..errors import EmberError
 from ..location import Location
 
 ## Constants
@@ -52,7 +52,6 @@ class Lexer(LookaheadBuffer[str, str]):
 
     # -Constructor
     def __init__(self, source: Path) -> None:
-        self.debug_level: DebugLevel = DebugLevel.Off
         self.errors: list[EmberError] = []
         # -Lookahead
         self._fp: TextIO
@@ -67,9 +66,6 @@ class Lexer(LookaheadBuffer[str, str]):
         value: str | None
         value = self._fp.read(1)
         value = value if value else None
-        if self.debug_level <= DebugLevel.Trace:
-            _value = f"'{value}'" if value is not None else str(None)
-            print(f"[Lexer::Next] {_value}")
         return value
 
     def _advance(self) -> str | None:
@@ -84,8 +80,6 @@ class Lexer(LookaheadBuffer[str, str]):
         return c
 
     def _error(self, code: int, **kwargs: Any) -> None:
-        if self.debug_level <= DebugLevel.Warn:
-            print(f"[Lexer::Error] [{self.location}] {code}")
         err = EmberError(code, self.location, **kwargs)
         self.errors.append(err)
 
@@ -128,8 +122,6 @@ class Lexer(LookaheadBuffer[str, str]):
         '''
         _type: Token.Type
         location = self.location
-        if self.debug_level <= DebugLevel.Info:
-            print(f"[Lexer::Symbol] '{buffer}' @ {location}")
         match buffer:
             # -Operators
             case '=':
@@ -190,8 +182,6 @@ class Lexer(LookaheadBuffer[str, str]):
         Lexer State: Comment - Inline
         Consumes characters until new line is reached
         '''
-        if self.debug_level <= DebugLevel.Info:
-            print(f"[Lexer::Comment::Inline] @ {self.location}")
         c = self._advance()
         while c is not None and c != '\n':
             c = self._advance()
@@ -205,8 +195,6 @@ class Lexer(LookaheadBuffer[str, str]):
         
         Errors: Unterminated comment multiline
         '''
-        if self.debug_level <= DebugLevel.Info:
-            print(f"[Lexer::Comment::Multiline] @ {self.location}")
         while c := self._advance():
             if c == '/' and self._consume('*'):
                 self._lex_comment_multiline()
@@ -221,11 +209,7 @@ class Lexer(LookaheadBuffer[str, str]):
         Returns a number literal token
         '''
         location = self.location
-        if self.debug_level <= DebugLevel.Info:
-            print(f"[Lexer::Number] '{buffer}' @ {location}")
         while c := self._peek():
-            if self.debug_level <= DebugLevel.Trace:
-                print(f"[Lexer::Number::Iteration] \"{buffer + c}\"")
             # Number -> Number
             if c.isnumeric():
                 c = self._advance()
@@ -242,11 +226,7 @@ class Lexer(LookaheadBuffer[str, str]):
         Returns a keyword token or an identifier tag token
         '''
         location = self.location
-        if self.debug_level <= DebugLevel.Info:
-            print(f"[Lexer::Word] '{buffer}' @ {location}")
         while c := self._peek():
-            if self.debug_level <= DebugLevel.Trace:
-                print(f"[Lexer::Word::Iteration] \"{buffer + c}\"")
             # -Word -> Word
             if c.isalnum() or c == '_':
                 c = self._advance()

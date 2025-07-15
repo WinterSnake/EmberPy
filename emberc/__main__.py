@@ -8,15 +8,11 @@
 import sys
 from collections.abc import Sequence
 from pathlib import Path
-from .errors import DebugLevel, EmberError
+from .errors import EmberError
 from .frontend import Lexer, Parser, Token
 from .middleware.nodes import Node
 from .middleware.symbol_table import SymbolTable
-from .middleware.interpreter import Interpreter
-
-## Constants
-LEXER_LEVEL: DebugLevel = DebugLevel.Off
-PARSER_LEVEL: DebugLevel = DebugLevel.Off
+from .middleware.walkers import InterpreterWalker, PrinterWalker
 
 
 ## Functions
@@ -33,18 +29,16 @@ def _entry() -> None:
             print(err.message, file=sys.stderr)
         sys.exit(64)
     print(table.entries)
-    Interpreter.run(output, table, DebugLevel.Off)
+    PrinterWalker.run(output)
+    InterpreterWalker.run(output, table)
 
 
 def parse_source(
     source: Path, table: SymbolTable
 ) -> Node | Sequence[EmberError]:
     """Lex and parse a source file and return parsed AST or found errors"""
-    global LEXER_LEVEL, PARSER_LEVEL
     lexer: Lexer = Lexer(source)
-    lexer.debug_level = LEXER_LEVEL
     parser: Parser = Parser(lexer.lex())
-    parser.debug_level = PARSER_LEVEL
     ast = parser.parse(table)
     errors = tuple((*lexer.errors, *parser.errors))
     return errors if errors else ast

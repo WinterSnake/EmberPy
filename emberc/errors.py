@@ -32,27 +32,8 @@ ERROR_TABLE: tuple[tuple[str, ...], ...] = (
     ),
 )
 
-## Functions
-def parse_debug_level(level: str) -> DebugLevel:
-    match level:
-        case "trace":
-            return DebugLevel.Trace
-        case "info":
-            return DebugLevel.Info
-        case "warning":
-            return DebugLevel.Warn
-        case _:
-            return DebugLevel.Off
-
 
 ## Classes
-class DebugLevel(IntEnum):
-    Trace = auto()
-    Info = auto()
-    Warn = auto()
-    Off = auto()
-
-
 class EmberError:
     """
     Ember Compiler Error

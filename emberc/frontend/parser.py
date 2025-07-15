@@ -11,7 +11,7 @@ from collections.abc import Sequence
 from typing import Any, Iterator, Literal
 from .lookahead_buffer import LookaheadBuffer
 from .token import Token, get_token_repr
-from ..errors import DebugLevel, EmberError
+from ..errors import EmberError
 from ..location import Location
 from ..middleware.nodes import (
     LITERAL,
@@ -36,21 +36,20 @@ TYPES_TABLE: tuple[Token.Type, ...] = (
     Token.Type.KeywordUInt32,
     Token.Type.KeywordUInt64,
 )
-# BINARY_OPERATORS: '+' | '-' | '*' | '/' | '%' | '<' | '>' | '<=' | '>=' | '==' | '!=';
-OPERATOR_BINARY_TABLE: dict[Token.Type, NodeExprBinary.Operator] = {
-    # -Math
-    Token.Type.SymbolPlus: NodeExprBinary.Operator.Add,
-    Token.Type.SymbolMinus: NodeExprBinary.Operator.Sub,
-    Token.Type.SymbolStar: NodeExprBinary.Operator.Mul,
-    Token.Type.SymbolFSlash: NodeExprBinary.Operator.Div,
-    Token.Type.SymbolPercent: NodeExprBinary.Operator.Mod,
+BINARY_OPERATOR: dict[Token.Type, tuple[NodeExprBinary.Operator, int]] = {
     # -Comparisons
-    Token.Type.SymbolLt: NodeExprBinary.Operator.Lt,
-    Token.Type.SymbolGt: NodeExprBinary.Operator.Gt,
-    Token.Type.SymbolLtEq: NodeExprBinary.Operator.LtEq,
-    Token.Type.SymbolGtEq: NodeExprBinary.Operator.GtEq,
-    Token.Type.SymbolEqEq: NodeExprBinary.Operator.EqEq,
-    Token.Type.SymbolBangEq: NodeExprBinary.Operator.NtEq,
+    Token.Type.SymbolEqEq:   (NodeExprBinary.Operator.EqEq, 1),  # '=='
+    Token.Type.SymbolBangEq: (NodeExprBinary.Operator.NtEq, 1),  # '!='
+    Token.Type.SymbolLt:     (NodeExprBinary.Operator.Lt,   2),  # '<'
+    Token.Type.SymbolGt:     (NodeExprBinary.Operator.Gt,   2),  # '>'
+    Token.Type.SymbolLtEq:   (NodeExprBinary.Operator.LtEq, 2),  # '<='
+    Token.Type.SymbolGtEq:   (NodeExprBinary.Operator.GtEq, 2),  # '>='
+    # -Math
+    Token.Type.SymbolPlus:    (NodeExprBinary.Operator.Add, 3),  # '+'
+    Token.Type.SymbolMinus:   (NodeExprBinary.Operator.Sub, 3),  # '-'
+    Token.Type.SymbolStar:    (NodeExprBinary.Operator.Mul, 4),  # '*'
+    Token.Type.SymbolFSlash:  (NodeExprBinary.Operator.Div, 4),  # '/'
+    Token.Type.SymbolPercent: (NodeExprBinary.Operator.Mod, 4),  # '%'
 }
 
 
@@ -66,7 +65,6 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
 
     # -Constructor
     def __init__(self, iterator: Iterator[Token]) -> None:
-        self.debug_level: DebugLevel = DebugLevel.Off
         self.errors: list[EmberError] = []
         # -Lookahead
         self._iterator: Iterator[Token] = iterator
@@ -79,8 +77,6 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     # -Instance Methods: Control
     def _next(self) -> Token | None:
         value = next(self._iterator, None)
-        if self.debug_level <= DebugLevel.Trace:
-            print(f"[Parser::Next] {value}")
         if value is not None:
             self._last_token = value
         else:
@@ -92,18 +88,12 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     ) -> EmberError:
         if location is None:
             location = self._last_token.location
-        if self.debug_level <= DebugLevel.Warn:
-            print(f"[Parser::Error] [{location}] {code}")
         err = EmberError(code, location, **kwargs)
         self.errors.append(err)
         return err
 
     def _sync(self) -> None:
-        if self.debug_level <= DebugLevel.Warn:
-            print(f"[Parser::Sync]")
         while token := self._advance():
-            if self.debug_level <= DebugLevel.Trace:
-                print(f"[Parser::Sync::Iter] {token}")
             if token.type is Token.Type.SymbolSemicolon:
                 token = self._peek()
                 if token is not None and token.type is Token.Type.SymbolRBrace:
@@ -119,8 +109,6 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         self._table = table
         nodes: list[Node] = []
         while token := self._peek():
-            if self.debug_level <= DebugLevel.Trace:
-                print(f"[Parser::Iter]{token}")
             node = self._parse_declaration()
             # -Error Recovery
             if isinstance(node, EmberError):
@@ -134,8 +122,6 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         Grammar[Declaration]
         declaration_function | statement;
         '''
-        if self.debug_level <= DebugLevel.Info:
-            print(f"[Parser::Declaration]")
         # -Rule: Function Declaration
         if self._consume(Token.Type.KeywordFunction):
             return self._parse_declaration_function()
@@ -147,8 +133,6 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         Grammar[Declaration::Function]
         'fn' IDENTIFIER '(' ')' ':' TYPE '{' statement* '}';
         '''
-        if self.debug_level <= DebugLevel.Info:
-            print(f"[Parser::Declaration::Function]")
         _id = self._advance()
         # -Invalid Identifier consume (end of stream)
         if _id is None:
@@ -188,8 +172,6 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         Grammar[Declaration::Variable]
         TYPE IDENTIFIER ('=' expression)? ';';
         '''
-        if self.debug_level <= DebugLevel.Info:
-            print(f"[Parser::Declaration::Variable]")
         _id = self._advance()
         # -Invalid Identifier consume (end of stream)
         if _id is None:
@@ -217,8 +199,6 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         Grammar[Statement]
         declaration_variable | statement_block | statement_expression;
         '''
-        if self.debug_level <= DebugLevel.Info:
-            print(f"[Parser::Statement]")
         # -Rule: Variable Declaration
         if token := self._match(*TYPES_TABLE):
             return self._parse_declaration_variable(token)
@@ -234,8 +214,6 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         Grammar[Statement::Block]
         '{' statement* '}';
         '''
-        if self.debug_level <= DebugLevel.Info:
-            print(f"[Parser::Statement::Block]")
         nodes: list[Node] = []
         while not self._consume(Token.Type.SymbolRBrace):
             # --Invalid '}' consume
@@ -254,8 +232,6 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         Grammar[Statement::Expression]
         expression ';';
         '''
-        if self.debug_level <= DebugLevel.Info:
-            print(f"[Parser::Statement::Expression]")
         node = self._parse_expression()
         if isinstance(node, EmberError):
             return node
@@ -269,115 +245,35 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         Grammar[Expression]
         expression_binary;
         '''
-        if self.debug_level <= DebugLevel.Info:
-            print(f"[Parser::Expression]")
         return self._parse_expression_binary()
 
-    def _parse_expression_binary(self) -> NodeExpr | EmberError:
+    def _parse_expression_binary(
+        self, current_precedence: int = 0
+    ) -> NodeExpr | EmberError:
         '''
         Grammar[Expression::Binary]
         expression_primary (BINARY_OPERATOR expression_primary)*;
         '''
-        # -Internal Functions
-        def _equality() -> NodeExpr | EmberError:
-            '''
-            Grammar[Expression::Binary::Equality]
-            comparison ( ('==' | '!=') comparison)*;
-            '''
-            if self.debug_level <= DebugLevel.Info:
-                print(f"[Parser::Expression::Binary::Equality]")
-            lhs = _comparison()
-            if isinstance(lhs, EmberError):
-                return lhs
-            while token := self._match(
-                Token.Type.SymbolEqEq,
-                Token.Type.SymbolBangEq,
-            ):
-                operator = OPERATOR_BINARY_TABLE[token.type]
-                rhs = _comparison()
-                if isinstance(rhs, EmberError):
-                    return rhs
-                lhs = NodeExprBinary(token.location, operator, lhs, rhs)
+        lhs = self._parse_expression_primary()
+        if isinstance(lhs, EmberError):
             return lhs
-
-        def _comparison() -> NodeExpr | EmberError:
-            '''
-            Grammar[Expression::Binary::Comparison]
-            term ( ('<' | '>' | '<=' | '>=') term)*;
-            '''
-            if self.debug_level <= DebugLevel.Info:
-                print(f"[Parser::Expression::Binary::Comparison]")
-            lhs = _term()
-            if isinstance(lhs, EmberError):
-                return lhs
-            while token := self._match(
-                Token.Type.SymbolLt,
-                Token.Type.SymbolGt,
-                Token.Type.SymbolLtEq,
-                Token.Type.SymbolGtEq,
-            ):
-                operator = OPERATOR_BINARY_TABLE[token.type]
-                rhs = _term()
-                if isinstance(rhs, EmberError):
-                    return rhs
-                lhs = NodeExprBinary(token.location, operator, lhs, rhs)
-            return lhs
-
-        def _term() -> NodeExpr | EmberError:
-            '''
-            Grammar[Expression::Binary::Term]
-            factor ( ('+' | '-') factor)*;
-            '''
-            if self.debug_level <= DebugLevel.Info:
-                print(f"[Parser::Expression::Binary::Term]")
-            lhs = _factor()
-            if isinstance(lhs, EmberError):
-                return lhs
-            while token := self._match(
-                Token.Type.SymbolPlus,
-                Token.Type.SymbolMinus,
-            ):
-                operator = OPERATOR_BINARY_TABLE[token.type]
-                rhs = _factor()
-                if isinstance(rhs, EmberError):
-                    return rhs
-                lhs = NodeExprBinary(token.location, operator, lhs, rhs)
-            return lhs
-
-        def _factor() -> NodeExpr | EmberError:
-            '''
-            Grammar[Expression::Binary::Factor]
-            expression_primary ( ('*' | '/' | '%') expression_primary)*;
-            '''
-            if self.debug_level <= DebugLevel.Info:
-                print(f"[Parser::Expression::Binary::Factor]")
-            lhs = self._parse_expression_primary()
-            if isinstance(lhs, EmberError):
-                return lhs
-            while token := self._match(
-                Token.Type.SymbolStar,
-                Token.Type.SymbolFSlash,
-                Token.Type.SymbolPercent,
-            ):
-                operator = OPERATOR_BINARY_TABLE[token.type]
-                rhs = self._parse_expression_primary()
-                if isinstance(rhs, EmberError):
-                    return rhs
-                lhs = NodeExprBinary(token.location, operator, lhs, rhs)
-            return lhs
-
-        # -Body
-        if self.debug_level <= DebugLevel.Info:
-            print(f"[Parser::Expression::Binary]")
-        return _equality()
+        while token := self._match(*BINARY_OPERATOR.keys()):
+            operator = BINARY_OPERATOR[token.type][0]
+            precedence = BINARY_OPERATOR[token.type][1]
+            if precedence <= current_precedence:
+                self._buffer = token
+                break
+            rhs = self._parse_expression_binary(precedence)
+            if isinstance(rhs, EmberError):
+                return rhs
+            lhs = NodeExprBinary(token.location, operator, lhs, rhs)
+        return lhs
 
     def _parse_expression_primary(self) -> NodeExpr | EmberError:
         '''
         Grammar[Expression::Primary]
         IDENTIFIER | BOOLEAN | NUMBER | '(' expression ')';
         '''
-        if self.debug_level <= DebugLevel.Info:
-            print(f"[Parser::Expression::Primary]")
         # -Rule: Group
         if self._consume(Token.Type.SymbolLParen):
             node = self._parse_expression()
