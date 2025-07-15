@@ -24,10 +24,6 @@ class PrinterWalker:
     Walks through the AST tree and prints expressions with associativity
     """
 
-    # -Constructor
-    def __init__(self) -> None:
-        self.nest_level: int = 0
-
     # -Instance Methods
     def visit_declaration_module(self, node: NodeDeclModule) -> None:
         for child in node.body:
@@ -67,8 +63,11 @@ class PrinterWalker:
         node.body.accept(self)
 
     def visit_statement_return(self, node: NodeStmtReturn) -> None:
-        value = node.expression.accept(self)
-        print(self.nest, f"return({value})")
+        print("return(", end='')
+        if node.has_expression:
+            value = node.expression.accept(self)
+            print(value, end='')
+        print(')')
 
     def visit_statement_expression(self, node: NodeStmtExpression) -> None:
         value = node.expression.accept(self)
@@ -142,3 +141,6 @@ class PrinterWalker:
     @property
     def nest(self) -> str:
         return '\t' * self.nest_level
+
+    # -Class Properties
+    nest_level: int = 0

@@ -14,7 +14,7 @@ from .visitor import NodeVisitor
 from ...location import Location
 
 ## Constants
-LITERAL = bool | int
+type LITERAL = bool | int
 
 
 ## Classes

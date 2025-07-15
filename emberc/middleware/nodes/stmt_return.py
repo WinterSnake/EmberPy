@@ -20,8 +20,18 @@ class NodeStmtReturn(Node):
 
     # -Constructor
     def __init__(self, expression: NodeExpr | None) -> None:
-        self.expression: NodeExpr | None = expression
+        self._expression: NodeExpr | None = expression
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:
         return visitor.visit_statement_return(self)
+
+    # -Properties
+    @property
+    def has_expression(self) -> bool:
+        return self._expression is not None
+
+    @property
+    def expression(self) -> NodeExpr:
+        assert self._expression is not None
+        return self._expression

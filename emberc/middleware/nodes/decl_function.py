@@ -42,3 +42,9 @@ class NodeDeclFunction(NodeContainer):
     def parameters(self) -> Sequence[int]:
         assert self._parameters is not None
         return self._parameters
+
+    @property
+    def parameter_count(self) -> int:
+        if not self.has_parameters:
+            return 0
+        return len(self.parameters)

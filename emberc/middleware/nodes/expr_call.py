@@ -41,3 +41,9 @@ class NodeExprCall(NodeExpr):
     def arguments(self) -> Sequence[NodeExpr]:
         assert self._arguments is not None
         return self._arguments
+
+    @property
+    def argument_count(self) -> int:
+        if not self.has_arguments:
+            return 0
+        return len(self.arguments)
