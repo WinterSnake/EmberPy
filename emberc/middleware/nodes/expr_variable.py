@@ -19,9 +19,9 @@ class NodeExprVariable(NodeExpr):
     """
 
     # -Constructor
-    def __init__(self, location: Location, _id: str) -> None:
+    def __init__(self, location: Location, _id: int) -> None:
         super().__init__(location)
-        self.id: str = _id
+        self.id: int = _id
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:

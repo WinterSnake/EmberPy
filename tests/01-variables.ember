@@ -1,6 +1,5 @@
 int8 a = 0;
 int8 b;
-b = 10;
 20 + a + b;
 
 bool _true  = true;

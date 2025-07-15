@@ -6,7 +6,6 @@
 ##-------------------------------##
 
 ## Imports
-from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any
 from .core import Node, NodeContainer
@@ -21,8 +20,8 @@ class NodeDeclModule(NodeContainer):
     """
 
     # -Constructor
-    def __init__(self, nodes: Sequence[Node]) -> None:
-        super().__init__(nodes)
+    def __init__(self, body: Sequence[Node]) -> None:
+        super().__init__(body)
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:

@@ -32,8 +32,8 @@ class NodeContainer(Node):
     """
 
     # -Constructor
-    def __init__(self, nodes: Sequence[Node]) -> None:
-        self.nodes: Sequence[Node] = nodes
+    def __init__(self, body: Sequence[Node]) -> None:
+        self.body: Sequence[Node] = body
 
 
 class NodeExpr(Node):

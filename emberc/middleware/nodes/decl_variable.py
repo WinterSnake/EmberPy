@@ -19,10 +19,20 @@ class NodeDeclVariable(Node):
     """
 
     # -Constructor
-    def __init__(self, _id: str, initializer: NodeExpr | None) -> None:
-        self.id: str = _id
-        self.initializer: NodeExpr | None = initializer
+    def __init__(self, _id: int, initializer: NodeExpr | None) -> None:
+        self.id: int = _id
+        self._initializer: NodeExpr | None = initializer
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:
         return visitor.visit_declaration_variable(self)
+
+    # -Properties
+    @property
+    def has_initializer(self) -> bool:
+        return self.initializer is not None
+
+    @property
+    def initializer(self) -> NodeExpr:
+        assert self._initializer is not None
+        return self._initializer
