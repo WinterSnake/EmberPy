@@ -18,7 +18,7 @@ from ..middleware.nodes import (
     Node, NodeExpr,
     NodeDeclModule, NodeDeclFunction, NodeDeclVariable,
     NodeStmtBlock, NodeStmtCondition, NodeStmtExpression,
-    NodeExprBinary,
+    NodeExprAssignment, NodeExprBinary,
     NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
 from ..middleware.symbol_table import SymbolTable
@@ -277,9 +277,19 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _parse_expression(self) -> NodeExpr | EmberError:
         '''
         Grammar[Expression]
-        expression_binary;
+        expression_binary ('=' expression)?;
         '''
-        return self._parse_expression_binary()
+        l_value = self._parse_expression_binary()
+        if isinstance(l_value, EmberError):
+            return l_value
+        if self._consume(Token.Type.SymbolEq):
+            location = self._last_token.location
+            r_value = self._parse_expression()
+            if isinstance(r_value, EmberError):
+                return r_value
+            l_value = NodeExprAssignment(location, l_value, r_value)
+        return l_value
+
 
     def _parse_expression_binary(
         self, current_precedence: int = 0

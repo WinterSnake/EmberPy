@@ -13,6 +13,7 @@ from .decl_variable import NodeDeclVariable
 from .stmt_block import NodeStmtBlock
 from .stmt_condition import NodeStmtCondition
 from .stmt_expression import NodeStmtExpression
+from .expr_assignment import NodeExprAssignment
 from .expr_binary import NodeExprBinary
 from .expr_group import NodeExprGroup
 from .expr_variable import NodeExprVariable
@@ -25,7 +26,7 @@ __all__: tuple[str, ...] = (
     "Node", "NodeExpr",
     "NodeDeclModule", "NodeDeclFunction", "NodeDeclVariable",
     "NodeStmtBlock", "NodeStmtCondition", "NodeStmtExpression",
-    "NodeExprBinary",
+    "NodeExprAssignment", "NodeExprBinary",
     "NodeExprGroup", "NodeExprVariable", "NodeExprLiteral",
     "NodeVisitor",
 )

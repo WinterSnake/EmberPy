@@ -11,7 +11,7 @@ from ..nodes import (
     Node,
     NodeDeclModule, NodeDeclFunction, NodeDeclVariable,
     NodeStmtBlock, NodeStmtCondition, NodeStmtExpression,
-    NodeExprBinary,
+    NodeExprAssignment, NodeExprBinary,
     NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
 from ..symbol_table import SymbolTable
@@ -62,6 +62,14 @@ class InterpreterWalker:
     def visit_statement_expression(self, node: NodeStmtExpression) -> None:
         value = node.expression.accept(self)
         print(f"Value: {value}")
+
+    def visit_expression_assignment(self, node: NodeExprAssignment) -> LITERAL:
+        assert isinstance(node.l_value, NodeExprVariable)
+        env = self.current_environment
+        entry = self._table.lookup(node.l_value.id)
+        value = node.r_value.accept(self)
+        env[entry] = value
+        return value
 
     def visit_expression_binary(self, node: NodeExprBinary) -> LITERAL:
         lhs: LITERAL = node.lhs.accept(self)

@@ -13,7 +13,7 @@ statement_condition: 'if' '(' expression ')' statement ('else' statement)?;
 statement_expression: expression ';';
 
 # Expressions
-expression: expression_binary;
+expression: expression_binary ('=' expression)?;
 expression_binary: expression_primary (BINARY_OPERATOR expression_primary)*;
 expression_primary: IDENTIFIER | BOOLEAN | NUMBER | '(' expression ')';
 

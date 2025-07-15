@@ -2,6 +2,15 @@ int8 a;
 int8 b = 0;
 int8 c = 30;
 20 + b + c;
+a = 20;
+a;
+
+int8 d;
+int8 e;
+
+d = e = 1;
+d;
+e;
 
 bool _true  = true;
 bool _false = false;

@@ -11,7 +11,7 @@ from ..nodes import (
     Node,
     NodeDeclModule, NodeDeclFunction, NodeDeclVariable,
     NodeStmtBlock, NodeStmtCondition, NodeStmtExpression,
-    NodeExprBinary,
+    NodeExprAssignment, NodeExprBinary,
     NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
 
@@ -45,6 +45,9 @@ class PrinterWalker:
     def visit_statement_expression(self, node: NodeStmtExpression) -> None:
         value = node.expression.accept(self)
         print(value)
+
+    def visit_expression_assignment(self, node: NodeExprAssignment) -> str:
+        return ""
 
     def visit_expression_binary(self, node: NodeExprBinary) -> str:
         lhs = node.lhs.accept(self)
