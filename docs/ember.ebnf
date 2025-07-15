@@ -8,12 +8,13 @@ declaration_statement: declaration_variable | statement;
 declaration_variable: TYPE IDENTIFIER ('=' expression)? ';';
 
 # Statements
-statement: statement_block | statement_condition | statement_loop_do | statement_loop_for | statement_loop_while | statement_expression;
+statement: statement_block | statement_condition | statement_loop_do | statement_loop_for | statement_loop_while | statement_return | statement_expression;
 statement_block: '{' declaration_statement* '}';
 statement_condition: 'if' '(' expression ')' statement ('else' statement)?;
 statement_loop_do: 'do' statement 'while' '(' expression ')' ';';
 statement_loop_for: 'for' '(' (declaration_variable | statement_expression | ';') expression? ';' expression? ')' statement;
 statement_loop_while: 'while' '(' expression ')' statement;
+statement_return 'return' expression? ';';
 statement_expression: expression ';';
 
 # Expressions

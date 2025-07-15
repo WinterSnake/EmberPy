@@ -27,6 +27,8 @@ def get_token_repr(token: Token) -> str:
         # -Keyword
         case Token.Type.KeywordFunction:
             return "fn"
+        case Token.Type.KeywordReturn:
+            return "return"
         case Token.Type.KeywordIf:
             return "if"
         case Token.Type.KeywordElse:
@@ -136,6 +138,7 @@ class Token:
         KeywordFalse = auto()
         # -Keyword
         KeywordFunction = auto()
+        KeywordReturn = auto()
         KeywordIf = auto()
         KeywordElse = auto()
         KeywordDo = auto()

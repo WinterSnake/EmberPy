@@ -10,7 +10,8 @@ from ..nodes import (
     LITERAL,
     Node,
     NodeDeclModule, NodeDeclFunction, NodeDeclVariable,
-    NodeStmtBlock, NodeStmtCondition, NodeStmtLoop, NodeStmtExpression,
+    NodeStmtBlock, NodeStmtCondition, NodeStmtLoop, NodeStmtReturn,
+    NodeStmtExpression,
     NodeExprAssignment, NodeExprBinary, NodeExprUnary, NodeExprCall,
     NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
@@ -47,6 +48,9 @@ class PrinterWalker:
 
     def visit_statement_loop(self, node: NodeStmtLoop) -> None:
         node.body.accept(self)
+
+    def visit_statement_return(self, node: NodeStmtReturn) -> None:
+        pass
 
     def visit_statement_expression(self, node: NodeStmtExpression) -> None:
         value = node.expression.accept(self)
