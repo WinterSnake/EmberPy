@@ -56,16 +56,19 @@ BINARY_OPERATOR: dict[Token.Type, tuple[NodeExprBinary.Operator, int]] = {
 ## Functions
 def _parse_condition_expression(parser: Parser) -> NodeExpr | EmberError:
     """
-    Helper function for parsing a condition expression between parens
+    Helper function for parsing a condition expression between parenthesis
 
     [Grammar]
     '(' expression ')'
     """
+    # --Invalid '(' consume
     if not parser._consume(Token.Type.SymbolLParen):
         return parser._error(EmberError.invalid_symbol, symbol='(')
     condition = parser._parse_expression()
+    # --Invalid <expression> consume
     if isinstance(condition, EmberError):
         return condition
+    # --Invalid ')' consume
     if not parser._consume(Token.Type.SymbolRParen):
         return parser._error(EmberError.invalid_symbol, symbol=')')
     return condition
@@ -152,10 +155,10 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         'fn' IDENTIFIER '(' ')' ':' TYPE '{' declaration_statement* '}';
         '''
         _id = self._advance()
-        # -Invalid Identifier consume (end of stream)
+        # -Invalid {Identifier} consume (end of stream)
         if _id is None:
             return self._error(EmberError.invalid_identifier_eof)
-        # -Invalid Identifier consume
+        # -Invalid {Identifier} consume
         elif _id.type is not Token.Type.Identifier:
             return self._error(
                 EmberError.invalid_identifier,
@@ -169,7 +172,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         if not self._consume(Token.Type.SymbolColon):
             return self._error(EmberError.invalid_symbol, symbol=':')
         _type: Token | Literal[False]
-        # -Invalid type
+        # -Invalid [Type] consume
         if not (_type := self._match(*TYPES_TABLE)):
             if self.is_at_end:
                 return self._error(EmberError.invalid_type_eof)
@@ -202,10 +205,10 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         TYPE IDENTIFIER ('=' expression)? ';';
         '''
         _id = self._advance()
-        # -Invalid Identifier consume (end of stream)
+        # -Invalid {Identifier} consume (end of stream)
         if _id is None:
             return self._error(EmberError.invalid_identifier_eof)
-        # -Invalid Identifier consume
+        # -Invalid {Identifier} consume
         elif _id.type is not Token.Type.Identifier:
             return self._error(
                 EmberError.invalid_identifier,
@@ -215,6 +218,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         initializer: NodeExpr | None = None
         if self._consume(Token.Type.SymbolEq):
             _initializer = self._parse_expression()
+            # --Invalid <expression> consume
             if isinstance(_initializer, EmberError):
                 return _initializer
             initializer = _initializer
@@ -226,7 +230,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _parse_statement(self) -> Node | EmberError:
         '''
         Grammar[Statement]
-        statement_block | statement_conditional | statement_loop_do | statement_loop_while | statement_expression;
+        statement_block | statement_conditional | statement_loop_do | statement_loop_for | statement_loop_while | statement_expression;
         '''
         # -Rule: Block
         if self._consume(Token.Type.SymbolLBrace):
@@ -238,6 +242,9 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         # -Rule: Loop :: Do
         elif self._consume(Token.Type.KeywordDo):
             return self._parse_statement_loop_do()
+        # -Rule: Loop :: For
+        elif self._consume(Token.Type.KeywordFor):
+            return self._parse_statement_loop_for()
         # -Rule: Loop :: While
         elif self._consume(Token.Type.KeywordWhile):
             return self._parse_statement_loop_while()
@@ -268,14 +275,17 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         'if' '(' expression ')' statement ('else' statement)?
         '''
         condition = _parse_condition_expression(self)
+        # --Invalid <expression> consume
         if isinstance(condition, EmberError):
             return condition
         body = self._parse_statement()
+        # --Invalid <statement> consume
         if isinstance(body, EmberError):
             return body
         branch: Node | None = None
         if self._consume(Token.Type.KeywordElse):
             _branch = self._parse_statement()
+            # --Invalid <statement> consume
             if isinstance(_branch, EmberError):
                 return _branch
             branch = _branch
@@ -287,20 +297,85 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         'do' statement 'while' '(' expression ')' ';';
         '''
         body = self._parse_statement()
+        # --Invalid <statement> consume
         if isinstance(body, EmberError):
             return body
         # --Invalid 'while' consume
         if not self._consume(Token.Type.KeywordWhile):
             return self._error(EmberError.invalid_keyword, word='while')
         condition = _parse_condition_expression(self)
-        # --Invalid expression consume
+        # --Invalid <expression> consume
         if isinstance(condition, EmberError):
             return condition
         # --Invalid ';' consume
         if not self._consume(Token.Type.SymbolSemicolon):
             _ = self._error(EmberError.invalid_symbol, symbol=';')
+        # --Desugar
         loop = NodeStmtLoop(condition, body)
         return NodeStmtBlock([body, loop])
+
+    def _parse_statement_loop_for(self) -> Node | EmberError:
+        '''
+        Grammar[Statement::Loop::For]
+        'for' '(' (declaration_variable | statement_expression)? ';' expression? ';' expression? ')' statement;
+        '''
+        # --Invalid '(' consume
+        if not self._consume(Token.Type.SymbolLParen):
+            return self._error(EmberError.invalid_symbol, symbol='(')
+        # -<<Initializer>>-
+        initializer: Node | None = None
+        if not self._consume(Token.Type.SymbolSemicolon):
+            # -Rule: Variable Declaration
+            if token := self._match(*TYPES_TABLE):
+                _initializer = self._parse_declaration_variable(token)
+            # -Rule: Expression Statement
+            else:
+                _initializer = self._parse_statement_expression()
+            # --Invalid <initializer> consume
+            if isinstance(_initializer, EmberError):
+                return _initializer
+            initializer = _initializer
+        # -<<Condition>>-
+        condition: NodeExpr
+        # --Expression
+        if not self._consume(Token.Type.SymbolSemicolon):
+            _condition = self._parse_expression()
+            # --Invalid <expression> consume
+            if isinstance(_condition, EmberError):
+                return _condition
+            condition = _condition
+            # --Invalid ';' consume
+            if not self._consume(Token.Type.SymbolSemicolon):
+                return self._error(EmberError.invalid_symbol, symbol=';')
+        # --Literal
+        else:
+            location = self._last_token.location
+            condition = NodeExprLiteral(
+                location, NodeExprLiteral.Type.Boolean, True
+            )
+        # -<<Increment>>-
+        increment: NodeExpr | None = None
+        if not self._consume(Token.Type.SymbolRParen):
+            _increment = self._parse_expression()
+            # --Invalid <expression> consume
+            if isinstance(_increment, EmberError):
+                return _increment
+            # --Valid <expression>
+            increment = _increment
+            # --Invalid ')' consume
+            if not self._consume(Token.Type.SymbolRParen):
+                return self._error(EmberError.invalid_symbol, symbol=')')
+        body = self._parse_statement()
+        # --Invalid <statement> consume
+        if isinstance(body, EmberError):
+            return body
+        # --Desugar
+        if increment is not None:
+            body = NodeStmtBlock([body, increment])
+        body = NodeStmtLoop(condition, body)
+        if initializer is not None:
+            body = NodeStmtBlock([initializer, body])
+        return body
 
     def _parse_statement_loop_while(self) -> Node | EmberError:
         '''
@@ -308,9 +383,11 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         'while' '(' expression ')' statement;
         '''
         condition = _parse_condition_expression(self)
+        # --Invalid <expression> consume
         if isinstance(condition, EmberError):
             return condition
         body = self._parse_statement()
+        # --Invalid <statement> consume
         if isinstance(body, EmberError):
             return body
         return NodeStmtLoop(condition, body)
@@ -321,6 +398,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         expression ';';
         '''
         node = self._parse_expression()
+        # --Invalid <expression> consume
         if isinstance(node, EmberError):
             return node
         # --Invalid ';' consume
@@ -334,11 +412,13 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         expression_binary ('=' expression)?;
         '''
         l_value = self._parse_expression_binary()
+        # --Invalid <expression> consume
         if isinstance(l_value, EmberError):
             return l_value
         if self._consume(Token.Type.SymbolEq):
             location = self._last_token.location
             r_value = self._parse_expression()
+            # --Invalid <expression> consume
             if isinstance(r_value, EmberError):
                 return r_value
             l_value = NodeExprAssignment(location, l_value, r_value)
@@ -353,6 +433,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         expression_primary (BINARY_OPERATOR expression_primary)*;
         '''
         lhs = self._parse_expression_primary()
+        # --Invalid <expression> consume
         if isinstance(lhs, EmberError):
             return lhs
         while token := self._match(*BINARY_OPERATOR.keys()):
@@ -362,6 +443,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
                 self._buffer = token
                 break
             rhs = self._parse_expression_binary(precedence)
+            # --Invalid <expression> consume
             if isinstance(rhs, EmberError):
                 return rhs
             lhs = NodeExprBinary(token.location, operator, lhs, rhs)
@@ -375,6 +457,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         # -Rule: Group
         if self._consume(Token.Type.SymbolLParen):
             node = self._parse_expression()
+            # --Invalid <expression> consume
             if isinstance(node, EmberError):
                 return node
             # -Invalid ')' consume
@@ -385,7 +468,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         _type: NodeExprLiteral.Type
         value: LITERAL
         literal = self._advance()
-        # -Invalid expression consume (end of stream)
+        # -Invalid <expression> consume (end of stream)
         if literal is None:
             return self._error(EmberError.invalid_expression_eof)
         match literal.type:
@@ -401,7 +484,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             case Token.Type.Integer:
                 _type = NodeExprLiteral.Type.Integer
                 value = int(literal.value)
-            # -Invalid expression consume
+            # -Invalid <expression> consume
             case _:
                 self._buffer = literal
                 return self._error(
