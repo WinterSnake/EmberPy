@@ -14,9 +14,8 @@ from .visitor import NodeVisitor
 ## Classes
 class NodeStmtLoop(Node):
     """
-    Ember Node: Statement :: Condition
-    Represents an AST node of a if statement with
-    condition, body, and branch
+    Ember Node: Statement :: Loop
+    Represents an AST node of a loop statement with condition and body
     """
 
     # -Constructor

@@ -55,7 +55,7 @@ class LookaheadBuffer[TItem, TMatch](ABC):
         return self._buffer
 
     def _consume(self, match: TMatch) -> bool:
-        '''Returns True if next TItem key is TMatch else False and sets buffer'''
+        '''Returns True if next TItem key is TMatch else returns False and sets buffer'''
         value = self._peek()
         if value is None:
             return False
