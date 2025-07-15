@@ -1,13 +1,14 @@
 module: declaration*;
 
 # Declarations
-declaration: declaration_function | statement;
-declaration_function: 'fn' IDENTIFIER '(' ')' ':' TYPE '{' statement* '}';
+declaration: declaration_function | declaration_statement;
+declaration_function: 'fn' IDENTIFIER '(' ')' ':' TYPE '{' declaration_statement* '}';
 declaration_variable: TYPE IDENTIFIER ('=' expression)? ';';
+declaration_statement: declaration_variable | statement;
 
 # Statements
-statement: declaration_variable | statement_block | statement_expression;
-statement_block: '{' statement* '}';
+statement: statement_block | statement_expression;
+statement_block: '{' declaration_statement* '}';
 statement_expression: expression ';';
 
 # Expressions

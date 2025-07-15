@@ -120,18 +120,18 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _parse_declaration(self) -> Node | EmberError:
         '''
         Grammar[Declaration]
-        declaration_function | statement;
+        declaration_function | declaration_statement;
         '''
         # -Rule: Function Declaration
         if self._consume(Token.Type.KeywordFunction):
             return self._parse_declaration_function()
         # -Rule: Statement
-        return self._parse_statement()
+        return self._parse_declaration_statement()
 
     def _parse_declaration_function(self) -> Node | EmberError:
         '''
         Grammar[Declaration::Function]
-        'fn' IDENTIFIER '(' ')' ':' TYPE '{' statement* '}';
+        'fn' IDENTIFIER '(' ')' ':' TYPE '{' declaration_statement* '}';
         '''
         _id = self._advance()
         # -Invalid Identifier consume (end of stream)
@@ -194,16 +194,24 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             _ = self._error(EmberError.invalid_consume_symbol, symbol=';')
         return NodeDeclVariable(entry, initializer)
 
-    def _parse_statement(self) -> Node | EmberError:
+    def _parse_declaration_statement(self) -> Node | EmberError:
         '''
-        Grammar[Statement]
-        declaration_variable | statement_block | statement_expression;
+        Grammar[Declaration::Statement]
+        declaration_variable | statement;
         '''
         # -Rule: Variable Declaration
         if token := self._match(*TYPES_TABLE):
             return self._parse_declaration_variable(token)
+        # -Rule: Statement
+        return self._parse_statement()
+
+    def _parse_statement(self) -> Node | EmberError:
+        '''
+        Grammar[Statement]
+        statement_block | statement_expression;
+        '''
         # -Rule: Block
-        elif self._consume(Token.Type.SymbolLBrace):
+        if self._consume(Token.Type.SymbolLBrace):
             body = self._parse_statement_block()
             return NodeStmtBlock(body)
         # -Rule: Expression
@@ -212,14 +220,14 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _parse_statement_block(self) -> Sequence[Node]:
         '''
         Grammar[Statement::Block]
-        '{' statement* '}';
+        '{' declaration_statement* '}';
         '''
         nodes: list[Node] = []
         while not self._consume(Token.Type.SymbolRBrace):
             # --Invalid '}' consume
             if self.is_at_end:
                 _ = self._error(EmberError.invalid_consume_symbol, symbol='}')
-            node = self._parse_statement()
+            node = self._parse_declaration_statement()
             # -Error Recovery
             if isinstance(node, EmberError):
                 self._sync()

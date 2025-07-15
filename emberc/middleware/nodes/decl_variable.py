@@ -30,7 +30,7 @@ class NodeDeclVariable(Node):
     # -Properties
     @property
     def has_initializer(self) -> bool:
-        return self.initializer is not None
+        return self._initializer is not None
 
     @property
     def initializer(self) -> NodeExpr:
