@@ -7,7 +7,7 @@
 
 ## Imports
 from __future__ import annotations
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import Any, Iterator, Literal
 from .lookahead_buffer import LookaheadBuffer
 from .token import Token, get_token_repr
@@ -58,26 +58,6 @@ BINARY_OPERATOR: dict[Token.Type, tuple[NodeExprBinary.Operator, int]] = {
 
 
 ## Functions
-def _parse_condition_expression(parser: Parser) -> NodeExpr | EmberError:
-    """
-    Helper function for parsing a condition expression between parenthesis
-
-    [Grammar]
-    '(' expression ')'
-    """
-    # --Invalid '(' consume
-    if not parser._consume(Token.Type.SymbolLParen):
-        return parser._error(EmberError.invalid_symbol, symbol='(')
-    condition = parser._parse_expression()
-    # --Invalid <expression> consume
-    if isinstance(condition, EmberError):
-        return condition
-    # --Invalid ')' consume
-    if not parser._consume(Token.Type.SymbolRParen):
-        return parser._error(EmberError.invalid_symbol, symbol=')')
-    return condition
-
-
 def _get_type_or_error(parser: Parser) -> Token | EmberError:
     """Helper function for getting a typed token or returning error"""
     _type: Token | Literal[False]
@@ -107,6 +87,35 @@ def _get_identifier_or_error(parser: Parser) -> Token | EmberError:
         )
     assert isinstance(_id, Token)
     return _id
+
+
+def _parse_condition_expression(parser: Parser) -> NodeExpr | EmberError:
+    """
+    Helper function for parsing a condition expression between parenthesis
+
+    [Grammar]
+    '(' expression ')'
+    """
+    # --Invalid '(' consume
+    if not parser._consume(Token.Type.SymbolLParen):
+        return parser._error(EmberError.invalid_symbol, symbol='(')
+    condition = parser._parse_expression()
+    # --Invalid <expression> consume
+    if isinstance(condition, EmberError):
+        return condition
+    # --Invalid ')' consume
+    if not parser._consume(Token.Type.SymbolRParen):
+        return parser._error(EmberError.invalid_symbol, symbol=')')
+    return condition
+
+
+def _try_get_type(parser: Parser) -> Token | Literal[False]:
+    """Helper function for trying to parse a typed token"""
+    token: Token | Literal[False]
+    if not (token := parser._match(*TYPES_TABLE)):
+        return False
+    assert isinstance(token, Token)
+    return token
 
 
 ## Classes
@@ -255,7 +264,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         declaration_variable | statement;
         '''
         # -Rule: Variable Declaration
-        if token := self._match(*TYPES_TABLE):
+        if token := _try_get_type(self):
             return self._parse_declaration_variable(token)
         # -Rule: Statement
         return self._parse_statement()
@@ -290,25 +299,18 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         | statement_loop_do | statement_loop_for | statement_loop_while
         | statement_return | statement_expression;
         '''
-        # -Rule: Block
-        if self._consume(Token.Type.SymbolLBrace):
-            body = self._parse_statement_block()
-            return NodeStmtBlock(body)
-        # -Rule: Condition
-        elif self._consume(Token.Type.KeywordIf):
-            return self._parse_statement_condition()
-        # -Rule: Loop :: Do
-        elif self._consume(Token.Type.KeywordDo):
-            return self._parse_statement_loop_do()
-        # -Rule: Loop :: For
-        elif self._consume(Token.Type.KeywordFor):
-            return self._parse_statement_loop_for()
-        # -Rule: Loop :: While
-        elif self._consume(Token.Type.KeywordWhile):
-            return self._parse_statement_loop_while()
-        # -Rule: Return
-        elif self._consume(Token.Type.KeywordReturn):
-            return self._parse_statement_return()
+        type RuleEntry = Callable[[], Node | EmberError]
+        rule_table: dict[Token.Type, RuleEntry] = {
+            Token.Type.SymbolLBrace:
+                lambda: NodeStmtBlock(self._parse_statement_block()),
+            Token.Type.KeywordIf: self._parse_statement_condition,
+            Token.Type.KeywordDo: self._parse_statement_loop_do,
+            Token.Type.KeywordWhile: self._parse_statement_loop_while,
+            Token.Type.KeywordFor: self._parse_statement_loop_for,
+            Token.Type.KeywordReturn: self._parse_statement_return,
+        }
+        if rule := self._match(*rule_table.keys()):
+            return rule_table[rule.type]()
         # -Rule: Expression
         return self._parse_statement_expression()
 
@@ -373,13 +375,12 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         elif not self._consume(Token.Type.SymbolSemicolon):
             _ = self._error(EmberError.invalid_symbol, symbol=';')
         # --Desugar
-        loop = NodeStmtLoop(condition, body)
-        return NodeStmtBlock([body, loop])
+        return NodeStmtBlock([body, NodeStmtLoop(condition, body)])
 
     def _parse_statement_loop_for(self) -> Node | EmberError:
         '''
         Grammar[Statement::Loop::For]
-        'for' '(' (declaration_variable | statement_expression)? ';' expression? ';' expression? ')' statement;
+        'for' '(' (declaration_variable | statement_expression | ';') expression? ';' expression? ')' statement;
         '''
         # --Invalid '(' consume
         if not self._consume(Token.Type.SymbolLParen):
@@ -388,7 +389,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         initializer: Node | None = None
         if not self._consume(Token.Type.SymbolSemicolon):
             # -Rule: Variable Declaration
-            if token := self._match(*TYPES_TABLE):
+            if token := _try_get_type(self):
                 _initializer = self._parse_declaration_variable(token)
             # -Rule: Expression Statement
             else:
