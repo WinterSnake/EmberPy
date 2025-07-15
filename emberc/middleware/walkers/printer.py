@@ -24,37 +24,55 @@ class PrinterWalker:
     Walks through the AST tree and prints expressions with associativity
     """
 
+    # -Constructor
+    def __init__(self) -> None:
+        self.nest_level: int = 0
+
     # -Instance Methods
     def visit_declaration_module(self, node: NodeDeclModule) -> None:
         for child in node.body:
             child.accept(self)
 
     def visit_declaration_function(self, node: NodeDeclFunction) -> None:
+        print(self.nest, f"Function ({node.id})[", end='')
+        if node.has_parameters:
+            print(','.join(str(arg) for arg in node.parameters), end='')
+        print("]")
+        self.nest_level += 1
         for child in node.body:
             child.accept(self)
+        self.nest_level -= 1
 
     def visit_declaration_variable(self, node: NodeDeclVariable) -> None:
         value = "None"
         if node.has_initializer:
             value = node.initializer.accept(self)
-        print(f"{{Id({node.id}) = {value}}}")
+        print(self.nest, f"{{Id({node.id}) = {value}}}")
 
     def visit_statement_block(self, node: NodeStmtBlock) -> None:
+        self.nest_level += 1
         for child in node.body:
             child.accept(self)
+        self.nest_level -= 1
 
     def visit_statement_condition(self, node: NodeStmtCondition) -> None:
+        print(self.nest, f"if ({node.condition.accept(self)})")
         node.body.accept(self)
+        if node.has_branch:
+            print(self.nest, "else")
+            node.branch.accept(self)
 
     def visit_statement_loop(self, node: NodeStmtLoop) -> None:
+        print(self.nest, f"while ({node.condition.accept(self)})")
         node.body.accept(self)
 
     def visit_statement_return(self, node: NodeStmtReturn) -> None:
-        pass
+        value = node.expression.accept(self)
+        print(self.nest, f"return({value})")
 
     def visit_statement_expression(self, node: NodeStmtExpression) -> None:
         value = node.expression.accept(self)
-        print(value)
+        print(self.nest, value)
 
     def visit_expression_assignment(self, node: NodeExprAssignment) -> str:
         assert isinstance(node.l_value, NodeExprVariable)
@@ -103,7 +121,7 @@ class PrinterWalker:
         args = f""
         if node.has_arguments:
             args = ", ".join(child.accept(self) for child in node.arguments)
-        return f"{_id}({args})"
+        return f"{_id}[{args}]"
 
     def visit_expression_group(self, node: NodeExprGroup) -> str:
         return f"({node.expression.accept(self)})"
@@ -119,3 +137,8 @@ class PrinterWalker:
     def run(node: Node) -> None:
         visitor = PrinterWalker()
         node.accept(visitor)
+
+    # -Properties
+    @property
+    def nest(self) -> str:
+        return '\t' * self.nest_level

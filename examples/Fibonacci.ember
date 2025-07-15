@@ -15,6 +15,6 @@ fn fibonacci(int32 n) : int32
 
 fn __start__() : void
 {
-	int32 i = fibonacci(29);
+	int32 i = fibonacci(29 - 11);
 	print(i);
 }
