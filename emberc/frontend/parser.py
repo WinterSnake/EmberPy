@@ -38,6 +38,7 @@ TYPES_TABLE: tuple[Token.Type, ...] = (
     Token.Type.KeywordUInt64,
 )
 UNARY_OPERATOR: dict[Token.Type, NodeExprUnary.Operator] = {
+    Token.Type.SymbolBang: NodeExprUnary.Operator.Negate,  # '!'
     Token.Type.SymbolMinus: NodeExprUnary.Operator.Minus,  # '-'
 }
 BINARY_OPERATOR: dict[Token.Type, tuple[NodeExprBinary.Operator, int]] = {

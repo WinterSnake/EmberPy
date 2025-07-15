@@ -13,3 +13,4 @@ true != true;  // Output: false
 10 + 50 > 15 - 2 * 2 == 18 * (4 - 3) < (54 * 4 * (20 - 19)); // Output: true
 bool c = false;
 true != c;  // Output: true
+!true;  // Output: false

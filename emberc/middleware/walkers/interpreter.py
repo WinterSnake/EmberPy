@@ -158,6 +158,8 @@ class InterpreterWalker:
     def visit_expression_unary(self, node: NodeExprUnary) -> LITERAL:
         expression = node.expression.accept(self)
         match node.operator:
+            case NodeExprUnary.Operator.Negate:
+                return not expression
             case NodeExprUnary.Operator.Minus:
                 return -expression
 

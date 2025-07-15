@@ -63,6 +63,8 @@ def get_token_repr(token: Token) -> str:
         # -Symbol: Operator
         case Token.Type.SymbolEq:
             return '='
+        case Token.Type.SymbolBang:
+            return '!'
         case Token.Type.SymbolPlus:
             return '+'
         case Token.Type.SymbolMinus:
@@ -157,6 +159,7 @@ class Token:
         KeywordUInt64 = auto()
         # -Symbol: Operator
         SymbolEq = auto()
+        SymbolBang = auto()
         SymbolPlus = auto()
         SymbolMinus = auto()
         SymbolStar = auto()

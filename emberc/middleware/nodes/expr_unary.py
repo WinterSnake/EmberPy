@@ -36,4 +36,5 @@ class NodeExprUnary(NodeExpr):
 
     # -Sub-Classes
     class Operator(IntEnum):
+        Negate = auto()
         Minus = auto()

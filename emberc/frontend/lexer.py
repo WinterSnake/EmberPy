@@ -136,11 +136,9 @@ class Lexer(LookaheadBuffer[str, str]):
                 if self._consume('='):
                     _type = Token.Type.SymbolEqEq
             case '!':
+                _type = Token.Type.SymbolBang
                 if self._consume('='):
                     _type = Token.Type.SymbolBangEq
-                else:
-                    self._error(EmberError.unknown_symbol, char=buffer)
-                    return None
             case '+':
                 _type = Token.Type.SymbolPlus
             case '-':

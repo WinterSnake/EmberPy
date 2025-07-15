@@ -93,6 +93,8 @@ class PrinterWalker:
     def visit_expression_unary(self, node: NodeExprUnary) -> str:
         expression = node.expression.accept(self)
         match node.operator:
+            case NodeExprUnary.Operator.Negate:
+                return f"(!{expression})"
             case NodeExprUnary.Operator.Minus:
                 return f"(-{expression})"
 
