@@ -21,7 +21,7 @@ from ..middleware.nodes import (
     NodeExprAssignment, NodeExprBinary, NodeExprUnary,
     NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
-from ..middleware.symbol_table import SymbolTable
+from ..middleware import Datatype, SymbolTable, get_datatype_from_token
 
 ## Constants
 TYPES_TABLE: tuple[Token.Type, ...] = (
@@ -202,14 +202,15 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             # --Invalid {Identifier} consume
             if isinstance(_id, EmberError):
                 return _id
-            return self._table.add(_id.value)
+            datatype = get_datatype_from_token(_type.type)
+            return self._table.add(_id.value, datatype)
 
         # -Body
         _id = _get_identifier_or_error(self)
         # --Invalid {Identifier} consume
         if isinstance(_id, EmberError):
             return _id
-        entry: int = self._table.add(_id.value)
+        entry: int = self._table.add(_id.value, Datatype.Empty)
         # --Invalid '(' consume
         if not self._consume(Token.Type.SymbolLParen):
             return self._error(EmberError.invalid_symbol, symbol='(')
@@ -239,6 +240,8 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         # --Invalid [Type] consume
         if isinstance(_type, EmberError):
             return _type
+        datatype = get_datatype_from_token(_type.type)
+        self._table.lookup(entry).type = datatype
         # --Invalid '{' consume
         if not self._consume(Token.Type.SymbolLBrace):
             return self._error(EmberError.invalid_symbol, symbol='{')
@@ -256,7 +259,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         # -Rule: Statement
         return self._parse_statement()
 
-    def _parse_declaration_variable(self, type_token: Token) -> Node | EmberError:
+    def _parse_declaration_variable(self, _type: Token) -> Node | EmberError:
         '''
         Grammar[Declaration::Variable]
         TYPE IDENTIFIER ('=' expression)? ';';
@@ -265,7 +268,8 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         # -Invalid {Identifier} consume
         if isinstance(_id, EmberError):
             return _id
-        entry: int = self._table.add(_id.value)
+        datatype = get_datatype_from_token(_type.type)
+        entry: int = self._table.add(_id.value, datatype)
         initializer: NodeExpr | None = None
         if self._consume(Token.Type.SymbolEq):
             _initializer = self._parse_expression()

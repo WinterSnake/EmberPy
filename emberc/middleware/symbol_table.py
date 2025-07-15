@@ -5,6 +5,10 @@
 ## Symbol Table                  ##
 ##-------------------------------##
 
+## Imports
+from __future__ import annotations
+from .datatype import Datatype
+
 
 ## Classes
 class SymbolTable:
@@ -16,23 +20,32 @@ class SymbolTable:
 
     # -Constructor
     def __init__(self) -> None:
-        self.entries: list[str] = []
+        self.entries: list[SymbolTable.Entry] = []
 
     # -Instance Methods
-    def add(self, name: str) -> int:
+    def add(self, name: str, _type: Datatype) -> int:
         index: int
         index = self.get(name)
         if index >= 0:
             return index
         index = len(self.entries)
-        self.entries.append(name)
+        entry = SymbolTable.Entry(name, _type)
+        self.entries.append(entry)
         return index
 
     def get(self, name: str) -> int:
         for i, entry in enumerate(self.entries):
-            if entry == name:
+            if entry.name == name:
                 return i
         return -1
 
-    def lookup(self, index: int) -> str:
+    def lookup(self, index: int) -> SymbolTable.Entry:
         return self.entries[index]
+
+    # -Sub-Classes
+    class Entry:
+
+        # -Constructor
+        def __init__(self, name: str, _type: Datatype) -> None:
+            self.name: str = name
+            self.type: Datatype = _type

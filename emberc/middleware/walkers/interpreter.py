@@ -46,7 +46,7 @@ class InterpreterWalker:
         value: LITERAL = None  # type: ignore
         if node.has_initializer:
             value = node.initializer.accept(self)
-        env[entry] = value
+        env[entry.name] = value
 
     def visit_statement_block(self, node: NodeStmtBlock) -> None:
         for child in node.body:
@@ -72,7 +72,7 @@ class InterpreterWalker:
         env = self.current_environment
         entry = self._table.lookup(node.l_value.id)
         value = node.r_value.accept(self)
-        env[entry] = value
+        env[entry.name] = value
         return value
 
     def visit_expression_binary(self, node: NodeExprBinary) -> LITERAL:
@@ -114,7 +114,7 @@ class InterpreterWalker:
     def visit_expression_variable(self, node: NodeExprVariable) -> LITERAL:
         env = self.current_environment
         entry = self._table.lookup(node.id)
-        return env[entry]
+        return env[entry.name]
 
     def visit_expression_literal(self, node: NodeExprLiteral) -> LITERAL:
         return node.value
