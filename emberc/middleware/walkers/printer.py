@@ -116,9 +116,7 @@ class PrinterWalker:
 
     def visit_expression_call(self, node: NodeExprCall) -> str:
         _id = node.callee.accept(self)
-        args = f""
-        if node.has_arguments:
-            args = ", ".join(child.accept(self) for child in node.arguments)
+        args = ", ".join(child.accept(self) for child in node.arguments)
         return f"{_id}[{args}]"
 
     def visit_expression_group(self, node: NodeExprGroup) -> str:

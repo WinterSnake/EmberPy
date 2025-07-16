@@ -21,10 +21,10 @@ class NodeExprCall(NodeExpr):
 
     # -Constructor
     def __init__(
-        self, callee: NodeExpr, arguments: Sequence[NodeExpr] | None
+        self, callee: NodeExpr, arguments: Sequence[NodeExpr]
     ) -> None:
         self.callee: NodeExpr = callee
-        self._arguments: Sequence[NodeExpr] | None = arguments
+        self.arguments: Sequence[NodeExpr] = arguments
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:
@@ -32,18 +32,5 @@ class NodeExprCall(NodeExpr):
 
     # -Properties
     @property
-    def has_arguments(self) -> bool:
-        if self._arguments is None:
-            return False
-        return True
-
-    @property
-    def arguments(self) -> Sequence[NodeExpr]:
-        assert self._arguments is not None
-        return self._arguments
-
-    @property
     def argument_count(self) -> int:
-        if not self.has_arguments:
-            return 0
         return len(self.arguments)

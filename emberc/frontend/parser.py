@@ -542,15 +542,29 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _parse_expression_unary(self) -> NodeExpr | EmberError:
         '''
         Grammar[Expression::Unary]
-        UNARY_PREFIX_OPERATOR expression_unary | expression_primary unary_postfix;
+        UNARY_PREFIX_OPERATOR expression_unary | expression_call;
+        '''
+        if token := self._match(*UNARY_OPERATOR.keys()):
+            operator = UNARY_OPERATOR[token.type]
+            expression = self._parse_expression_unary()
+            # --Invalid <expression> consume
+            if isinstance(expression, EmberError):
+                return expression
+            return NodeExprUnary(token.location, operator, expression)
+        return self._parse_expression_call()
+
+    def _parse_expression_call(self) -> NodeExpr | EmberError:
+        '''
+        Grammar[Expression::Call]
+        expression_primary function_call*;
         '''
         # -Internal Methods
-        def _function_call() -> list[NodeExpr] | EmberError | None:
+        def _function_call() -> list[NodeExpr] | EmberError:
             '''
             Grammar[Unary::Postfix::Call]
             '(' (expression (',' expression)*)? ')';
             '''
-            arguments: list[NodeExpr] | None = None
+            arguments: list[NodeExpr] = []
             # --Arguments: 0
             if not self._consume(Token.Type.SymbolRParen):
                 # --Arguments: 1
@@ -572,21 +586,9 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             return arguments
 
         # -Body
-        # -<Prefix>-
-        if token := self._match(*UNARY_OPERATOR.keys()):
-            operator = UNARY_OPERATOR[token.type]
-            expression = self._parse_expression_unary()
-            # --Invalid <expression> consume
-            if isinstance(expression, EmberError):
-                return expression
-            return NodeExprUnary(token.location, operator, expression)
-        # -<Primary>-
         node = self._parse_expression_primary()
-        # --Invalid <expression> consume
         if isinstance(node, EmberError):
             return node
-        # -<Postfix>-
-        # --Rule: Function Call
         while self._consume(Token.Type.SymbolLParen):
             arguments = _function_call()
             if isinstance(arguments, EmberError):
