@@ -5,7 +5,8 @@ declaration: declaration_function | declaration_statement;
 declaration_function: 'fn' IDENTIFIER '(' (parameter (',' parameter)*)? ')' ':' TYPE '{' declaration_statement* '}';
 	parameter: TYPE IDENTIFIER
 declaration_statement: declaration_variable | statement;
-declaration_variable: TYPE IDENTIFIER ('=' expression)? ';';
+declaration_variable: TYPE variable (',' variable)* ';';
+	variable: IDENTIFIER ('=' expression)?;
 
 # Statements
 statement: statement_block | statement_condition | statement_loop_do | statement_loop_for | statement_loop_while | statement_return | statement_expression;

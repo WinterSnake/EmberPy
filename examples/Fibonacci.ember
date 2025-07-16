@@ -6,8 +6,7 @@ fn __start__() : void
 
 fn fibonacci(int32 n) : int32
 {
-	int32 prev = 0;
-	int32 curr = 1;
+	int32 prev = 0, curr = 1;
 	
 	for (int32 i = 1; i < n; i = i + 1)
 	{

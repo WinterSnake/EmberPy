@@ -200,7 +200,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         # -Internal Functions
         def _parameter() -> NodeDeclFunction.Parameter | EmberError:
             '''
-            Grammar[Function::Parameter]
+            Grammar[Declaration::Function::Parameter]
             TYPE IDENTIFIER;
             '''
             _type = _get_type_or_error(self)
@@ -269,24 +269,42 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _parse_declaration_variable(self, _type: Token) -> Node | EmberError:
         '''
         Grammar[Declaration::Variable]
-        TYPE IDENTIFIER ('=' expression)? ';';
+        TYPE variable (',' variable)* ';';
         '''
-        _id = _get_identifier_or_error(self)
-        # -Invalid {Identifier} consume
-        if isinstance(_id, EmberError):
-            return _id
+        # -Internal Functions
+        def _variable() -> NodeDeclVariable.Variable | EmberError:
+            '''
+            Grammar[Declaration::Variable::Variable]
+            IDENTIFIER ('=' expression)?;
+            '''
+            _id = _get_identifier_or_error(self)
+            # -Invalid {Identifier} consume
+            if isinstance(_id, EmberError):
+                return _id
+            initializer: NodeExpr | None = None
+            if self._consume(Token.Type.SymbolEq):
+                _initializer = self._parse_expression()
+                # --Invalid <expression> consume
+                if isinstance(_initializer, EmberError):
+                    return _initializer
+                initializer = _initializer
+            return NodeDeclVariable.Variable(_id.value, initializer)
+
+        # -Body
         datatype = get_datatype_from_token(_type)
-        initializer: NodeExpr | None = None
-        if self._consume(Token.Type.SymbolEq):
-            _initializer = self._parse_expression()
-            # --Invalid <expression> consume
-            if isinstance(_initializer, EmberError):
-                return _initializer
-            initializer = _initializer
+        _var = _variable()
+        if isinstance(_var, EmberError):
+            return _var
+        variables: list[NodeDeclVariable.Variable] = [_var]
+        while self._consume(Token.Type.SymbolComma):
+            _var = _variable()
+            if isinstance(_var, EmberError):
+                return _var
+            variables.append(_var)
         # --Invalid ';' consume
         if not self._consume(Token.Type.SymbolSemicolon):
             _ = self._error(EmberError.invalid_symbol, symbol=';')
-        return NodeDeclVariable(_id.value, datatype, initializer)
+        return NodeDeclVariable(datatype, variables)
 
     def _parse_statement(self) -> Node | EmberError:
         '''

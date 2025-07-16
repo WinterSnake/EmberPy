@@ -6,6 +6,8 @@
 ##-------------------------------##
 
 ## Imports
+from __future__ import annotations
+from collections.abc import Sequence
 from typing import Any
 from .core import Node, NodeExpr
 from .visitor import NodeVisitor
@@ -21,22 +23,29 @@ class NodeDeclVariable(Node):
 
     # -Constructor
     def __init__(
-        self, _id: str, _type: Datatype, initializer: NodeExpr | None
+        self, _type: Datatype, variables: Sequence[NodeDeclVariable.Variable]
     ) -> None:
-        self.id: str = _id
         self.type: Datatype = _type
-        self._initializer: NodeExpr | None = initializer
+        self.variables: Sequence[NodeDeclVariable.Variable] = variables
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:
         return visitor.visit_declaration_variable(self)
 
-    # -Properties
-    @property
-    def has_initializer(self) -> bool:
-        return self._initializer is not None
+    # -Sub-Classes
+    class Variable:
 
-    @property
-    def initializer(self) -> NodeExpr:
-        assert self._initializer is not None
-        return self._initializer
+        # -Constructor
+        def __init__(self, _id: str, initializer: NodeExpr | None) -> None:
+            self.id: str = _id
+            self._initializer: NodeExpr | None = initializer
+
+        # -Properties
+        @property
+        def has_initializer(self) -> bool:
+            return self._initializer is not None
+
+        @property
+        def initializer(self) -> NodeExpr:
+            assert self._initializer is not None
+            return self._initializer

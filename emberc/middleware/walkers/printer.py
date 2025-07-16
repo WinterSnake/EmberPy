@@ -39,10 +39,11 @@ class PrinterWalker:
         self.nest_level -= 1
 
     def visit_declaration_variable(self, node: NodeDeclVariable) -> None:
-        value = "None"
-        if node.has_initializer:
-            value = node.initializer.accept(self)
-        print(f"{self.nest}{{Id({node.id}) = {value}}}")
+        for var in node.variables:
+            value = "None"
+            if var.has_initializer:
+                value = var.initializer.accept(self)
+            print(f"{self.nest}{{Id({var.id}) = {value}}}")
 
     def visit_statement_block(self, node: NodeStmtBlock) -> None:
         self.nest_level += 1
