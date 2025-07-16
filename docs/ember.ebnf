@@ -9,7 +9,14 @@ declaration_variable: TYPE variable (',' variable)* ';';
 	variable: IDENTIFIER ('=' expression)?;
 
 # Statements
-statement: statement_block | statement_condition | statement_loop_do | statement_loop_for | statement_loop_while | statement_return | statement_expression;
+statement: statement_block
+		 | statement_condition
+		 | statement_loop_do
+		 | statement_loop_for
+		 | statement_loop_while
+		 | statement_return
+		 | statement_expression
+		 ;
 statement_block: '{' declaration_statement* '}';
 statement_condition: 'if' '(' expression ')' statement ('else' statement)?;
 statement_loop_do: 'do' statement 'while' '(' expression ')' ';';
@@ -20,20 +27,25 @@ statement_expression: expression ';';
 
 # Expressions
 expression: expression_binary ('=' expression)?;
-expression_binary: expression_primary (BINARY_OPERATOR expression_binary)*;
-expression_unary: UNARY_PREFIX_OPERATOR expression_unary | expression_postfix;
+expression_binary: expression_binary ('==' | '!=') expression_binary
+				 | expression_binary ('<' | '>' | '<=' | '>=') expression_binary
+				 | expression_binary ('*' | '/' | '%') expression_binary
+				 | expression_binary ('+' | '-') expression_binary
+				 | expression_unary
+				 ;
+expression_unary: ('-' | '!') expression_unary
+                | expression_call;
 expression_call: expression_primary ('(' (expression (',' expression)*)? ')')*;
-expression_primary: IDENTIFIER | BOOLEAN | NUMBER | '(' expression ')';
-
-# Symbols
-BINARY_OPERATOR: '+' | '-' | '*' | '/' | '%' | '<' | '>' | '<=' | '>=' | '==' | '!=';
-UNARY_PREFIX_OPERATOR: '-';
+expression_primary: IDENTIFIER
+                  | BOOLEAN
+				  | NUMBER
+				  | '(' expression ')';
 
 # Keywords
-INTS: "int8" | "int16" | "int32" | "int64";
-UINTS: "uint8" | "uint16" | "uint32" | "uint64";
-BUILTIN_TYPE: "void" | "bool" | INTS | UINTS;
-TYPE: BUILTIN_TYPE;
+TYPE_INT: "int8" | "int16" | "int32" | "int64";
+TYPE_UINT: "uint8" | "uint16" | "uint32" | "uint64";
+TYPE_PRIMITIVE: "void" | "bool" | TYPE_INT | TYPE_UINT;
+TYPE: TYPE_PRIMITIVE;
 
 # Literals
 BOOLEAN: "true" | "false";
