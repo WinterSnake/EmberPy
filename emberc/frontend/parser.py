@@ -22,7 +22,7 @@ from ..middleware.nodes import (
     NodeExprAssignment, NodeExprBinary, NodeExprUnary, NodeExprCall,
     NodeExprGroup, NodeExprVariable, NodeExprLiteral,
 )
-from ..middleware import Datatype, SymbolTable, get_datatype_from_token
+from ..middleware import Datatype, get_datatype_from_token
 
 ## Constants
 TYPES_TABLE: tuple[Token.Type, ...] = (
@@ -137,7 +137,6 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         self._key = lambda token: token.type
         # -State
         self.is_at_end: bool = False
-        self._table: SymbolTable
         self._last_token: Token
 
     # -Instance Methods: Control
@@ -167,12 +166,11 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
                 break
 
     # -Instance Methods: Parse
-    def parse(self, table: SymbolTable) -> Node:
+    def parse(self) -> Node:
         '''
         Grammar[Module]
         declaration*;
         '''
-        self._table = table
         nodes: list[Node] = []
         while token := self._peek():
             node = self._parse_declaration()
@@ -200,7 +198,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         'fn' IDENTIFIER '(' (parameter (',' parameter)*)? ')' ':' TYPE '{' declaration_statement* '}';
         '''
         # -Internal Functions
-        def _parameter() -> int | EmberError:
+        def _parameter() -> NodeDeclFunction.Parameter | EmberError:
             '''
             Grammar[Function::Parameter]
             TYPE IDENTIFIER;
@@ -213,28 +211,27 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             # --Invalid {Identifier} consume
             if isinstance(_id, EmberError):
                 return _id
-            datatype = get_datatype_from_token(_type.type)
-            return self._table.add(_id.value, datatype)
+            datatype = get_datatype_from_token(_type)
+            return NodeDeclFunction.Parameter(_id.value, datatype)
 
         # -Body
         _id = _get_identifier_or_error(self)
         # --Invalid {Identifier} consume
         if isinstance(_id, EmberError):
             return _id
-        entry: int = self._table.add(_id.value, Datatype.Empty)
         # --Invalid '(' consume
         if not self._consume(Token.Type.SymbolLParen):
             return self._error(EmberError.invalid_symbol, symbol='(')
-        parameters: list[int] | None = None
-        # -Parameters 0
+        parameters: list[NodeDeclFunction.Parameter] = []
+        # -Parameters: 0
         if not self._consume(Token.Type.SymbolRParen):
-            # -Parameters 1
+            # -Parameters: 1
             _param = _parameter()
             # --Invalid [Parameter] consume
             if isinstance(_param, EmberError):
                 return _param
             parameters = [_param]
-            # -Parameters 2+
+            # -Parameter: 2+
             while self._consume(Token.Type.SymbolComma):
                 _param = _parameter()
                 # --Invalid [Parameter] consume
@@ -251,13 +248,12 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         # --Invalid [Type] consume
         if isinstance(_type, EmberError):
             return _type
-        datatype = get_datatype_from_token(_type.type)
-        self._table.lookup(entry).type = datatype
+        return_type = get_datatype_from_token(_type)
         # --Invalid '{' consume
         if not self._consume(Token.Type.SymbolLBrace):
             return self._error(EmberError.invalid_symbol, symbol='{')
         body = self._parse_statement_block()
-        return NodeDeclFunction(entry, parameters, body)
+        return NodeDeclFunction(_id.value, parameters, return_type, body)
 
     def _parse_declaration_statement(self) -> Node | EmberError:
         '''
@@ -279,8 +275,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         # -Invalid {Identifier} consume
         if isinstance(_id, EmberError):
             return _id
-        datatype = get_datatype_from_token(_type.type)
-        entry: int = self._table.add(_id.value, datatype)
+        datatype = get_datatype_from_token(_type)
         initializer: NodeExpr | None = None
         if self._consume(Token.Type.SymbolEq):
             _initializer = self._parse_expression()
@@ -291,7 +286,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         # --Invalid ';' consume
         if not self._consume(Token.Type.SymbolSemicolon):
             _ = self._error(EmberError.invalid_symbol, symbol=';')
-        return NodeDeclVariable(entry, initializer)
+        return NodeDeclVariable(_id.value, datatype, initializer)
 
     def _parse_statement(self) -> Node | EmberError:
         '''
@@ -605,8 +600,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             return self._error(EmberError.invalid_expression_eof)
         match literal.type:
             case Token.Type.Identifier:
-                entry: int = self._table.get(literal.value)
-                return NodeExprVariable(literal.location, entry)
+                return NodeExprVariable(literal.location, literal.value)
             case Token.Type.KeywordTrue:
                 _type = NodeExprLiteral.Type.Boolean
                 value = True

@@ -1,3 +1,9 @@
+fn __start__() : void
+{
+	int32 i = fibonacci(29 - 11);
+	print(i);
+}
+
 fn fibonacci(int32 n) : int32
 {
 	int32 prev = 0;
@@ -11,10 +17,4 @@ fn fibonacci(int32 n) : int32
 	}
 
 	return curr;
-}
-
-fn __start__() : void
-{
-	int32 i = fibonacci(29 - 11);
-	print(i);
 }

@@ -12,9 +12,9 @@ from ..frontend.token import Token
 
 
 ## Functions
-def get_datatype_from_token(_type: Token.Type) -> Datatype:
-    """Returns a datatype associated with a typed keyword"""
-    match _type:
+def get_datatype_from_token(token: Token) -> Datatype:
+    """Returns an associated datatype from a keyword token"""
+    match token.type:
         case Token.Type.KeywordVoid:
             return Datatype.Void
         case Token.Type.KeywordBoolean:
@@ -36,12 +36,11 @@ def get_datatype_from_token(_type: Token.Type) -> Datatype:
         case Token.Type.KeywordUInt64:
             return Datatype.UInt64
         case _:
-            assert False
+            assert False, f"Unhandled datatype '{token.type.name}'"
 
 
 ## Classes
 class Datatype(IntEnum):
-    Empty = auto()
     Void = auto()
     Boolean = auto()
     Int8 = auto()

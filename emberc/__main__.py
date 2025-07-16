@@ -11,7 +11,6 @@ from pathlib import Path
 from .errors import EmberError
 from .frontend import Lexer, Parser, Token
 from .middleware.nodes import Node
-from .middleware.symbol_table import SymbolTable
 from .middleware.walkers import InterpreterWalker, PrinterWalker
 
 
@@ -21,24 +20,21 @@ def _entry() -> None:
         print("No source file provided", file=sys.stderr)
         usage()
         return
-    table = SymbolTable()
     source: Path = Path(sys.argv[1])
-    output = parse_source(source, table)
+    output = parse_source(source)
     if isinstance(output, Sequence):
         for err in output:
             print(err.message, file=sys.stderr)
         sys.exit(64)
     PrinterWalker.run(output)
-    InterpreterWalker.run(output, table)
+    InterpreterWalker.run(output)
 
 
-def parse_source(
-    source: Path, table: SymbolTable
-) -> Node | Sequence[EmberError]:
+def parse_source(source: Path) -> Node | Sequence[EmberError]:
     """Lex and parse a source file and return parsed AST or found errors"""
     lexer: Lexer = Lexer(source)
     parser: Parser = Parser(lexer.lex())
-    ast = parser.parse(table)
+    ast = parser.parse()
     errors = tuple((*lexer.errors, *parser.errors))
     return errors if errors else ast
 

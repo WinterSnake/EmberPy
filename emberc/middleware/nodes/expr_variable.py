@@ -1,3 +1,4 @@
+##-------------------------------##
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
@@ -19,9 +20,9 @@ class NodeExprVariable(NodeExpr):
     """
 
     # -Constructor
-    def __init__(self, location: Location, _id: int) -> None:
+    def __init__(self, location: Location, _id: str) -> None:
         super().__init__(location)
-        self.id: int = _id
+        self.id: str = _id
 
     # -Instance Methods
     def accept(self, visitor: NodeVisitor) -> Any:

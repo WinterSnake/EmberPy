@@ -9,6 +9,7 @@
 from typing import Any
 from .core import Node, NodeExpr
 from .visitor import NodeVisitor
+from ..datatype import Datatype
 
 
 ## Classes
@@ -19,8 +20,11 @@ class NodeDeclVariable(Node):
     """
 
     # -Constructor
-    def __init__(self, _id: int, initializer: NodeExpr | None) -> None:
-        self.id: int = _id
+    def __init__(
+        self, _id: str, _type: Datatype, initializer: NodeExpr | None
+    ) -> None:
+        self.id: str = _id
+        self.type: Datatype = _type
         self._initializer: NodeExpr | None = initializer
 
     # -Instance Methods

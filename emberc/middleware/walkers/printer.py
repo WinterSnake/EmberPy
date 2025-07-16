@@ -30,10 +30,9 @@ class PrinterWalker:
             child.accept(self)
 
     def visit_declaration_function(self, node: NodeDeclFunction) -> None:
-        print(self.nest, f"Function ({node.id})[", end='')
-        if node.has_parameters:
-            print(','.join(str(arg) for arg in node.parameters), end='')
-        print("]")
+        out = f"{self.nest}Function ({node.id})["
+        out += ','.join(arg.id for arg in node.parameters) + ']'
+        print(out)
         self.nest_level += 1
         for child in node.body:
             child.accept(self)
@@ -43,7 +42,7 @@ class PrinterWalker:
         value = "None"
         if node.has_initializer:
             value = node.initializer.accept(self)
-        print(self.nest, f"{{Id({node.id}) = {value}}}")
+        print(f"{self.nest}{{Id({node.id}) = {value}}}")
 
     def visit_statement_block(self, node: NodeStmtBlock) -> None:
         self.nest_level += 1
@@ -52,26 +51,25 @@ class PrinterWalker:
         self.nest_level -= 1
 
     def visit_statement_condition(self, node: NodeStmtCondition) -> None:
-        print(self.nest, f"if ({node.condition.accept(self)})")
+        print(f"{self.nest}if ({node.condition.accept(self)})")
         node.body.accept(self)
         if node.has_branch:
-            print(self.nest, "else")
+            print(f"{self.nest}else")
             node.branch.accept(self)
 
     def visit_statement_loop(self, node: NodeStmtLoop) -> None:
-        print(self.nest, f"while ({node.condition.accept(self)})")
+        print(f"{self.nest}while ({node.condition.accept(self)})")
         node.body.accept(self)
 
     def visit_statement_return(self, node: NodeStmtReturn) -> None:
-        print("return(", end='')
+        out = f"{self.nest}return("
         if node.has_expression:
-            value = node.expression.accept(self)
-            print(value, end='')
-        print(')')
+            out += node.expression.accept(self)
+        print(out + ')')
 
     def visit_statement_expression(self, node: NodeStmtExpression) -> None:
         value = node.expression.accept(self)
-        print(self.nest, value)
+        print(f"{self.nest}{value}")
 
     def visit_expression_assignment(self, node: NodeExprAssignment) -> str:
         assert isinstance(node.l_value, NodeExprVariable)
