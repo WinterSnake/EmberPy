@@ -1,0 +1,49 @@
+/*
+	Ember Tests: Primitives
+
+	/*
+		Contains a collection of primitive types and their min/max values
+	*/
+
+	Written By: Ryan Smith
+*/
+
+// Uninitialized declarations
+bool   unInitBoolean;
+int8   uninitI8;
+uint8  uninitU8;
+int16  uninitI16;
+uint16 uninitU16;
+int32  uninitI32;
+uint32 uninitU32;
+int64  uninitI64;
+uint64 uninitU64;
+
+// Initialized declarations
+bool  _true = true;
+bool _false = false;
+
+int8   minI8  = -128;
+int8   maxI8  =  127;
+int16  minI16 = -32768;
+int16  maxI16 =  32767;
+int32  minI32 = -2147483648;
+int32  maxI32 =  2147483647;
+int64  minI64 = -9223372036854775808;
+int64  maxI64 =  9223372036854775807;
+
+uint8  minU8  = 0;
+uint8  maxU8  = 255;
+uint16 minU16 = 0;
+uint16 maxU16 = 65536;
+uint32 minU32 = 0;
+uint32 maxU32 = 4294967295;
+uint64 minU64 = 0;
+uint64 maxU64 = 18446744073709551615;
+
+// Specialized primitives
+iptr signed_pointer_size;    // 
+uptr unsigned_pointer_size;  // 
+
+isize signed_size;    // 
+usize unsigned_size;  // 

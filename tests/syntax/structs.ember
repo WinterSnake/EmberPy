@@ -1,0 +1,57 @@
+/*
+	Ember Tests: Pointers
+
+	/*
+		Describes how to declare structure types and use them
+		On initialization, all fields must be set
+
+		-------
+		Errors:
+		-------
+		struct { int8 a; } name;  // No type name for struct, anon structs only available inside structs
+		struct name { struct a { int8 b; } };  // Cannot declare struct inside struct, only anon structs allowed
+	*/
+
+	Written By: Ryan Smith
+*/
+
+struct MyStruct
+{
+	int8 a;
+	int8 b;
+}
+
+MyStruct a;  // Uninitialized
+MyStruct b = { .a=10, .b=20 };  // Explicit initialized
+a.a = 10;
+a.b = 20;
+
+struct MyOtherStruct
+{
+	int8 a;
+	struct {
+		int8 a;
+		int8 b;
+	} inner;
+}
+
+MyOtherStruct c; // Uninitialized
+MyOtherStruct d = { .a=10, .inner={ .a=20, .b=30 }};  // Explicit initialized
+c.a = 10;
+c.inner = {.a=20, .b=30};
+c.inner.a = 20;
+c.inner.b = 30;
+
+*MyOtherStruct e = &c;
+e.a = 10;
+e.inner = { .a=20, .b=30 };
+
+struct SelfReferenceStruct
+{
+	SelfReferenceStruct parent;
+	*SelfReferenceStruct child;
+};
+
+SelfReferenceStruct f;
+SelfReferenceStruct g = { .parent=f };
+f.child = &g;

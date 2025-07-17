@@ -1,0 +1,42 @@
+/*
+	Ember Tests: Functions
+
+	/*
+		Contains examples of defining functions and parameters
+
+		Functions with parameters will throw warnings if parameters are not used
+		Functions with returns MUST return on all paths!
+
+		---------
+		Warnings:
+		---------
+		fn fn_no_use_params(int16 a, int16 b) : void { }
+
+		-------
+		Errors:
+		-------
+		fn fn_return_invalid(): int16 { }
+		fn fn_no_return_invalid(): void { return 0; }
+
+		-------------
+		Warn + Error:
+		-------------
+		fn fn_nouse_params_and_return_invalid(int16 a, int16 b): int16 { }
+	*/
+
+	Written By: Ryan Smith
+*/
+
+fn fn_no_params_and_no_return(): void { }
+fn fn_no_params_and_explicit_return(): void { return; }
+fn fn_params_and_no_return(int16 a, int16 b): void { a + b; }
+fn fn_no_params_and_return(): int8 { return 0; }
+fn fn_params_and_return(int16 a, int8 b): int8 { return a + b; }
+
+fn array_parameter(int32[] array)
+{
+	for (usize i = 0; i < array.length; i = i + 1)
+	{
+		print(array[i]);
+	}
+}

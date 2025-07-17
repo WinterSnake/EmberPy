@@ -1,0 +1,21 @@
+/*
+	Ember Tests: Pointers
+
+	/*
+		Describes how to declare pointers to types
+	*/
+
+	Written By: Ryan Smith
+*/
+
+// Initialization
+*int32    a;  // Pointer to an int32
+**int32   b;  // Pointer to a pointer to an int32
+*int32[5] c;  // Array of 5 int32 pointers
+
+// Setup
+uint16   d = 10;
+*uint16  e = &d;  // Pointer to uint16 (address of 'd')
+**uint16 f = &e;  // Pointer to a pointer to an uint16 (address of 'e')
+*uint16  g = *f;  // Pointer to uint16 (dereference 'f')
+uint16   h = *g;  // uint16 (dereference 'g')

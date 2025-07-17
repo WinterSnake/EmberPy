@@ -1,0 +1,85 @@
+/*
+	Ember Tests: Arrays
+
+	/*
+		Describes how to declare arrays of types
+		Uninitialzed arrays MUST declare a size
+
+		-------
+		Errors:
+		-------
+		int8[]    a;  // No size specified error
+		int8[4]   b = [0, 1, 2];  // Size error mismatch
+		int8[,]   c = [0, 1, 2, 3, 4, 5];  // Unknown rank size
+		int8[2,2] d = [[0, 1], [2]];  // Rank size mismatch
+		int8[2,2] d = [0, 1, 2];  // Rank size mismatch
+		int8[][]  e;  // No size specified error
+		int8[][5] f;  // Cannot specify jagged rank size
+	*/
+
+	Written By: Ryan Smith
+*/
+
+// N-dimensional Arrays
+// 1D array
+int8[10] uninit_1d_array;  // Uninitialzed array of 10 ints
+int8[]   infer_1d_array = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];  // Initialized array of 10 ints (size infered)
+int8[10] size_1d_array  = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];  // Initialized array of 10 ints (size forced)
+uninit_1d_array[0] = 0;
+uninit_1d_array[9] = 9;
+
+// 2D array
+/*
+	[
+		[0, 1, 2, 3, 4],
+		[5, 6, 7, 8, 9],
+	]
+*/
+int8[2,5] uninit_2d_array;  // Uninitialzed [2, 5] n-dimensional array
+int8[,]   infer_2d_array = [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]];  // Initialized [2,5] n-dimensional array (size infered) and force array ranks
+int8[2,5] size_2d_array  = [[0, 1, 2, 3, 4], [6, 7, 7, 8, 9]];  // Initialized [2,5] n-dimensional array (size forced) and force array ranks
+int8[2,5] rank_2d_array  = [ 0, 1, 2, 3, 4,   5, 6, 7, 8, 9];   // Initialized [2,5] n-dimensional array (sized forced) and infer array ranks
+uninit_2d_array[0,0] = 0;
+uninit_2d_array[1,4] = 9;
+
+// 3d array
+/*
+	[
+		[[ 0,  1], [ 2,  3], [ 4,  5]],
+		[[ 6,  7], [ 8,  9], [10, 11]],
+		[[12, 13], [14, 15], [16, 17]],
+	]
+*/
+int8[3,3,2] uninit_3d_array;  // Uninitialzed [3,3,2] n-dimensional array
+int8[,,]    infer_3d_array = [  // Initialized [3,3,2] n-dimensional array (size infered) and force array ranks
+	[[ 0,  1], [ 2,  3], [ 4,  5]],
+	[[ 6,  7], [ 8,  9], [10, 11]],
+	[[12, 13], [14, 15], [16, 17]]
+];
+int8[3,3,2] size_3d_array  = [  // Initialized [3,3,2] n-dimensional array (size forced) and force array ranks
+	[[ 0,  1], [ 2,  3], [ 4,  5]],
+	[[ 6,  7], [ 8,  9], [10, 11]],
+	[[12, 13], [14, 15], [16, 17]]
+];
+int8[3,3,2] rank_3d_array = [  // Initialized [3,3,2] n-dimensional array (sized forced) and infer array ranks
+	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17
+];
+uninit_3d_array[0,0,0] =  0;
+uninit_3d_array[2,2,1] = 17;
+
+// Jagged array
+/*
+	[
+		[0, 1],
+		[2, 3, 4],
+		[5, 6, 7, 8],
+		[9],
+	]
+*/
+int8[4][] uninit_jagged;  // Uninitialzed a jagged array of 4 arrays
+int8[][]   infer_jagged = [[0, 1], [2, 3, 4], [5, 6, 7, 8], [9]];  // Initialized [4][] jagged array (size infered)
+int8[4][]  size_jagged  = [[0, 1], [2, 3, 4], [5, 6, 7, 8], [9]];  // Initialized [4][] jagged array (size forced)
+uninit_jagged[0] = [0, 1];
+uninit_jagged[1] = [2, 3, 4];
+uninit_jagged[2] = [5, 6, 7, 8];
+uninit_jagged[3] = [9];
