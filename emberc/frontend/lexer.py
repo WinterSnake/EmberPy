@@ -40,15 +40,15 @@ class Lexer(LookaheadBuffer[str, str]):
     # -Instance Methods
     # --Lookahead
     def advance(self) -> str | None:
-        c = super().advance()
-        if c == '\n':
+        value = super().advance()
+        if value == '\n':
             self.row += 1
             self.column = 0
-        elif c is not None:
+        elif value is not None:
             self.column += 1
-        if c is not None:
+        if value is not None:
             self.offset += 1
-        return c
+        return value
 
     # --Lexing
     def lex(self) -> Iterator[Token]:

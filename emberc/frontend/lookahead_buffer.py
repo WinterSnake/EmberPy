@@ -42,9 +42,9 @@ class LookaheadBuffer[TItem, TMatch](ABC):
         self, iterator: Iterator[TItem],
         selector: TSelector[TItem, TMatch] = None
     ) -> None:
-        self._source = iterator
-        self._buffer = deque()
-        self._selector = selector
+        self._source: Iterator[TItem] = iterator
+        self._buffer: deque[TItem] = deque()
+        self._selector: TSelector[TItem, TMatch] = selector
 
     # -Instance Methods
     def _next(self) -> TItem | None:
@@ -70,6 +70,8 @@ class LookaheadBuffer[TItem, TMatch](ABC):
 
     def peek(self, index: int = 0) -> TItem | None:
         '''Fills buffer to N TItem then returns buffer[N]'''
+        if index < 0:
+            raise IndexError(f"Tried to peek a negative amount ({index})")
         buffer_count = len(self._buffer)
         if buffer_count <= index:
             self._fill_buffer(index - buffer_count + 1)
@@ -88,7 +90,12 @@ class LookaheadBuffer[TItem, TMatch](ABC):
         self.advance()
         return True
 
-    # -Properties
-    _source: Iterator[TItem]
-    _buffer: deque[TItem]
-    _selector: TSelector[TItem, TMatch]
+    def matches(self, *expected: TMatch) -> TItem | None:
+        '''Returns TItem if in TMatches else None; does not consume'''
+        value = self.peek()
+        if value is None:
+            return None
+        match: TMatch = _get_match_from_item(value, self._selector)
+        if match not in expected:
+            return None
+        return value
