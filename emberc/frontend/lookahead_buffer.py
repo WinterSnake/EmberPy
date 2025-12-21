@@ -77,6 +77,17 @@ class LookaheadBuffer[TItem, TMatch](ABC):
             return None
         return self._buffer[index]
 
+    def consume(self, expected: TMatch) -> bool:
+        '''Returns boolean of next TItem is TMatch'''
+        value = self.peek()
+        if value is None:
+            return False
+        match: TMatch = _get_match_from_item(value, self._selector)
+        if match != expected:
+            return False
+        self.advance()
+        return True
+
     # -Properties
     _source: Iterator[TItem]
     _buffer: deque[TItem]
