@@ -47,5 +47,7 @@ class Token:
         SymbolStar = auto()
         SymbolFSlash = auto()
         SymbolPercent = auto()
-        # -Symbtl: Misc
+        # -Symbol: Misc
+        SymbolLParen = auto()
+        SymbolRParen = auto()
         SymbolSemicolon = auto()

@@ -15,7 +15,7 @@ from ..location import Location
 ## Constants
 SYMBOLS: tuple[str, ...] = (
     '+', '-', '*', '/', '%',
-    ';',
+    '(', ')', ';',
 )
 
 
@@ -91,6 +91,10 @@ class Lexer(LookaheadBuffer[str, str]):
             case '%':
                 _type = Token.Type.SymbolPercent
             # -Misc
+            case '(':
+                _type = Token.Type.SymbolLParen
+            case ')':
+                _type = Token.Type.SymbolRParen
             case ';':
                 _type = Token.Type.SymbolSemicolon
         return Token(location, _type)
