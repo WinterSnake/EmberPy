@@ -9,6 +9,7 @@
 from collections.abc import Iterator
 from .lookahead_buffer import LookaheadBuffer
 from .token import Token
+from ..errors import EmberError, EmberParserError
 from ..middleware.nodes import (
     LITERAL, NodeBase, NodeDecl, NodeStmt, NodeExpr,
     NodeDeclUnit,
@@ -64,16 +65,48 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             self._last_token = value
         return value
 
+    def require(self, expected: Token.Type) -> None:
+        '''Throws error if next token is not expected type'''
+        if self.consume(expected):
+            return
+        token = self._last_token if self.is_at_end else self.peek()
+        assert token is not None
+        raise EmberParserError(token.location, f"Expected {expected.name} got {token.type.name}")
+
+    def require_any(self, *expected: Token.Type) -> Token:
+        '''Throws error if next token is not in expected types'''
+        token = self.matches(*expected)
+        if token is not None:
+            _ = self.advance()
+            return token
+        token = self.peek()
+        if token is None:
+            raise EmberParserError(
+                self._last_token.location,
+                f"Unexpected end of token stream, expected one of {expected}"
+            )
+        raise EmberParserError(token.location, f"Unexpected token {token.type.name}; expected one of {expected}")
+
+    def _sync(self) -> None:
+        '''Sync the parser into the next correct state'''
+        while token := self.advance():
+            if token.type == Token.Type.SymbolSemicolon:
+                break
+
     def parse(self) -> NodeDeclUnit:
         '''
         Grammar[Unit]
         statement;
         '''
-        statements: list[NodeStmt] = []
+        body: list[NodeBase] = []
         while not self.is_at_end:
-            stmt = self._parse_statement()
-            statements.append(stmt)
-        return NodeDeclUnit(statements)
+            try:
+                stmt = self._parse_statement()
+                body.append(stmt)
+            except EmberParserError as e:
+                print(e)
+                self._sync()
+        return NodeDeclUnit(body)
 
     def _parse_statement(self) -> NodeStmt:
         '''
@@ -83,8 +116,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         if self.consume(Token.Type.SymbolSemicolon):
             return NodeStmtExpression(self._last_token.location, None)
         expr = self._parse_expression()
-        if not self.consume(Token.Type.SymbolSemicolon):
-            pass  # TODO: Error handling
+        self.require(Token.Type.SymbolSemicolon)
         return NodeStmtExpression(expr.location, expr)
 
     def _parse_expression(self) -> NodeExpr:
@@ -130,8 +162,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             return self._parse_expression_literal()
         location = self._last_token.location
         expression = self._parse_expression()
-        if not self.consume(Token.Type.SymbolRParen):
-            pass  # TODO: Error handling
+        self.require(Token.Type.SymbolRParen)
         return NodeExprGroup(location, expression)
 
     def _parse_expression_literal(self) -> NodeExprLiteral:
@@ -139,8 +170,8 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         Grammar[Expression:Literal]
         NUMBER;
         '''
-        token = self.advance()
-        assert token is not None  # TODO: Error handling
+        token = self.require_any(Token.Type.Integer)
+        print(token)
         return _create_literal_node(token)
 
     # -Properties
