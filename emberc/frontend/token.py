@@ -57,6 +57,7 @@ class Token:
         KeywordUInt64 = auto()
         # -Symbol: Operator
         SymbolEq = auto()
+        SymbolBang = auto()
         SymbolPlus = auto()
         SymbolMinus = auto()
         SymbolStar = auto()

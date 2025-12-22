@@ -32,6 +32,7 @@ BINARY_OPERATOR = {
 }
 UNARY_OPERATOR = {
     Token.Type.SymbolMinus: NodeExprUnary.Operator.Negative,
+    Token.Type.SymbolBang: NodeExprUnary.Operator.Negate,
 }
 LITERALS = (
     Token.Type.Identifier,

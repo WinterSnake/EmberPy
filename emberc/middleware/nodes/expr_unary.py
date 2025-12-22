@@ -43,10 +43,12 @@ class NodeExprUnary(NodeExpr):
     # -Sub-Classes
     class Operator(IntEnum):
         # -Math
+        Negate = auto()
         Negative = auto()
 
 
 ## Body
 OPERATOR_STR = {
+    NodeExprUnary.Operator.Negate: '!',
     NodeExprUnary.Operator.Negative: '-',
 }
