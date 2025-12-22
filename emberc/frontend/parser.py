@@ -15,10 +15,11 @@ from ..middleware.nodes import (
     NODE_TYPES, VALUE_TYPES, BLOCK_TYPES,
     NodeBase, NodeType, NodeDecl, NodeStmt, NodeExpr,
     NodeTypeBuiltin, NodeTypeIdentifier,
-    NodeDeclUnit, NodeDeclVariable,
-    NodeStmtBlock, NodeStmtConditional, NodeStmtLoop, NodeStmtExpression,
+    NodeDeclUnit, NodeDeclFunction, NodeDeclVariable,
+    NodeStmtBlock, NodeStmtConditional, NodeStmtLoop,
+    NodeStmtReturn, NodeStmtExpression,
     NodeExprAssignment, NodeExprGroup, NodeExprBinary, NodeExprUnary,
-    NodeExprVariable, NodeExprLiteral,
+    NodeExprCall, NodeExprVariable, NodeExprLiteral,
 )
 
 ## Constants
@@ -61,6 +62,7 @@ STATEMENT_TYPES = (
     Token.Type.KeywordWhile,
     Token.Type.KeywordDo,
     Token.Type.KeywordFor,
+    Token.Type.KeywordReturn,
     Token.Type.SymbolLBrace,
     Token.Type.SymbolSemicolon,
 )
@@ -132,19 +134,23 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             self._last_token = value
         return value
 
-    def require(self, expected: Token.Type) -> None:
+    def require(self, expected: Token.Type) -> Token:
         '''Throws error if next token is not expected type'''
         if self.consume(expected):
-            return
-        token = self._last_token if self.is_at_end else self.peek()
-        assert token is not None
-        raise EmberParserError(token.location, f"Expected {expected.name} got {token.type.name}")
+            return self._last_token
+        token = self.peek()
+        if token is None:
+            raise EmberParserError(
+                self._last_token.location,
+                f"Unexpected end of token stream, expected {expected}"
+            )
+        raise EmberParserError(token.location, f"Unexpected token {token.type.name}; expected {expected}")
 
     def require_any(self, *expected: Token.Type) -> Token:
         '''Throws error if next token is not in expected types'''
         token = self.matches(*expected)
         if token is not None:
-            _ = self.advance()
+            self.advance()
             return token
         token = self.peek()
         if token is None:
@@ -178,9 +184,45 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _parse_declaration(self) -> NodeBase:
         '''
         Grammar[Declaration]
-        declaration_statement;
+        declaration_function | declaration_statement;
         '''
+        if self.consume(Token.Type.KeywordFn):
+            return self._parse_declaration_function()
         return self._parse_declaration_statement()
+
+    def _parse_declaration_function(self) -> NodeDeclFunction:
+        '''
+        Grammar[Declaration:Function]
+        'fn' IDENTIFIER '(' (parameter (',' parameter)*)? ')' ':' TYPE '{' declaration_statement* '}'
+
+        parameter: TYPE IDENTIFIER
+        '''
+        # -Internal Functions
+        def _parse_parameter() -> NodeDeclVariable:
+            _type = self._parse_type()
+            ident = self.require(Token.Type.Identifier)
+            return NodeDeclVariable(_type.location, _type, ident.value, None)
+
+        # -Body
+        ident = self.require(Token.Type.Identifier)
+        self.require(Token.Type.SymbolLParen)
+        # -Parameters
+        parameters: list[NodeDeclVariable] = []
+        # --Zero
+        if not self.consume(Token.Type.SymbolRParen):
+            # --One
+            parameters.append(_parse_parameter())
+            # --Multi
+            while self.consume(Token.Type.SymbolComma):
+                parameters.append(_parse_parameter())
+            self.require(Token.Type.SymbolRParen)
+        self.require(Token.Type.SymbolColon)
+        return_type = self._parse_type()
+        self.require(Token.Type.SymbolLBrace)
+        body = self._parse_statement_block()
+        return NodeDeclFunction(
+            ident.location, ident.value, return_type, parameters, body
+        )
 
     def _parse_declaration_statement(self) -> NodeDecl | NodeStmt:
         '''
@@ -219,13 +261,12 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         if type_node is None:
             type_node = self._parse_type()
         assert type_node is not None
-        self.require(Token.Type.Identifier)
-        token = self._last_token
+        ident = self.require(Token.Type.Identifier)
         initializer: NodeExpr | None = None
         if self.consume(Token.Type.SymbolEq):
             initializer = cast(NodeExpr, self._parse_expression())
         self.require(Token.Type.SymbolSemicolon)
-        return NodeDeclVariable(token.location, type_node, token.value, initializer)
+        return NodeDeclVariable(ident.location, type_node, ident.value, initializer)
 
     def _parse_statement(self, node: NodeExpr | None = None) -> NodeDecl | NodeStmt:
         '''
@@ -248,6 +289,9 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             # -Loop:For statement
             elif self.consume(Token.Type.KeywordFor):
                 return self._parse_statement_loop_for()
+            # -Return statement
+            elif self.consume(Token.Type.KeywordReturn):
+                return self._parse_statement_return()
             # -Empty statement
             elif self.consume(Token.Type.SymbolSemicolon):
                 return NodeStmtExpression(self._last_token.location, None)
@@ -300,8 +344,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         '''
         do_token = self._last_token
         body = cast(NodeStmt, self._parse_statement())
-        self.require(Token.Type.KeywordWhile)
-        while_token = self._last_token
+        while_token = self.require(Token.Type.KeywordWhile)
         self.require(Token.Type.SymbolLParen)
         condition = cast(NodeExpr, self._parse_expression())
         self.require(Token.Type.SymbolRParen)
@@ -346,6 +389,18 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             return loop
         return NodeStmtBlock(init.location, [init, loop])
 
+    def _parse_statement_return(self) -> NodeStmtReturn:
+        '''
+        Grammar[Statement:Block]
+        return expression? ';';
+        '''
+        token = self._last_token
+        value: NodeExpr | None = None
+        if not self.consume(Token.Type.SymbolSemicolon):
+            value = self._parse_expression()
+            self.require(Token.Type.SymbolSemicolon)
+        return NodeStmtReturn(token.location, value)
+
     def _continue_statement_expression(self, expr: NodeExpr) -> NodeStmtExpression:
         '''Handles forwarding expression node through expression and statement parsing'''
         expr = self._parse_expression(expr)
@@ -388,7 +443,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             operator, precedence = BINARY_OPERATOR[token.type]
             if precedence <= current:
                 break
-            _ = self.advance()
+            self.advance()
             rhs = cast(NodeExpr, self._parse_expression_binary(precedence))
             lhs = NodeExprBinary(token.location, operator, lhs, rhs)
         return lhs
@@ -400,10 +455,32 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         '''
         if token := self.matches(*UNARY_OPERATOR.keys()):
             operator = UNARY_OPERATOR[token.type]
-            _ = self.advance()
+            self.advance()
             expression = self._parse_expression_unary()
             return NodeExprUnary(token.location, operator, expression)
-        return self._parse_expression_primary()
+        return self._parse_expression_call()
+
+    def _parse_expression_call(self) -> NodeExpr:
+        '''
+        Grammar[Expression:Unary]
+        expression_primary ('(' (expression (',' expression)*)? ')')*;
+        '''
+        expr = self._parse_expression_primary()
+        # -Expr: Primary
+        if not self.consume(Token.Type.SymbolLParen):
+            return expr
+        # -Expr: Call
+        token = self._last_token
+        arguments: list[NodeExpr] = []
+        # --Zero
+        if not self.consume(Token.Type.SymbolRParen):
+            # --One
+            arguments.append(self._parse_expression())
+            # --Multi
+            while self.consume(Token.Type.SymbolComma):
+                arguments.append(self._parse_expression())
+            self.require(Token.Type.SymbolRParen)
+        return NodeExprCall(token.location, expr, arguments)
 
     def _parse_expression_primary(self) -> NodeExpr:
         '''

@@ -50,6 +50,8 @@ class Token:
         KeywordWhile = auto()
         KeywordDo = auto()
         KeywordFor = auto()
+        KeywordFn = auto()
+        KeywordReturn = auto()
         # -Keyword: Types
         KeywordVoid = auto()
         KeywordBoolean = auto()
@@ -76,8 +78,10 @@ class Token:
         SymbolLtEq = auto()
         SymbolGtEq = auto()
         # -Symbol: Misc
+        SymbolComma = auto()
         SymbolLParen = auto()
         SymbolRParen = auto()
         SymbolLBrace = auto()
         SymbolRBrace = auto()
+        SymbolColon = auto()
         SymbolSemicolon = auto()

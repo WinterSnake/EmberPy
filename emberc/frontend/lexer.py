@@ -17,7 +17,7 @@ from ..location import Location
 SYMBOLS = (
     '=', '!', '<', '>',
     '+', '-', '*', '/', '%',
-    '(', ')', '{', '}', ';',
+    ',', '(', ')', '{', '}', ':', ';',
 )
 KEYWORDS = {
     # -Keywords
@@ -26,6 +26,8 @@ KEYWORDS = {
     'while': Token.Type.KeywordWhile,
     'do': Token.Type.KeywordDo,
     'for': Token.Type.KeywordFor,
+    'fn': Token.Type.KeywordFn,
+    'return': Token.Type.KeywordReturn,
     # -Types
     'true': Token.Type.BooleanTrue,
     'false': Token.Type.BooleanFalse,
@@ -133,6 +135,8 @@ class Lexer(LookaheadBuffer[str, str]):
             case '%':
                 _type = Token.Type.SymbolPercent
             # -Misc
+            case ',':
+                _type = Token.Type.SymbolComma
             case '(':
                 _type = Token.Type.SymbolLParen
             case ')':
@@ -141,6 +145,8 @@ class Lexer(LookaheadBuffer[str, str]):
                 _type = Token.Type.SymbolLBrace
             case '}':
                 _type = Token.Type.SymbolRBrace
+            case ':':
+                _type = Token.Type.SymbolColon
             case ';':
                 _type = Token.Type.SymbolSemicolon
             case _:

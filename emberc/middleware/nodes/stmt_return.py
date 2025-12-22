@@ -17,32 +17,27 @@ if TYPE_CHECKING:
 
 
 ## Classes
-class NodeStmtConditional(NodeStmt):
+class NodeStmtReturn(NodeStmt):
     """
-    Ember Statement Node : Conditional
-    Represents an AST node of a conditional statement
+    Ember Statement Node : Return
+    Represents an AST node of a returned expression
     """
 
     # -Constructor
-    def __init__(
-        self, location: Location, condition: NodeExpr,
-        then_body: NodeStmt, else_branch: NodeStmt | None
-    ) -> None:
+    def __init__(self, location: Location, value: NodeExpr | None) -> None:
         super().__init__(location)
-        self.condition: NodeExpr = condition
-        self.then_branch: NodeStmt = then_body
-        self._else_branch: NodeStmt | None = else_branch
+        self._value: NodeExpr | None = value
 
     # -Instance Methods
     def accept[T](self, visitor: NodeStmtVisitor[T], manager: NodeVisitor) -> T:
-        return visitor.visit_stmt_conditional(self, manager)
+        return visitor.visit_stmt_return(self, manager)
 
     # -Properties
     @property
-    def has_else_branch(self) -> bool:
-        return self._else_branch is not None
+    def has_value(self) -> bool:
+        return self._value is not None
 
     @property
-    def else_branch(self) -> NodeStmt:
-        assert self._else_branch is not None
-        return self._else_branch
+    def value(self) -> NodeExpr:
+        assert self._value is not None
+        return self._value
