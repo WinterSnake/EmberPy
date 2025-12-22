@@ -17,34 +17,24 @@ if TYPE_CHECKING:
 
 
 ## Classes
-class NodeStmtConditional(NodeStmt):
+class NodeStmtLoop(NodeStmt):
     """
-    Ember Statement Node : Conditional
-    Represents an AST node of a conditional statement
+    Ember Statement Node : Loop
+    Represents an AST node of a conditional loop
     """
 
     # -Constructor
     def __init__(
-        self, location: Location, condition: NodeExpr,
-        body: NodeStmt, else_body: NodeStmt | None
+        self, location: Location, condition: NodeExpr, body: NodeStmt
     ) -> None:
         super().__init__(location)
         self.condition: NodeExpr = condition
         self.body: NodeStmt = body
-        self.else_body: NodeStmt | None = else_body
 
     # -Dunder Methods
     def __str__(self) -> str:
-        _str = f"if({self.condition}) [ {self.body} ]"
-        if self.has_else_body:
-            _str += f" else [ {self.else_body} ]"
-        return _str
+        return f"while({self.condition}) [ {self.body} ]"
 
     # -Instance Methods
     def accept[T](self, visitor: NodeStmtVisitor[T], manager: NodeVisitor) -> T:
-        return visitor.visit_conditional(self, manager)
-
-    # -Properties
-    @property
-    def has_else_body(self) -> bool:
-        return self.else_body is not None
+        return visitor.visit_loop(self, manager)

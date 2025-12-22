@@ -20,6 +20,11 @@ SYMBOLS = (
     '(', ')', '{', '}', ';',
 )
 KEYWORDS = {
+    # -Keywords
+    'if': Token.Type.KeywordIf,
+    'else': Token.Type.KeywordElse,
+    'while': Token.Type.KeywordWhile,
+    # -Types
     'true': Token.Type.BooleanTrue,
     'false': Token.Type.BooleanFalse,
     'void': Token.Type.KeywordVoid,
@@ -32,8 +37,6 @@ KEYWORDS = {
     'uint16': Token.Type.KeywordUInt16,
     'uint32': Token.Type.KeywordUInt32,
     'uint64': Token.Type.KeywordUInt64,
-    'if': Token.Type.KeywordIf,
-    'else': Token.Type.KeywordElse,
 }
 
 
