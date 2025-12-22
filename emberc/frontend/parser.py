@@ -60,6 +60,7 @@ STATEMENT_TYPES = (
     Token.Type.KeywordIf,
     Token.Type.KeywordWhile,
     Token.Type.KeywordDo,
+    Token.Type.KeywordFor,
     Token.Type.SymbolLBrace,
     Token.Type.SymbolSemicolon,
 )
@@ -244,8 +245,8 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             elif self.consume(Token.Type.KeywordDo):
                 return self._parse_statement_loop_do()
             # -Loop:For statement
-            #elif self.consume(Token.Type.KeywordWhile):
-            #    return self._parse_statement_loop_for()
+            elif self.consume(Token.Type.KeywordFor):
+                return self._parse_statement_loop_for()
             # -Empty statement
             elif self.consume(Token.Type.SymbolSemicolon):
                 return NodeStmtExpression(self._last_token.location, None)
@@ -306,7 +307,46 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         self.require(Token.Type.SymbolRParen)
         self.require(Token.Type.SymbolSemicolon)
         loop = NodeStmtLoop(while_token.location, condition, body)
-        return NodeStmtBlock(do_token.location, (body, loop))
+        return NodeStmtBlock(do_token.location, [body, loop])
+
+    def _parse_statement_loop_for(self) -> NodeStmt:
+        '''
+        Grammar[Statement:Loop:For]
+        'for' '(' (declaration_variable | statement_expression | ';') expression? ';' expression? ')' statement;
+        '''
+        self.require(Token.Type.SymbolLParen)
+        # -<Initializer>-
+        init: NodeBase | None = None
+        if not self.consume(Token.Type.SymbolSemicolon):
+            is_decl, node = self._try_parse_type_decl()
+            if is_decl:
+                init = self._parse_declaration_variable(node)
+            else:
+                node = cast(NodeExpr, node)
+                init = self._parse_expression(node)
+                self.require(Token.Type.SymbolSemicolon)
+        # -<Condition>-
+        condition: NodeExpr
+        if not self.consume(Token.Type.SymbolSemicolon):
+            condition = cast(NodeExpr, self._parse_expression())
+            self.require(Token.Type.SymbolSemicolon)
+        else:
+            token = self._last_token
+            condition = NodeExprLiteral.create_boolean(token.location, True)
+        # -<Increment>-
+        inc: NodeStmt | None = None
+        if not self.consume(Token.Type.SymbolRParen):
+            inc_expr = cast(NodeExpr, self._parse_expression())
+            self.require(Token.Type.SymbolRParen)
+            inc = NodeStmtExpression(self._last_token.location, inc_expr)
+        # -<Body>-
+        body = cast(NodeStmt, self._parse_statement())
+        if inc is not None:
+            body = NodeStmtBlock(body.location, [body, inc])
+        loop = NodeStmtLoop(condition.location, condition, body)
+        if init is None:
+            return loop
+        return NodeStmtBlock(init.location, [init, loop])
 
     def _parse_statement_expression(
         self, expr: NodeExpr | None = None

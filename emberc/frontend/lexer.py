@@ -25,6 +25,7 @@ KEYWORDS = {
     'else': Token.Type.KeywordElse,
     'while': Token.Type.KeywordWhile,
     'do': Token.Type.KeywordDo,
+    'for': Token.Type.KeywordFor,
     # -Types
     'true': Token.Type.BooleanTrue,
     'false': Token.Type.BooleanFalse,
