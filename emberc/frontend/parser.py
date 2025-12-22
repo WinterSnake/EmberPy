@@ -12,7 +12,7 @@ from .lookahead_buffer import LookaheadBuffer
 from .token import Token
 from ..errors import EmberError, EmberParserError
 from ..middleware.nodes import (
-    LITERAL_TYPE, LITERAL_VALUE,
+    NODE_TYPE, LITERAL_VALUE,
     NodeBase, NodeType, NodeDecl, NodeStmt, NodeExpr,
     NodeTypeBuiltin, NodeTypeIdentifier,
     NodeDeclUnit, NodeDeclVariable,
@@ -55,6 +55,9 @@ BUILTIN_TYPES = (
     Token.Type.KeywordUInt16,
     Token.Type.KeywordUInt32,
     Token.Type.KeywordUInt64,
+)
+STATEMENT_TYPES = (
+    Token.Type.SymbolSemicolon,
 )
 
 
@@ -155,20 +158,55 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def parse(self) -> NodeDeclUnit:
         '''
         Grammar[Unit]
-        statement;
+        declaration*;
         '''
         body: list[NodeBase] = []
         while not self.is_at_end:
             try:
-                stmt = self._parse_statement()
-                body.append(stmt)
+                decl = self._parse_declaration()
+                body.append(decl)
             except EmberParserError as e:
                 print(e)
                 self._sync()
         return NodeDeclUnit(body)
 
+    def _parse_declaration(self) -> NodeBase:
+        '''
+        Grammar[Declaration]
+        declaration_statement;
+        '''
+        return self._parse_declaration_statement()
+
+    def _parse_declaration_statement(self) -> NodeBase:
+        '''
+        Grammar[Declaration:Statement]
+        declaration_variable | statement;
+        '''
+        token = self.peek()
+        # -Statement blocks
+        if token is not None and token in STATEMENT_TYPES:
+            return self._parse_statement()
+        # -Type declarations
+        is_decl, node = self._try_parse_type_decl()
+        if is_decl:
+            return self._parse_declaration_variable(node)
+        # -Statement Expression
+        node = cast(NodeExpr, node)
+        return self._parse_statement(node)
+
+    def _parse_type(self) -> NODE_TYPE:
+        '''Returns a parsed type node'''
+        return cast(NODE_TYPE, self._parse_expression_unary())
+
+    def _try_parse_type_decl(self) -> tuple[bool, NODE_TYPE]:
+        '''Try to parse a type token and return if type declaration'''
+        _type = self._parse_type()
+        token = self.peek()
+        is_type = True if token is not None and token.type == Token.Type.Identifier else False
+        return (is_type, _type)
+
     def _parse_declaration_variable(
-        self, type_node: LITERAL_TYPE | None = None
+        self, type_node: NODE_TYPE | None = None
     ) -> NodeDeclVariable:
         '''
         Grammar[Declaration:Variable]
@@ -183,40 +221,52 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         self.require(Token.Type.SymbolSemicolon)
         return NodeDeclVariable(ident.location, type_node, ident.value, initializer)
 
-    def _parse_statement(self) -> NodeBase:
+    def _parse_statement(self, node: NodeExpr | None = None) -> NodeBase:
         '''
         Grammar[Statement]
-        (declaration_variable | expression)? ';';
+        statement_expression | ';';
         '''
-        # -Empty statement
-        if self.consume(Token.Type.SymbolSemicolon):
-            return NodeStmtExpression(self._last_token.location, None)
-        expr = cast(NodeExpr, self._parse_expression())
-        # -Variable declaration
-        _next = self.peek()
-        if _next and _next.type == Token.Type.Identifier:
-            return self._parse_declaration_variable(expr)
+        if node is None:
+            # -Empty statement
+            if self.consume(Token.Type.SymbolSemicolon):
+                return NodeStmtExpression(self._last_token.location, None)
+            return self._parse_statement_expression()
+        expr = cast(NodeExpr, self._parse_expression(node))
+        return self._parse_statement_expression(expr)
+
+    def _parse_statement_expression(
+        self, expr: NodeExpr | None = None
+    ) -> NodeBase:
+        '''
+        Grammar[Statement:Expression]
+        expression ';';
+        '''
+        if expr is None:
+            expr = cast(NodeExpr, self._parse_expression())
         self.require(Token.Type.SymbolSemicolon)
         return NodeStmtExpression(expr.location, expr)
 
-    def _parse_expression(self) -> NodeBase:
+    def _parse_expression(self, l_value: NodeExpr | None = None) -> NodeBase:
         '''
         Grammar[Expression]
         expression_binary ('=' expression)?;
         '''
-        l_value = cast(NodeExpr, self._parse_expression_binary())
+        l_value = cast(NodeExpr, self._parse_expression_binary(lhs=l_value))
         if self.consume(Token.Type.SymbolEq):
             location = self._last_token.location
             r_value = cast(NodeExpr, self._parse_expression())
             l_value = NodeExprAssignment(location, l_value, r_value)
         return l_value
 
-    def _parse_expression_binary(self, current: int = 0) -> NodeBase:
+    def _parse_expression_binary(
+        self, current: int = 0, lhs: NodeExpr | None = None
+    ) -> NodeBase:
         '''
         Grammar[Expression:Binary]
-        expression_primary (BINARY_OPERATOR expression_binary)*;
+        expression_unary (BINARY_OPERATOR expression_binary)*;
         '''
-        lhs = cast(NodeExpr, self._parse_expression_unary())
+        if lhs is None:
+            lhs = cast(NodeExpr, self._parse_expression_unary())
         while token := self.matches(*BINARY_OPERATOR.keys()):
             operator, precedence = BINARY_OPERATOR[token.type]
             if precedence <= current:
@@ -250,7 +300,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         self.require(Token.Type.SymbolRParen)
         return NodeExprGroup(location, expression)
 
-    def _parse_expression_literal(self) -> LITERAL_TYPE:
+    def _parse_expression_literal(self) -> NODE_TYPE:
         '''
         Grammar[Expression:Literal]
         TYPE | IDENTIFIER | BOOLEAN | INTEGER;

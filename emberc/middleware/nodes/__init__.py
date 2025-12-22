@@ -22,9 +22,9 @@ from .stmt_expression import NodeStmtExpression
 from .typed import NodeType, NodeTypeBuiltin, NodeTypeIdentifier
 
 ## Constants
-type LITERAL_TYPE = NodeType | NodeExpr
+type NODE_TYPE = NodeType | NodeExpr
 __all__ = (
-    "LITERAL_TYPE", "LITERAL_VALUE",
+    "NODE_TYPE", "LITERAL_VALUE",
     "NodeBase", "NodeType", "NodeDecl", "NodeStmt", "NodeExpr",
     "NodeTypeBuiltin", "NodeTypeIdentifier",
     "NodeDeclUnit", "NodeDeclVariable",
