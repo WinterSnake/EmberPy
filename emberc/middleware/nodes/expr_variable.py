@@ -27,10 +27,6 @@ class NodeExprVariable(NodeExpr):
         super().__init__(location)
         self.id: str = _id
 
-    # -Dunder Methods
-    def __str__(self) -> str:
-        return f"Variable({self.id})"
-
     # -Instance Methods
     def accept[T](self, visitor: NodeExprVisitor[T], manager: NodeVisitor) -> T:
-        return visitor.visit_variable(self, manager)
+        return visitor.visit_expr_variable(self, manager)

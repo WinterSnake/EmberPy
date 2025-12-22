@@ -33,13 +33,9 @@ class NodeExprBinary(NodeExpr):
         self.lhs: NodeExpr = lhs
         self.rhs: NodeExpr = rhs
 
-    # -Dunder Methods
-    def __str__(self) -> str:
-        return f"({self.lhs}{OPERATOR_STR[self.operator]}{self.rhs})"
-
     # -Instance Methods
     def accept[T](self, visitor: NodeExprVisitor[T], manager: NodeVisitor) -> T:
-        return visitor.visit_binary(self, manager)
+        return visitor.visit_expr_binary(self, manager)
 
     # -Sub-Classes
     class Operator(IntEnum):
@@ -56,19 +52,3 @@ class NodeExprBinary(NodeExpr):
         GtEq = auto()
         EqEq = auto()
         NtEq = auto()
-
-
-## Body
-OPERATOR_STR = {
-    NodeExprBinary.Operator.Add: '+',
-    NodeExprBinary.Operator.Sub: '-',
-    NodeExprBinary.Operator.Mul: '*',
-    NodeExprBinary.Operator.Div: '/',
-    NodeExprBinary.Operator.Mod: '%',
-    NodeExprBinary.Operator.Lt: '<',
-    NodeExprBinary.Operator.Gt: '>',
-    NodeExprBinary.Operator.LtEq: '<=',
-    NodeExprBinary.Operator.GtEq: '>=',
-    NodeExprBinary.Operator.EqEq: '==',
-    NodeExprBinary.Operator.NtEq: '!=',
-}

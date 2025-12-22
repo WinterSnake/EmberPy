@@ -27,10 +27,6 @@ class NodeExprGroup(NodeExpr):
         super().__init__(location)
         self.expression: NodeExpr = expression
 
-    # -Dunder Methods
-    def __str__(self) -> str:
-        return str(self.expression)
-
     # -Instance Methods
     def accept[T](self, visitor: NodeExprVisitor[T], manager: NodeVisitor) -> T:
-        return visitor.visit_group(self, manager)
+        return visitor.visit_expr_group(self, manager)

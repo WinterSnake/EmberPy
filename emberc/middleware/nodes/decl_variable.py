@@ -18,6 +18,9 @@ if TYPE_CHECKING:
     from ..visitor import NodeVisitor, NodeDeclVisitor
     from ...frontend import Token
 
+## Constants
+type NODE_TYPES = NodeType | NodeExpr
+
 
 ## Classes
 class NodeDeclVariable(NodeDecl):
@@ -28,26 +31,23 @@ class NodeDeclVariable(NodeDecl):
 
     # -Constructor
     def __init__(
-        self, location: Location, _type: NodeType | NodeExpr, _id: str,
+        self, location: Location, _type: NODE_TYPES, _id: str,
         initializer: NodeExpr | None
     ) -> None:
         super().__init__(location)
         self.id: str = _id
-        self.type: NodeType | NodeExpr = _type
+        self.type: NODE_TYPES = _type
         self._initializer: NodeExpr | None = initializer
-
-    # -Dunder Methods
-    def __str__(self) -> str:
-        _str = f"[{self.type}]({self.id}"
-        if self._initializer is not None:
-            _str += f" = {self.initializer}"
-        return _str + ')'
 
     # -Instance Methods
     def accept[T](self, visitor: NodeDeclVisitor[T], manager: NodeVisitor) -> T:
-        return visitor.visit_variable(self, manager)
+        return visitor.visit_decl_variable(self, manager)
 
     # -Properties
+    @property
+    def has_initializer(self) -> bool:
+        return self._initializer is not None
+
     @property
     def initializer(self) -> NodeExpr:
         assert self._initializer is not None

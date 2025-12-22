@@ -28,15 +28,9 @@ class NodeStmtExpression(NodeStmt):
         super().__init__(location)
         self._expression: NodeExpr | None = expression
 
-    # -Dunder Methods
-    def __str__(self) -> str:
-        if self.is_empty:
-            return ";"
-        return f"{self.expression};"
-
     # -Instance Methods
     def accept[T](self, visitor: NodeStmtVisitor[T], manager: NodeVisitor) -> T:
-        return visitor.visit_expression(self, manager)
+        return visitor.visit_stmt_expression(self, manager)
 
     # -Properties
     @property

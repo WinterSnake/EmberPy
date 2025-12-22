@@ -30,4 +30,4 @@ class NodeDeclUnit(NodeDecl):
 
     # -Instance Methods
     def accept[T](self, visitor: NodeDeclVisitor[T], manager: NodeVisitor) -> T:
-        return visitor.visit_unit(self, manager)
+        return visitor.visit_decl_unit(self, manager)

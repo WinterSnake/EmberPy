@@ -34,10 +34,6 @@ class NodeExprAssignment(NodeExpr):
         self.l_value: NodeExpr = l_value
         self.r_value: NodeExpr = r_value
 
-    # -Dunder Methods
-    def __str__(self) -> str:
-        return f"[{self.l_value} = {self.r_value}]"
-
     # -Instance Methods
     def accept[T](self, visitor: NodeExprVisitor[T], manager: NodeVisitor) -> T:
-        return visitor.visit_assignment(self, manager)
+        return visitor.visit_expr_assignment(self, manager)

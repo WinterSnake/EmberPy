@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 class NodeType(NodeBase):
     """
     Ember Type Node
-    Represents an AST node of type
+    Represents an AST node of typing
     """
 
     # -Instance Methods
@@ -40,13 +40,9 @@ class NodeTypeBuiltin(NodeType):
         super().__init__(location)
         self.type: NodeTypeBuiltin.Type = _type
 
-    # -Dunder Methods
-    def __str__(self) -> str:
-        return f"[Builtin:{self.type.name}]"
-
     # -Instance Methods
     def accept[T](self, visitor: NodeTypeVisitor[T], manager: NodeVisitor) -> T:
-        return visitor.visit_builtin(self, manager)
+        return visitor.visit_type_builtin(self, manager)
 
     # -Sub-Classes
     class Type(IntEnum):
@@ -76,4 +72,4 @@ class NodeTypeIdentifier(NodeType):
 
     # -Instance Methods
     def accept[T](self, visitor: NodeTypeVisitor[T], manager: NodeVisitor) -> T:
-        return visitor.visit_custom(self, manager)
+        return visitor.visit_type_custom(self, manager)

@@ -33,16 +33,9 @@ class NodeStmtConditional(NodeStmt):
         self.body: NodeStmt = body
         self.else_body: NodeStmt | None = else_body
 
-    # -Dunder Methods
-    def __str__(self) -> str:
-        _str = f"if({self.condition}) [ {self.body} ]"
-        if self.has_else_body:
-            _str += f" else [ {self.else_body} ]"
-        return _str
-
     # -Instance Methods
     def accept[T](self, visitor: NodeStmtVisitor[T], manager: NodeVisitor) -> T:
-        return visitor.visit_conditional(self, manager)
+        return visitor.visit_stmt_conditional(self, manager)
 
     # -Properties
     @property

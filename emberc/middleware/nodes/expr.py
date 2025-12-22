@@ -23,10 +23,6 @@ class NodeExpr(NodeBase):
     Represents an AST node of an expression
     """
 
-    # -Constructor
-    def __init__(self, location: Location) -> None:
-        super().__init__(location)
-
     # -Instance Methods
     @abstractmethod
     def accept[T](self, visitor: NodeExprVisitor[T], manager: NodeVisitor) -> T: ...

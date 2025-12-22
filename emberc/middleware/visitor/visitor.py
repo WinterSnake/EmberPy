@@ -7,7 +7,8 @@
 
 ## Imports
 from ..nodes import (
-    NodeType, NodeDecl, NodeDeclUnit, NodeStmt, NodeExpr
+    NodeBase, NodeType, NodeDecl, NodeStmt, NodeExpr,
+    NodeDeclUnit, 
 )
 from .decl import NodeDeclVisitor
 from .expr import NodeExprVisitor
@@ -33,8 +34,21 @@ class NodeVisitor[TType, TDecl, TStmt, TExpr]:
         self._expr_v: NodeExprVisitor[TExpr] = expr_v
 
     # -Instance Methods
-    def run(self, ast: NodeDeclUnit) -> TDecl:
-        return self.visit_declaration(ast)
+    def run(self, ast: NodeDeclUnit) -> None:
+        self.visit_declaration(ast)
+
+    def visit(self, node: NodeBase) -> TType | TDecl | TStmt | TExpr:
+        match node:
+            case NodeType():
+                return self.visit_type(node)
+            case NodeDecl():
+                return self.visit_declaration(node)
+            case NodeStmt():
+                return self.visit_statement(node)
+            case NodeExpr():
+                return self.visit_expression(node)
+            case _:
+                raise RuntimeError(f"Unhandled node type: {node} in visitor")
 
     def visit_type(self, node: NodeType) -> TType:
         return node.accept(self._type_v, self)

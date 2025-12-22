@@ -31,10 +31,6 @@ class NodeStmtLoop(NodeStmt):
         self.condition: NodeExpr = condition
         self.body: NodeStmt = body
 
-    # -Dunder Methods
-    def __str__(self) -> str:
-        return f"while({self.condition}) [ {self.body} ]"
-
     # -Instance Methods
     def accept[T](self, visitor: NodeStmtVisitor[T], manager: NodeVisitor) -> T:
-        return visitor.visit_loop(self, manager)
+        return visitor.visit_stmt_loop(self, manager)

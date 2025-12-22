@@ -32,23 +32,12 @@ class NodeExprUnary(NodeExpr):
         self.operator: NodeExprUnary.Operator = operator
         self.expression: NodeExpr = expression
 
-    # -Dunder Methods
-    def __str__(self) -> str:
-        return f"({OPERATOR_STR[self.operator]}{self.expression})"
-
     # -Instance Methods
     def accept[T](self, visitor: NodeExprVisitor[T], manager: NodeVisitor) -> T:
-        return visitor.visit_unary(self, manager)
+        return visitor.visit_expr_unary(self, manager)
 
     # -Sub-Classes
     class Operator(IntEnum):
         # -Math
         Negate = auto()
         Negative = auto()
-
-
-## Body
-OPERATOR_STR = {
-    NodeExprUnary.Operator.Negate: '!',
-    NodeExprUnary.Operator.Negative: '-',
-}

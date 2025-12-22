@@ -9,12 +9,15 @@
 from __future__ import annotations
 from collections.abc import Collection
 from typing import TYPE_CHECKING
-from .node import NodeBase
+from .decl_variable import NodeDeclVariable
 from .stmt import NodeStmt
 from ...location import Location
 
 if TYPE_CHECKING:
     from ..visitor import NodeVisitor, NodeStmtVisitor
+
+## Constants
+type BLOCK_TYPES = NodeStmt | NodeDeclVariable
 
 
 ## Classes
@@ -25,17 +28,10 @@ class NodeStmtBlock(NodeStmt):
     """
 
     # -Constructor
-    def __init__(self, location: Location, body: Collection[NodeBase]) -> None:
+    def __init__(self, location: Location, body: Collection[BLOCK_TYPES]) -> None:
         super().__init__(location)
-        self.body: Collection[NodeBase] = body
-
-    # -Dunder Methods
-    def __str__(self) -> str:
-        _str = "{\n"
-        for node in self.body:
-            _str += f"\t{node}\n"
-        return _str + '}'
+        self.body: Collection[BLOCK_TYPES] = body
 
     # -Instance Methods
     def accept[T](self, visitor: NodeStmtVisitor[T], manager: NodeVisitor) -> T:
-        return visitor.visit_block(self, manager)
+        return visitor.visit_stmt_block(self, manager)
