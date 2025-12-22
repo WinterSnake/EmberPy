@@ -7,9 +7,13 @@
 
 ## Imports
 from __future__ import annotations
+from typing import TYPE_CHECKING
 from .expr import NodeExpr
 from .stmt import NodeStmt
 from ...location import Location
+
+if TYPE_CHECKING:
+    from ..visitor import NodeVisitor, NodeStmtVisitor
 
 
 ## Classes
@@ -29,6 +33,10 @@ class NodeStmtExpression(NodeStmt):
         if self.is_empty:
             return ";"
         return f"{self.expression};"
+
+    # -Instance Methods
+    def accept[T](self, visitor: NodeStmtVisitor[T], manager: NodeVisitor) -> T:
+        return visitor.visit_expression(self, manager)
 
     # -Properties
     @property

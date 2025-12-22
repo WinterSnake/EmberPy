@@ -8,8 +8,12 @@
 ## Imports
 from __future__ import annotations
 from enum import IntEnum, auto
+from typing import TYPE_CHECKING
 from .expr import NodeExpr
 from ...location import Location
+
+if TYPE_CHECKING:
+    from ..visitor import NodeVisitor, NodeExprVisitor
 
 ## Constants
 type LITERAL = int
@@ -33,6 +37,10 @@ class NodeExprLiteral(NodeExpr):
     # -Dunder Methods
     def __str__(self) -> str:
         return str(self.value)
+
+    # -Instance Methods
+    def accept[T](self, visitor: NodeExprVisitor[T], manager: NodeVisitor) -> T:
+        return visitor.visit_literal(self, manager)
 
     # -Static Methods
     @staticmethod

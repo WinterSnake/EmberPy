@@ -18,7 +18,7 @@ from .stmt import NodeStmt
 from .stmt_expression import NodeStmtExpression
 
 ## Constants
-__all__: tuple[str, ...] = (
+__all__ = (
     "LITERAL", "NodeBase", "NodeDecl", "NodeStmt", "NodeExpr",
     "NodeDeclUnit",
     "NodeStmtExpression",
