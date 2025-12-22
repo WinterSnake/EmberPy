@@ -12,10 +12,8 @@ from ..middleware.nodes import (
 )
 from ..middleware.visitor import NodeVisitor
 
-
-## Functions
-def interpret(ast: NodeDeclUnit) -> None:
-    _interpreter.visit_declaration(ast)
+## Constants
+__all__ = ("interpreter",)
 
 
 ## Classes
@@ -61,7 +59,7 @@ class InterpreterExprVisitor:
 
 
 ## Body
-_interpreter = NodeVisitor(
+interpreter = NodeVisitor(
     InterpreterDeclVisitor(),
     InterpreterStmtVisitor(),
     InterpreterExprVisitor()

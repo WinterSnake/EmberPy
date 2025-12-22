@@ -6,7 +6,7 @@
 ##-------------------------------##
 
 ## Imports
-from ..nodes import NodeDecl, NodeStmt, NodeExpr
+from ..nodes import NodeDecl, NodeDeclUnit, NodeStmt, NodeExpr
 from .decl import NodeDeclVisitor
 from .expr import NodeExprVisitor
 from .stmt import NodeStmtVisitor
@@ -29,6 +29,9 @@ class NodeVisitor[TDecl, TStmt, TExpr]:
         self._expr_v: NodeExprVisitor[TExpr] = expr_v
 
     # -Instance Methods
+    def run(self, ast: NodeDeclUnit) -> TDecl:
+        return self.visit_declaration(ast)
+
     def visit_declaration(self, node: NodeDecl) -> TDecl:
         return node.accept(self._decl_v, self)
 
