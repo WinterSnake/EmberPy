@@ -102,8 +102,8 @@ def _create_literal_node(token: Token) -> NodeExprLiteral:
     """Helper function for creating NodeExprLiteral by token type and value"""
     match token.type:
         case Token.Type.Integer:
-            value = int(token.value)
-            return NodeExprLiteral.create_integer(token.location, value)
+            assert isinstance(token.value, int)
+            return NodeExprLiteral.create_integer(token.location, token.value)
         case Token.Type.BooleanTrue:
             return NodeExprLiteral.create_boolean(token.location, True)
         case Token.Type.BooleanFalse:
@@ -201,10 +201,12 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         def _parse_parameter() -> NodeDeclVariable:
             _type = self._parse_type()
             ident = self.require(Token.Type.Identifier)
+            assert isinstance(ident.value, str)
             return NodeDeclVariable(_type.location, _type, ident.value, None)
 
         # -Body
         ident = self.require(Token.Type.Identifier)
+        assert isinstance(ident.value, str)
         self.require(Token.Type.SymbolLParen)
         # -Parameters
         parameters: list[NodeDeclVariable] = []
@@ -262,6 +264,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             type_node = self._parse_type()
         assert type_node is not None
         ident = self.require(Token.Type.Identifier)
+        assert isinstance(ident.value, str)
         initializer: NodeExpr | None = None
         if self.consume(Token.Type.SymbolEq):
             initializer = cast(NodeExpr, self._parse_expression())
@@ -504,6 +507,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             return _create_typed_node(token)
         elif self.consume(Token.Type.Identifier):
             token = self._last_token
+            assert isinstance(token.value, str)
             return NodeExprVariable(token.location, token.value)
         token = self.require_any(*LITERALS)
         return _create_literal_node(token)

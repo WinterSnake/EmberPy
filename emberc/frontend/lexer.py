@@ -176,6 +176,7 @@ class Lexer(LookaheadBuffer[str, str]):
 
     def _lex_number(self, buffer: str) -> Token:
         '''Lexer State: Number'''
+        base: int = 10
         location = self.location
         while c := self.peek():
             # -Number -> Number
@@ -186,7 +187,8 @@ class Lexer(LookaheadBuffer[str, str]):
                 continue
             # -Number -> Default
             break
-        return Token(location, Token.Type.Integer, buffer)
+        value = int(buffer, base)
+        return Token(location, Token.Type.Integer, value)
 
     def _lex_word(self, buffer: str) -> Token:
         '''Lexer State: Word'''

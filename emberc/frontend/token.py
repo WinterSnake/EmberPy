@@ -18,11 +18,11 @@ class Token:
     # -Constructor
     def __init__(
         self, location: Location, _type: Token.Type,
-        value: str | None = None
+        value: int | str | None = None
     ) -> None:
         self.location: Location = location
         self.type: Token.Type = _type
-        self._value: str | None = value
+        self._value: int | str | None = value
 
     # -Dunder Methods
     def __str__(self) -> str:
@@ -33,7 +33,7 @@ class Token:
 
     # -Properties
     @property
-    def value(self) -> str:
+    def value(self) -> int | str:
         assert self._value is not None
         return self._value
 
