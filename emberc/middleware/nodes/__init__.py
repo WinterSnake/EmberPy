@@ -18,6 +18,8 @@ from .expr_literal import LITERAL_VALUE, NodeExprLiteral
 from .expr_unary import NodeExprUnary
 from .expr_variable import NodeExprVariable
 from .stmt import NodeStmt
+from .stmt_block import NodeStmtBlock
+from .stmt_conditional import NodeStmtConditional
 from .stmt_expression import NodeStmtExpression
 from .typed import NodeType, NodeTypeBuiltin, NodeTypeIdentifier
 
@@ -28,7 +30,7 @@ __all__ = (
     "NodeBase", "NodeType", "NodeDecl", "NodeStmt", "NodeExpr",
     "NodeTypeBuiltin", "NodeTypeIdentifier",
     "NodeDeclUnit", "NodeDeclVariable",
-    "NodeStmtExpression",
+    "NodeStmtBlock", "NodeStmtConditional", "NodeStmtExpression",
     "NodeExprAssignment", "NodeExprGroup", "NodeExprBinary", "NodeExprUnary",
     "NodeExprVariable", "NodeExprLiteral",
 )

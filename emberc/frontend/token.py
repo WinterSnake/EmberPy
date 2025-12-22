@@ -44,6 +44,9 @@ class Token:
         Integer = auto()
         BooleanTrue = auto()
         BooleanFalse = auto()
+        # -Keyword
+        KeywordIf = auto()
+        KeywordElse = auto()
         # -Keyword: Types
         KeywordVoid = auto()
         KeywordBoolean = auto()
@@ -72,4 +75,6 @@ class Token:
         # -Symbol: Misc
         SymbolLParen = auto()
         SymbolRParen = auto()
+        SymbolLBrace = auto()
+        SymbolRBrace = auto()
         SymbolSemicolon = auto()

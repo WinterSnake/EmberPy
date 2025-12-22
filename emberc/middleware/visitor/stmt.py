@@ -9,7 +9,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol
 from ..nodes import (
-    NodeStmtExpression,
+    NodeStmtBlock, NodeStmtConditional, NodeStmtExpression,
 )
 
 if TYPE_CHECKING:
@@ -25,4 +25,6 @@ class NodeStmtVisitor[TReturn](Protocol):
     """
 
     # -Instance Methods
+    def visit_block(self, node: NodeStmtBlock, manager: NodeVisitor) -> TReturn: ...
+    def visit_conditional(self, node: NodeStmtConditional, manager: NodeVisitor) -> TReturn: ...
     def visit_expression(self, node: NodeStmtExpression, manager: NodeVisitor) -> TReturn: ...

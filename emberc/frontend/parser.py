@@ -16,7 +16,7 @@ from ..middleware.nodes import (
     NodeBase, NodeType, NodeDecl, NodeStmt, NodeExpr,
     NodeTypeBuiltin, NodeTypeIdentifier,
     NodeDeclUnit, NodeDeclVariable,
-    NodeStmtExpression,
+    NodeStmtBlock, NodeStmtConditional, NodeStmtExpression,
     NodeExprAssignment, NodeExprGroup, NodeExprBinary, NodeExprUnary,
     NodeExprVariable, NodeExprLiteral,
 )
@@ -57,6 +57,8 @@ BUILTIN_TYPES = (
     Token.Type.KeywordUInt64,
 )
 STATEMENT_TYPES = (
+    Token.Type.KeywordIf,
+    Token.Type.SymbolLBrace,
     Token.Type.SymbolSemicolon,
 )
 
@@ -184,7 +186,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         '''
         token = self.peek()
         # -Statement blocks
-        if token is not None and token in STATEMENT_TYPES:
+        if token is not None and token.type in STATEMENT_TYPES:
             return self._parse_statement()
         # -Type declarations
         is_decl, node = self._try_parse_type_decl()
@@ -224,15 +226,48 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _parse_statement(self, node: NodeExpr | None = None) -> NodeBase:
         '''
         Grammar[Statement]
-        statement_expression | ';';
+        statement_block | statement_condition | statement_expression | ';';
         '''
         if node is None:
+            # -If statement
+            if self.consume(Token.Type.KeywordIf):
+                return self._parse_statement_conditional()
+            # -Block statement
+            elif self.consume(Token.Type.SymbolLBrace):
+                return self._parse_statement_block()
             # -Empty statement
-            if self.consume(Token.Type.SymbolSemicolon):
+            elif self.consume(Token.Type.SymbolSemicolon):
                 return NodeStmtExpression(self._last_token.location, None)
             return self._parse_statement_expression()
         expr = cast(NodeExpr, self._parse_expression(node))
         return self._parse_statement_expression(expr)
+
+    def _parse_statement_conditional(self) -> NodeBase:
+        '''
+        Grammar[Statement:Conditional]
+        if '(' expression ')' statement ('else' statement)?;
+        '''
+        token = self._last_token
+        self.require(Token.Type.SymbolLParen)
+        condition = cast(NodeExpr, self._parse_expression())
+        self.require(Token.Type.SymbolRParen)
+        body = cast(NodeStmt, self._parse_statement())
+        else_body: NodeStmt | None = None
+        if self.consume(Token.Type.KeywordElse):
+            else_body = cast(NodeStmt, self._parse_statement())
+        return NodeStmtConditional(token.location, condition, body, else_body)
+
+    def _parse_statement_block(self) -> NodeBase:
+        '''
+        Grammar[Statement:Block]
+        '{' declaration_statement* '}';
+        '''
+        token = self._last_token
+        body: list[NodeBase] = []
+        while not self.consume(Token.Type.SymbolRBrace):
+            stmt = self._parse_declaration_statement()
+            body.append(stmt)
+        return NodeStmtBlock(token.location, body)
 
     def _parse_statement_expression(
         self, expr: NodeExpr | None = None

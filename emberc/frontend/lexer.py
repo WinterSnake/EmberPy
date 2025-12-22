@@ -17,7 +17,7 @@ from ..location import Location
 SYMBOLS = (
     '=', '!', '<', '>',
     '+', '-', '*', '/', '%',
-    '(', ')', ';',
+    '(', ')', '{', '}', ';',
 )
 KEYWORDS = {
     'true': Token.Type.BooleanTrue,
@@ -32,6 +32,8 @@ KEYWORDS = {
     'uint16': Token.Type.KeywordUInt16,
     'uint32': Token.Type.KeywordUInt32,
     'uint64': Token.Type.KeywordUInt64,
+    'if': Token.Type.KeywordIf,
+    'else': Token.Type.KeywordElse,
 }
 
 
@@ -130,6 +132,10 @@ class Lexer(LookaheadBuffer[str, str]):
                 _type = Token.Type.SymbolLParen
             case ')':
                 _type = Token.Type.SymbolRParen
+            case '{':
+                _type = Token.Type.SymbolLBrace
+            case '}':
+                _type = Token.Type.SymbolRBrace
             case ';':
                 _type = Token.Type.SymbolSemicolon
             case _:

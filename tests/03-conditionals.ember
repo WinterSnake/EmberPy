@@ -1,0 +1,24 @@
+int8 a = 10;
+int8 b = 20;
+if (a < b)
+{
+	a + b;
+}
+
+if (a > b) { }
+else {
+	20 + 92;
+}
+
+if (a < 10)
+	if (b > 10) c = 30;
+	else d = 15;
+else a = 30;
+
+if (false) {
+	int8 c = 10;
+} else if (10 > 8) {
+	10;
+} else { }
+
+if (true) c = 10; else b = 20;
