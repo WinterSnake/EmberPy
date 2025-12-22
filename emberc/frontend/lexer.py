@@ -6,6 +6,7 @@
 ##-------------------------------##
 
 ## Imports
+from __future__ import annotations
 from collections.abc import Iterator
 from pathlib import Path
 from .lookahead_buffer import LookaheadBuffer
@@ -13,7 +14,7 @@ from .token import Token
 from ..location import Location
 
 ## Constants
-SYMBOLS: tuple[str, ...] = (
+SYMBOLS = (
     '+', '-', '*', '/', '%',
     '(', ')', ';',
 )
@@ -133,6 +134,19 @@ class Lexer(LookaheadBuffer[str, str]):
             # -Number -> Default
             break
         return Token(location, Token.Type.Integer, buffer)
+
+    # -Static Methods
+    @staticmethod
+    def from_file(file: Path) -> Lexer:
+        '''Create a lexer from a given file'''
+        def char_generator() -> Iterator[str]:
+            with file.open('r') as f:
+                while True:
+                    char = f.read(1)
+                    if not char:
+                        break
+                    yield char
+        return Lexer(char_generator(), file)
 
     # -Properties
     @property
