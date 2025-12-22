@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from ..visitor import NodeVisitor, NodeExprVisitor
 
 ## Constants
-type LITERAL = int
+type LITERAL = bool | int
 
 
 ## Classes
@@ -44,9 +44,14 @@ class NodeExprLiteral(NodeExpr):
 
     # -Static Methods
     @staticmethod
+    def create_boolean(location: Location, value: bool) -> NodeExprLiteral:
+        return NodeExprLiteral(location, NodeExprLiteral.Type.Boolean, value)
+
+    @staticmethod
     def create_integer(location: Location, value: int) -> NodeExprLiteral:
         return NodeExprLiteral(location, NodeExprLiteral.Type.Integer, value)
 
     # -Sub-Classes
     class Type(IntEnum):
         Integer = auto()
+        Boolean = auto()

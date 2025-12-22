@@ -59,6 +59,7 @@ class InterpreterExprVisitor:
 
     def visit_literal(self, node, manager) -> int:
         match node.type:
+            case NodeExprLiteral.Type.Boolean: return 1 if node.value else 0
             case NodeExprLiteral.Type.Integer: return node.value
             case _: raise RuntimeError(f"Unimplemented interpreter literal {node.type.name}")
 

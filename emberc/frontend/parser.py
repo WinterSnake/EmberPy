@@ -30,6 +30,11 @@ BINARY_OPERATOR = {
 UNARY_OPERATOR = {
     Token.Type.SymbolMinus: NodeExprUnary.Operator.Negative,
 }
+LITERALS = (
+    Token.Type.Identifier,
+    Token.Type.Integer,
+    Token.Type.BooleanTrue, Token.Type.BooleanFalse,
+)
 
 
 ## Functions
@@ -39,6 +44,10 @@ def _create_literal_node(token: Token) -> NodeExprLiteral:
         case Token.Type.Integer:
             value = int(token.value)
             return NodeExprLiteral.create_integer(token.location, value)
+        case Token.Type.BooleanTrue:
+            return NodeExprLiteral.create_boolean(token.location, True)
+        case Token.Type.BooleanFalse:
+            return NodeExprLiteral.create_boolean(token.location, False)
         case _:
             raise TypeError(f"Unhandled token type ({token.type.name}) in create_literal_node")
 
@@ -168,9 +177,9 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _parse_expression_literal(self) -> NodeExprLiteral:
         '''
         Grammar[Expression:Literal]
-        NUMBER;
+        BOOLEAN | NUMBER;
         '''
-        token = self.require_any(Token.Type.Integer)
+        token = self.require_any(*LITERALS)
         return _create_literal_node(token)
 
     # -Properties

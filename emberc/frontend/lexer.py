@@ -18,6 +18,10 @@ SYMBOLS = (
     '+', '-', '*', '/', '%',
     '(', ')', ';',
 )
+KEYWORDS = {
+    'true': Token.Type.BooleanTrue,
+    'false': Token.Type.BooleanFalse
+}
 
 
 ## Classes
@@ -62,6 +66,9 @@ class Lexer(LookaheadBuffer[str, str]):
             # Default -> Number
             elif c.isnumeric():
                 token = self._lex_number(c)
+            # Default -> Word
+            elif c.isalpha() or c == '_':
+                token = self._lex_word(c)
             if token:
                 yield token
 
@@ -134,6 +141,22 @@ class Lexer(LookaheadBuffer[str, str]):
             # -Number -> Default
             break
         return Token(location, Token.Type.Integer, buffer)
+
+    def _lex_word(self, buffer: str) -> Token:
+        '''Lexer State: Word'''
+        location = self.location
+        while c := self.peek():
+            # -Word -> Word
+            if c.isalnum() or c == '_':
+                c = self.advance()
+                assert c is not None
+                buffer += c
+                continue
+            # -Word -> Default
+            break
+        _type = KEYWORDS.get(buffer, Token.Type.Identifier)
+        value = buffer if _type == Token.Type.Identifier else None
+        return Token(location, _type, value)
 
     # -Static Methods
     @staticmethod

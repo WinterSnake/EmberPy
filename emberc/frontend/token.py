@@ -40,7 +40,10 @@ class Token:
     # -Sub-Classes
     class Type(IntEnum):
         # -Literal
+        Identifier = auto()
         Integer = auto()
+        BooleanTrue = auto()
+        BooleanFalse = auto()
         # -Symbol: Operator
         SymbolPlus = auto()
         SymbolMinus = auto()
