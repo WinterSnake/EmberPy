@@ -59,6 +59,7 @@ BUILTIN_TYPES = (
 STATEMENT_TYPES = (
     Token.Type.KeywordIf,
     Token.Type.KeywordWhile,
+    Token.Type.KeywordDo,
     Token.Type.SymbolLBrace,
     Token.Type.SymbolSemicolon,
 )
@@ -239,6 +240,12 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             # -Loop:While statement
             elif self.consume(Token.Type.KeywordWhile):
                 return self._parse_statement_loop_while()
+            # -Loop:Do statement
+            elif self.consume(Token.Type.KeywordDo):
+                return self._parse_statement_loop_do()
+            # -Loop:For statement
+            #elif self.consume(Token.Type.KeywordWhile):
+            #    return self._parse_statement_loop_for()
             # -Empty statement
             elif self.consume(Token.Type.SymbolSemicolon):
                 return NodeStmtExpression(self._last_token.location, None)
@@ -285,9 +292,25 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         body = cast(NodeStmt, self._parse_statement())
         return NodeStmtLoop(token.location, condition, body)
 
+    def _parse_statement_loop_do(self) -> NodeStmtBlock:
+        '''
+        Grammar[Statement:Loop:Do]
+        'do' statement 'while' '(' expression ')' ';';
+        '''
+        do_token = self._last_token
+        body = cast(NodeStmt, self._parse_statement())
+        self.require(Token.Type.KeywordWhile)
+        while_token = self._last_token
+        self.require(Token.Type.SymbolLParen)
+        condition = cast(NodeExpr, self._parse_expression())
+        self.require(Token.Type.SymbolRParen)
+        self.require(Token.Type.SymbolSemicolon)
+        loop = NodeStmtLoop(while_token.location, condition, body)
+        return NodeStmtBlock(do_token.location, (body, loop))
+
     def _parse_statement_expression(
         self, expr: NodeExpr | None = None
-    ) -> NodeBase:
+    ) -> NodeStmtExpression:
         '''
         Grammar[Statement:Expression]
         expression ';';
