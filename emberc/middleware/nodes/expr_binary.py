@@ -49,6 +49,13 @@ class NodeExprBinary(NodeExpr):
         Mul = auto()
         Div = auto()
         Mod = auto()
+        # -Comparisons
+        Lt = auto()
+        Gt = auto()
+        LtEq = auto()
+        GtEq = auto()
+        EqEq = auto()
+        NtEq = auto()
 
 
 ## Body
@@ -58,4 +65,10 @@ OPERATOR_STR = {
     NodeExprBinary.Operator.Mul: '*',
     NodeExprBinary.Operator.Div: '/',
     NodeExprBinary.Operator.Mod: '%',
+    NodeExprBinary.Operator.Lt: '<',
+    NodeExprBinary.Operator.Gt: '>',
+    NodeExprBinary.Operator.LtEq: '<=',
+    NodeExprBinary.Operator.GtEq: '>=',
+    NodeExprBinary.Operator.EqEq: '==',
+    NodeExprBinary.Operator.NtEq: '!=',
 }

@@ -63,6 +63,12 @@ class Token:
         SymbolStar = auto()
         SymbolFSlash = auto()
         SymbolPercent = auto()
+        SymbolEqEq = auto()
+        SymbolNtEq = auto()
+        SymbolLt = auto()
+        SymbolGt = auto()
+        SymbolLtEq = auto()
+        SymbolGtEq = auto()
         # -Symbol: Misc
         SymbolLParen = auto()
         SymbolRParen = auto()

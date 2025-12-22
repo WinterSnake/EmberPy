@@ -15,7 +15,8 @@ from ..location import Location
 
 ## Constants
 SYMBOLS = (
-    '=', '!', '+', '-', '*', '/', '%',
+    '=', '!', '<', '>',
+    '+', '-', '*', '/', '%',
     '(', ')', ';',
 )
 KEYWORDS = {
@@ -94,8 +95,20 @@ class Lexer(LookaheadBuffer[str, str]):
             # -Operators
             case '=':
                 _type = Token.Type.SymbolEq
+                if self.consume('='):
+                    _type = Token.Type.SymbolEqEq
             case '!':
                 _type = Token.Type.SymbolBang
+                if self.consume('='):
+                    _type = Token.Type.SymbolNtEq
+            case '<':
+                _type = Token.Type.SymbolLt
+                if self.consume('='):
+                    _type = Token.Type.SymbolLtEq
+            case '>':
+                _type = Token.Type.SymbolGt
+                if self.consume('='):
+                    _type = Token.Type.SymbolGtEq
             case '+':
                 _type = Token.Type.SymbolPlus
             case '-':

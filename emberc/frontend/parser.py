@@ -23,12 +23,17 @@ from ..middleware.nodes import (
 
 ## Constants
 BINARY_OPERATOR = {
-    # -Math
-    Token.Type.SymbolPlus: (NodeExprBinary.Operator.Add, 1),
-    Token.Type.SymbolMinus: (NodeExprBinary.Operator.Sub, 1),
-    Token.Type.SymbolStar: (NodeExprBinary.Operator.Mul, 2),
-    Token.Type.SymbolFSlash: (NodeExprBinary.Operator.Div, 2),
-    Token.Type.SymbolPercent: (NodeExprBinary.Operator.Mod, 2),
+    Token.Type.SymbolEqEq: (NodeExprBinary.Operator.EqEq, 1),
+    Token.Type.SymbolNtEq: (NodeExprBinary.Operator.NtEq, 1),
+    Token.Type.SymbolLt: (NodeExprBinary.Operator.Lt, 2),
+    Token.Type.SymbolGt: (NodeExprBinary.Operator.Gt, 2),
+    Token.Type.SymbolLtEq: (NodeExprBinary.Operator.LtEq, 2),
+    Token.Type.SymbolGtEq: (NodeExprBinary.Operator.GtEq, 2),
+    Token.Type.SymbolPlus: (NodeExprBinary.Operator.Add, 3),
+    Token.Type.SymbolMinus: (NodeExprBinary.Operator.Sub, 3),
+    Token.Type.SymbolStar: (NodeExprBinary.Operator.Mul, 4),
+    Token.Type.SymbolFSlash: (NodeExprBinary.Operator.Div, 4),
+    Token.Type.SymbolPercent: (NodeExprBinary.Operator.Mod, 4),
 }
 UNARY_OPERATOR = {
     Token.Type.SymbolMinus: NodeExprUnary.Operator.Negative,
