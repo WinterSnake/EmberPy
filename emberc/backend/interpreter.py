@@ -7,7 +7,6 @@
 
 ## Imports
 from ..middleware.nodes import (
-    NodeDeclUnit,
     NodeExprBinary, NodeExprUnary, NodeExprLiteral
 )
 from ..middleware.visitor import NodeVisitor
@@ -18,12 +17,16 @@ __all__ = ("interpreter",)
 
 ## Classes
 class InterpreterDeclVisitor:
+
+    # -Instance Methods
     def visit_unit(self, node, manager) -> None:
         for stmt in node.body:
             manager.visit_statement(stmt)
 
 
 class InterpreterStmtVisitor:
+
+    # -Instance Methods
     def visit_expression(self, node, manager) -> None:
         if node.is_empty:
             return
@@ -32,6 +35,8 @@ class InterpreterStmtVisitor:
 
 
 class InterpreterExprVisitor:
+
+    # -Instance Methods
     def visit_group(self, node, manager) -> int:
         return manager.visit_expression(node.expression)
 

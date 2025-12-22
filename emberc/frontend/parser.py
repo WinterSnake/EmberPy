@@ -171,7 +171,6 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         NUMBER;
         '''
         token = self.require_any(Token.Type.Integer)
-        print(token)
         return _create_literal_node(token)
 
     # -Properties
