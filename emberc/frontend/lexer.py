@@ -15,12 +15,22 @@ from ..location import Location
 
 ## Constants
 SYMBOLS = (
-    '+', '-', '*', '/', '%',
+    '=', '+', '-', '*', '/', '%',
     '(', ')', ';',
 )
 KEYWORDS = {
     'true': Token.Type.BooleanTrue,
-    'false': Token.Type.BooleanFalse
+    'false': Token.Type.BooleanFalse,
+    'void': Token.Type.KeywordVoid,
+    'bool': Token.Type.KeywordBoolean,
+    'int8': Token.Type.KeywordInt8,
+    'int16': Token.Type.KeywordInt16,
+    'int32': Token.Type.KeywordInt32,
+    'int64': Token.Type.KeywordInt64,
+    'uint8': Token.Type.KeywordUInt8,
+    'uint16': Token.Type.KeywordUInt16,
+    'uint32': Token.Type.KeywordUInt32,
+    'uint64': Token.Type.KeywordUInt64,
 }
 
 
@@ -82,6 +92,8 @@ class Lexer(LookaheadBuffer[str, str]):
         location = self.location
         match buffer:
             # -Operators
+            case '=':
+                _type = Token.Type.SymbolEq
             case '+':
                 _type = Token.Type.SymbolPlus
             case '-':
@@ -105,6 +117,8 @@ class Lexer(LookaheadBuffer[str, str]):
                 _type = Token.Type.SymbolRParen
             case ';':
                 _type = Token.Type.SymbolSemicolon
+            case _:
+                raise NotImplementedError(f"'{buffer}' not handled in _lex_symbols()")
         return Token(location, _type)
 
     def _lex_comment_inline(self) -> None:

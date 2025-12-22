@@ -9,7 +9,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol
 from ..nodes import (
-    NodeDeclUnit
+    NodeDeclUnit, NodeDeclVariable
 )
 
 if TYPE_CHECKING:
@@ -25,3 +25,4 @@ class NodeDeclVisitor[TReturn](Protocol):
 
     # -Instance Methods
     def visit_unit(self, node: NodeDeclUnit, manager: NodeVisitor) -> TReturn: ...
+    def visit_variable(self, node: NodeDeclVariable, manager: NodeVisitor) -> TReturn: ...

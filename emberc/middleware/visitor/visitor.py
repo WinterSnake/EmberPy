@@ -6,13 +6,16 @@
 ##-------------------------------##
 
 ## Imports
-from ..nodes import NodeDecl, NodeDeclUnit, NodeStmt, NodeExpr
+from ..nodes import (
+    NodeType, NodeDecl, NodeDeclUnit, NodeStmt, NodeExpr
+)
 from .decl import NodeDeclVisitor
 from .expr import NodeExprVisitor
 from .stmt import NodeStmtVisitor
+from .typed import NodeTypeVisitor
 
 ## Classes
-class NodeVisitor[TDecl, TStmt, TExpr]:
+class NodeVisitor[TType, TDecl, TStmt, TExpr]:
     """
     Node Visitor
 
@@ -21,9 +24,10 @@ class NodeVisitor[TDecl, TStmt, TExpr]:
 
     # -Constructor
     def __init__(
-        self, decl_v: NodeDeclVisitor[TDecl], stmt_v: NodeStmtVisitor[TStmt],
-        expr_v: NodeExprVisitor[TExpr]
+        self, type_v: NodeTypeVisitor[TType], decl_v: NodeDeclVisitor[TDecl],
+        stmt_v: NodeStmtVisitor[TStmt], expr_v: NodeExprVisitor[TExpr]
     ) -> None:
+        self._type_v: NodeTypeVisitor[TType] = type_v
         self._decl_v: NodeDeclVisitor[TDecl] = decl_v
         self._stmt_v: NodeStmtVisitor[TStmt] = stmt_v
         self._expr_v: NodeExprVisitor[TExpr] = expr_v
@@ -31,6 +35,9 @@ class NodeVisitor[TDecl, TStmt, TExpr]:
     # -Instance Methods
     def run(self, ast: NodeDeclUnit) -> TDecl:
         return self.visit_declaration(ast)
+
+    def visit_type(self, node: NodeType) -> TType:
+        return node.accept(self._type_v, self)
 
     def visit_declaration(self, node: NodeDecl) -> TDecl:
         return node.accept(self._decl_v, self)

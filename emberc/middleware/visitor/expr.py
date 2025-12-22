@@ -9,9 +9,9 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol
 from ..nodes import (
-    NodeExprGroup,
+    NodeExprAssignment, NodeExprGroup,
     NodeExprBinary, NodeExprUnary,
-    NodeExprLiteral
+    NodeExprVariable, NodeExprLiteral
 )
 
 if TYPE_CHECKING:
@@ -27,7 +27,9 @@ class NodeExprVisitor[TReturn](Protocol):
     """
 
     # -Instance Methods
+    def visit_assignment(self, node: NodeExprAssignment, manager: NodeVisitor) -> TReturn: ...
     def visit_group(self, node: NodeExprGroup, manager: NodeVisitor) -> TReturn: ...
     def visit_binary(self, node: NodeExprBinary, manager: NodeVisitor) -> TReturn: ...
     def visit_unary(self, node: NodeExprUnary, manager: NodeVisitor) -> TReturn: ...
     def visit_literal(self, node: NodeExprLiteral, manager: NodeVisitor) -> TReturn: ...
+    def visit_variable(self, node: NodeExprVariable, manager: NodeVisitor) -> TReturn: ...

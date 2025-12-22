@@ -10,7 +10,6 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 from .node import NodeBase
-from ...location import Location
 
 if TYPE_CHECKING:
     from ..visitor import NodeVisitor, NodeStmtVisitor
@@ -22,10 +21,6 @@ class NodeStmt(NodeBase):
     Ember Statement Node
     Represents an AST node of a statement
     """
-
-    # -Constructor
-    def __init__(self, location: Location) -> None:
-        super().__init__(location)
 
     # -Instance Methods
     @abstractmethod

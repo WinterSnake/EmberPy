@@ -9,7 +9,12 @@
 from .decl import NodeDeclVisitor
 from .expr import NodeExprVisitor
 from .stmt import NodeStmtVisitor
+from .typed import NodeTypeVisitor
 from .visitor import NodeVisitor
 
 ## Constants
-__all__ = ("NodeVisitor", "NodeDeclVisitor", "NodeStmtVisitor", "NodeExprVisitor")
+__all__ = (
+    "NodeVisitor",
+    "NodeTypeVisitor", "NodeDeclVisitor",
+    "NodeStmtVisitor", "NodeExprVisitor"
+)

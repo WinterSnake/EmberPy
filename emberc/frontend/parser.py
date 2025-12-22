@@ -7,15 +7,18 @@
 
 ## Imports
 from collections.abc import Iterator
+from typing import cast
 from .lookahead_buffer import LookaheadBuffer
 from .token import Token
 from ..errors import EmberError, EmberParserError
 from ..middleware.nodes import (
-    LITERAL, NodeBase, NodeDecl, NodeStmt, NodeExpr,
-    NodeDeclUnit,
+    LITERAL_TYPE, LITERAL_VALUE,
+    NodeBase, NodeType, NodeDecl, NodeStmt, NodeExpr,
+    NodeTypeBuiltin, NodeTypeIdentifier,
+    NodeDeclUnit, NodeDeclVariable,
     NodeStmtExpression,
-    NodeExprGroup, NodeExprBinary, NodeExprUnary,
-    NodeExprLiteral,
+    NodeExprAssignment, NodeExprGroup, NodeExprBinary, NodeExprUnary,
+    NodeExprVariable, NodeExprLiteral,
 )
 
 ## Constants
@@ -35,9 +38,50 @@ LITERALS = (
     Token.Type.Integer,
     Token.Type.BooleanTrue, Token.Type.BooleanFalse,
 )
+BUILTIN_TYPES = (
+    Token.Type.KeywordVoid,
+    Token.Type.KeywordBoolean,
+    Token.Type.KeywordInt8,
+    Token.Type.KeywordInt16,
+    Token.Type.KeywordInt32,
+    Token.Type.KeywordInt64,
+    Token.Type.KeywordUInt8,
+    Token.Type.KeywordUInt16,
+    Token.Type.KeywordUInt32,
+    Token.Type.KeywordUInt64,
+)
 
 
 ## Functions
+def _create_typed_node(token: Token) -> NodeTypeBuiltin:
+    """Helper function for creating NodeTypeBuiltin by token"""
+    _type: NodeTypeBuiltin.Type
+    match token.type:
+        case Token.Type.KeywordVoid:
+            _type = NodeTypeBuiltin.Type.Void
+        case Token.Type.KeywordBoolean:
+            _type = NodeTypeBuiltin.Type.Boolean
+        case Token.Type.KeywordInt8:
+            _type = NodeTypeBuiltin.Type.Int8
+        case Token.Type.KeywordInt16:
+            _type = NodeTypeBuiltin.Type.Int16
+        case Token.Type.KeywordInt32:
+            _type = NodeTypeBuiltin.Type.Int32
+        case Token.Type.KeywordInt64:
+            _type = NodeTypeBuiltin.Type.Int64
+        case Token.Type.KeywordUInt8:
+            _type = NodeTypeBuiltin.Type.UInt8
+        case Token.Type.KeywordUInt16:
+            _type = NodeTypeBuiltin.Type.UInt16
+        case Token.Type.KeywordUInt32:
+            _type = NodeTypeBuiltin.Type.UInt32
+        case Token.Type.KeywordUInt64:
+            _type = NodeTypeBuiltin.Type.UInt64
+        case _:
+            raise TypeError(f"Unhandled token type ({token.type.name}) in create_typed_node")
+    return NodeTypeBuiltin(token.location, _type)
+
+
 def _create_literal_node(token: Token) -> NodeExprLiteral:
     """Helper function for creating NodeExprLiteral by token type and value"""
     match token.type:
@@ -117,40 +161,66 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
                 self._sync()
         return NodeDeclUnit(body)
 
-    def _parse_statement(self) -> NodeStmt:
+    def _parse_declaration_variable(
+        self, type_node: LITERAL_TYPE | None = None
+    ) -> NodeDeclVariable:
+        '''
+        Grammar[Declaration:Variable]
+        TYPE IDENTIFIER ('=' expression)? ';';
+        '''
+        assert type_node is not None
+        self.require(Token.Type.Identifier)
+        ident = self._last_token
+        initializer: NodeExpr | None = None
+        if self.consume(Token.Type.SymbolEq):
+            initializer = cast(NodeExpr, self._parse_expression())
+        self.require(Token.Type.SymbolSemicolon)
+        return NodeDeclVariable(ident.location, type_node, ident.value, initializer)
+
+    def _parse_statement(self) -> NodeBase:
         '''
         Grammar[Statement]
-        expression? ';';
+        (declaration_variable | expression)? ';';
         '''
+        # -Empty statement
         if self.consume(Token.Type.SymbolSemicolon):
             return NodeStmtExpression(self._last_token.location, None)
-        expr = self._parse_expression()
+        expr = cast(NodeExpr, self._parse_expression())
+        # -Variable declaration
+        _next = self.peek()
+        if _next and _next.type == Token.Type.Identifier:
+            return self._parse_declaration_variable(expr)
         self.require(Token.Type.SymbolSemicolon)
         return NodeStmtExpression(expr.location, expr)
 
-    def _parse_expression(self) -> NodeExpr:
+    def _parse_expression(self) -> NodeBase:
         '''
         Grammar[Expression]
-        expression_binary;
+        expression_binary ('=' expression)?;
         '''
-        return self._parse_expression_binary()
+        l_value = cast(NodeExpr, self._parse_expression_binary())
+        if self.consume(Token.Type.SymbolEq):
+            location = self._last_token.location
+            r_value = cast(NodeExpr, self._parse_expression())
+            l_value = NodeExprAssignment(location, l_value, r_value)
+        return l_value
 
-    def _parse_expression_binary(self, current: int = 0) -> NodeExpr:
+    def _parse_expression_binary(self, current: int = 0) -> NodeBase:
         '''
         Grammar[Expression:Binary]
         expression_primary (BINARY_OPERATOR expression_binary)*;
         '''
-        lhs = self._parse_expression_unary()
+        lhs = cast(NodeExpr, self._parse_expression_unary())
         while token := self.matches(*BINARY_OPERATOR.keys()):
             operator, precedence = BINARY_OPERATOR[token.type]
             if precedence <= current:
                 break
             _ = self.advance()
-            rhs = self._parse_expression_binary(precedence)
+            rhs = cast(NodeExpr, self._parse_expression_binary(precedence))
             lhs = NodeExprBinary(token.location, operator, lhs, rhs)
         return lhs
 
-    def _parse_expression_unary(self) -> NodeExpr:
+    def _parse_expression_unary(self) -> NodeBase:
         '''
         Grammar[Expression:Unary]
         UNARY_OPERATOR expression_unary | expression_primary;
@@ -158,11 +228,11 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         if token := self.matches(*UNARY_OPERATOR.keys()):
             operator = UNARY_OPERATOR[token.type]
             _ = self.advance()
-            expression = self._parse_expression_unary()
+            expression = cast(NodeExpr, self._parse_expression_unary())
             return NodeExprUnary(token.location, operator, expression)
         return self._parse_expression_primary()
 
-    def _parse_expression_primary(self) -> NodeExpr:
+    def _parse_expression_primary(self) -> NodeBase:
         '''
         Grammar[Expression:Primary]
         '(' expression ')' | expression_literal;
@@ -170,15 +240,21 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         if not self.consume(Token.Type.SymbolLParen):
             return self._parse_expression_literal()
         location = self._last_token.location
-        expression = self._parse_expression()
+        expression = cast(NodeExpr, self._parse_expression())
         self.require(Token.Type.SymbolRParen)
         return NodeExprGroup(location, expression)
 
-    def _parse_expression_literal(self) -> NodeExprLiteral:
+    def _parse_expression_literal(self) -> LITERAL_TYPE:
         '''
         Grammar[Expression:Literal]
-        BOOLEAN | NUMBER;
+        TYPE | IDENTIFIER | BOOLEAN | INTEGER;
         '''
+        if token := self.matches(*BUILTIN_TYPES):
+            self.advance()
+            return _create_typed_node(token)
+        elif self.consume(Token.Type.Identifier):
+            token = self._last_token
+            return NodeExprVariable(token.location, token.value)
         token = self.require_any(*LITERALS)
         return _create_literal_node(token)
 

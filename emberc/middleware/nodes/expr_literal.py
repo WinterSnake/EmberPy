@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from ..visitor import NodeVisitor, NodeExprVisitor
 
 ## Constants
-type LITERAL = bool | int
+type LITERAL_VALUE = bool | int
 
 
 ## Classes
@@ -28,11 +28,11 @@ class NodeExprLiteral(NodeExpr):
 
     # -Constructor
     def __init__(
-        self, location: Location, _type: NodeExprLiteral.Type, value: LITERAL
+        self, location: Location, _type: NodeExprLiteral.Type, value: LITERAL_VALUE
     ) -> None:
         super().__init__(location)
         self.type: NodeExprLiteral.Type = _type
-        self.value: LITERAL = value
+        self.value: LITERAL_VALUE = value
 
     # -Dunder Methods
     def __str__(self) -> str:
