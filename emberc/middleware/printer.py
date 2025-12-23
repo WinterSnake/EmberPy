@@ -53,6 +53,7 @@ class NodePrinter(NodeVisitor[str, str, str, str]):
         super().__init__(self, self, self, self)
         self._symbol_table = symbol_table
         self._indent_level: int = 0
+        self._use_lookup: bool = use_lookup
 
     # -Instance Methods
     def _get_indent(self) -> str:
