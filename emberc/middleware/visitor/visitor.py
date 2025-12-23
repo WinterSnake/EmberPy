@@ -34,8 +34,8 @@ class NodeVisitor[TType, TDecl, TStmt, TExpr]:
         self._expr_v: NodeExprVisitor[TExpr] = expr_v
 
     # -Instance Methods
-    def run(self, ast: NodeDeclUnit) -> None:
-        self.visit_declaration(ast)
+    def run(self, ast: NodeDeclUnit) -> TDecl:
+        return self.visit_declaration(ast)
 
     def visit(self, node: NodeBase) -> TType | TDecl | TStmt | TExpr:
         match node:

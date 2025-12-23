@@ -15,8 +15,10 @@ from .visitor import NodeVisitor
 ## Constants
 __all__ = (
     "NodeVisitor",
-    "NodeTypeVisitor", "NodeDeclVisitor", "NodeStmtVisitor", "NodeExprVisitor",
-    "NullTypeVisitor", "NullDeclVisitor", "NodeStmtVisitor", "NullExprVisitor",
+    "NodeTypeVisitor", "NodeDeclVisitor",
+    "NodeStmtVisitor", "NodeExprVisitor",
+    "null_type_visitor", "null_decl_visitor",
+    "null_stmt_visitor", "null_expr_visitor",
 )
 
 
@@ -73,3 +75,10 @@ class NullExprVisitor:
         return None
     def visit_expr_variable(self, node, manager) -> None:
         return None
+
+
+## Body
+null_type_visitor = NullTypeVisitor()
+null_decl_visitor = NullDeclVisitor()
+null_stmt_visitor = NullStmtVisitor()
+null_expr_visitor = NullExprVisitor()
