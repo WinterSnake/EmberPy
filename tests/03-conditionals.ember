@@ -10,6 +10,7 @@ else {
 	20 + 92;
 }
 
+int8 c; int8 d;
 if (a < 10)
 	if (b > 10) c = 30;
 	else d = 15;
