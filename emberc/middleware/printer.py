@@ -6,7 +6,7 @@
 ##-------------------------------##
 
 ## Imports
-from typing import cast
+from typing import Any
 from .nodes import (
     NodeType,
     NodeTypeBuiltin, NodeTypeIdentifier,
@@ -49,14 +49,22 @@ class NodePrinter(NodeVisitor[str, str, str, str]):
     """
 
     # -Constructor
-    def __init__(self, symbol_table: SymbolTable) -> None:
+    def __init__(self, symbol_table: SymbolTable, use_lookup: bool = True) -> None:
         super().__init__(self, self, self, self)
         self._symbol_table = symbol_table
-        self._indent: int = 0
+        self._indent_level: int = 0
 
     # -Instance Methods
-    def indent(self) -> str:
-        return ' ' * self._indent
+    def _get_indent(self) -> str:
+        return ' ' * self._indent_level
+
+    def _get_node_name(self, node: Any) -> str:
+        if self._use_lookup:
+            if isinstance(node._id, str):
+                return f"'string:{node.name}'"
+            else:
+                return self._symbol_table.get(node.id).name
+        return node.name
 
     def visit_type_builtin(self, node: NodeTypeBuiltin, manager) -> str:
         return f"[Builtin:{node.type.name}]"
@@ -72,51 +80,51 @@ class NodePrinter(NodeVisitor[str, str, str, str]):
         return '\n'.join(lines)
 
     def visit_decl_function(self, node: NodeDeclFunction, manager) -> str:
-        symbol = self._symbol_table.get(node.id)
-        header = f"{self.indent()}{symbol.name}("
+        name = self._get_node_name(node)
+        header = f"{self._get_indent()}{name}("
         parameters = ','.join(self.visit_declaration(parameter) for parameter in node.parameters)
-        ret = self.visit_type(cast(NodeType, node.type))
+        ret = self.visit_type(node.type)
         body = self.visit_statement(node.body)
         return f"{header}{parameters}):{ret}\n{body}"
 
     def visit_decl_variable(self, node: NodeDeclVariable, manager) -> str:
-        symbol = self._symbol_table.get(node.id)
+        name = self._get_node_name(node)
         _type = self.visit_type(node.type)
-        decl = f"{self.indent()}{{{_type}{symbol.name}"
+        decl = f"{self._get_indent()}{{{_type}{name}"
         if node.has_initializer:
             decl += f" = {self.visit_expression(node.initializer)}"
         return decl + '}'
 
     def visit_stmt_block(self, node: NodeStmtBlock, manager) -> str:
-        header = f"{self.indent()}{{"
-        self._indent += 1
+        header = f"{self._get_indent()}{{"
+        self._indent_level += 1
         body = '\n'.join(self.visit(elem) for elem in node.body)
-        self._indent -= 1
-        footer = f"{self.indent()}}}"
+        self._indent_level -= 1
+        footer = f"{self._get_indent()}}}"
         return f"{header}\n{body}\n{footer}"
 
     def visit_stmt_conditional(self, node: NodeStmtConditional, manager) -> str:
         cond = self.visit_expression(node.condition)
         body = self.visit_statement(node.then_branch)
-        block = f"{self.indent()}if({cond})\n{body}\n"
+        block = f"{self._get_indent()}if({cond})\n{body}\n"
         if node.has_else_branch:
             else_body = self.visit_statement(node.else_branch)
-            block += f"{self.indent()}else\n{else_body}"
+            block += f"{self._get_indent()}else\n{else_body}"
         return block
 
     def visit_stmt_loop(self, node: NodeStmtLoop, manager) -> str:
         cond = self.visit_expression(node.condition)
         body = self.visit_statement(node.body)
-        return f"{self.indent()}while({cond})\n{body}"
+        return f"{self._get_indent()}while({cond})\n{body}"
 
     def visit_stmt_return(self, node: NodeStmtReturn, manager) -> str:
-        header = f"{self.indent()}ret["
+        header = f"{self._get_indent()}ret["
         if node.has_value:
             return header + f"{self.visit_expression(node.value)}]"
         return header + "void]"
 
     def visit_stmt_expression(self, node: NodeStmtExpression, manager) -> str:
-        return self.indent() + self.visit_expression(node.expression)
+        return self._get_indent() + self.visit_expression(node.expression)
 
     def visit_expr_assignment(self, node: NodeExprAssignment, manager) -> str:
         l_value = self.visit_expression(node.l_value)
@@ -144,5 +152,5 @@ class NodePrinter(NodeVisitor[str, str, str, str]):
         return str(node.value)
 
     def visit_expr_variable(self, node: NodeExprVariable, manager) -> str:
-        symbol = self._symbol_table.get(node.id)
-        return f"[Variable:({symbol.name})]"
+        name = self._get_node_name(node)
+        return f"[Variable:({name})]"
