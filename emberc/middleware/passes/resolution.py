@@ -54,21 +54,19 @@ class NodeResolutionPass(NodeVisitor):
         return node
 
     def visit_decl_function(self, node: NodeDeclFunction, manager: NodeVisitor) -> NodeDecl:
-        _type = self.visit_type_meta(node.type)
-        node.type = _type
-        idx = self.symbol_table.add(node.name, Symbol.Kind.Function, _type)
+        node._type = self.visit_type_meta(node._type)
+        idx = self.symbol_table.add(node.name, Symbol.Kind.Function, node.type)
         # -TODO: Error handling
         assert idx is not None
-        node.id = idx
+        node._id = idx
         return node
     
     def visit_decl_variable(self, node: NodeDeclVariable, manager: NodeVisitor) -> NodeDecl:
-        _type = self.visit_type_meta(node.type)
-        node.type = _type
-        idx = self.symbol_table.add(node.name, Symbol.Kind.Variable, _type)
+        node._type = self.visit_type_meta(node._type)
+        idx = self.symbol_table.add(node.name, Symbol.Kind.Variable, node.type)
         # -TODO: Error handling
         assert idx is not None
-        node.id = idx
+        node._id = idx
         return node
 
     def visit_expr_variable(self, node: NodeExprVariable, manager: NodeVisitor) -> NodeType:

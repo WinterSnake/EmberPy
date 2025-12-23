@@ -11,7 +11,7 @@ from collections.abc import Collection
 from typing import TYPE_CHECKING
 from .decl import NodeDecl
 from .expr import NodeExpr
-from .typed import NODE_TYPES
+from .typed import NODE_TYPES, NodeType
 from ...location import Location
 
 if TYPE_CHECKING:
@@ -32,9 +32,8 @@ class NodeDeclVariable(NodeDecl):
         initializer: NodeExpr | None
     ) -> None:
         super().__init__(location)
-        self.id: int
-        self.name: str = name
-        self.type: NODE_TYPES = _type
+        self._id: int | str = name
+        self._type: NODE_TYPES = _type
         self._initializer: NodeExpr | None = initializer
 
     # -Instance Methods
@@ -42,6 +41,21 @@ class NodeDeclVariable(NodeDecl):
         return visitor.visit_decl_variable(self, manager)
 
     # -Properties
+    @property
+    def id(self) -> int:
+        assert isinstance(self._id, int)
+        return self._id
+
+    @property
+    def name(self) -> str:
+        assert isinstance(self._id, str)
+        return self._id
+
+    @property
+    def type(self) -> NodeType:
+        assert isinstance(self._type, NodeType)
+        return self._type
+
     @property
     def has_initializer(self) -> bool:
         return self._initializer is not None

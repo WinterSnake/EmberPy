@@ -25,9 +25,19 @@ class NodeExprVariable(NodeExpr):
     # -Constructor
     def __init__(self, location: Location, name: str) -> None:
         super().__init__(location)
-        self.id: int
-        self.name: str = name
+        self._id: int | str = name
 
     # -Instance Methods
     def accept[T](self, visitor: NodeExprVisitor[T], manager: NodeVisitor) -> T:
         return visitor.visit_expr_variable(self, manager)
+
+    # -Properties
+    @property
+    def id(self) -> int:
+        assert isinstance(self._id, int)
+        return self._id
+
+    @property
+    def name(self) -> str:
+        assert isinstance(self._id, str)
+        return self._id
