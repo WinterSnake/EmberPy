@@ -87,3 +87,7 @@ class SymbolTable:
     @property
     def current_scope(self) -> dict[str, int]:
         return self._scopes[-1]
+
+    @property
+    def scope_depth(self) -> int:
+        return len(self._scopes) - 1
