@@ -56,9 +56,6 @@ class NodePrinter(NodeVisitor[str, str, str, str]):
     def _indent(self) -> str:
         return ' ' * self.indent
 
-    def run(self, ast: NodeDeclUnit) -> None:
-        print(self.visit_declaration(ast))
-
     def visit_type_builtin(self, node: NodeTypeBuiltin, manager) -> str:
         return f"[Builtin:{node.type.name}]"
 
@@ -72,15 +69,15 @@ class NodePrinter(NodeVisitor[str, str, str, str]):
         return '\n'.join(lines)
 
     def visit_decl_function(self, node: NodeDeclFunction, manager) -> str:
-        header = f"{self._indent()}{node.id}("
+        header = f"{self._indent()}{node.name}("
         parameters = ','.join(self.visit_declaration(parameter) for parameter in node.parameters)
-        ret = self.visit_type(cast(NodeType, node.return_type))
+        ret = self.visit_type(cast(NodeType, node.type))
         body = self.visit_statement(node.body)
         return f"{header}{parameters}):{ret}\n{body}"
 
     def visit_decl_variable(self, node: NodeDeclVariable, manager) -> str:
         _type = self.visit_type(cast(NodeType, node.type))
-        decl = f"{self._indent()}{{{_type}{node.id}"
+        decl = f"{self._indent()}{{{_type}{node.name}"
         if node.has_initializer:
             decl += f" = {self.visit_expression(node.initializer)}"
         return decl + '}'
@@ -142,7 +139,7 @@ class NodePrinter(NodeVisitor[str, str, str, str]):
         return str(node.value)
 
     def visit_expr_variable(self, node: NodeExprVariable, manager) -> str:
-        return f"[Variable:({node.id})]"
+        return f"[Variable:({node.name})]"
 
 
 ## Body

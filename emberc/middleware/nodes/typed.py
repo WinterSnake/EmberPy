@@ -14,7 +14,11 @@ from .node import NodeBase
 from ...location import Location
 
 if TYPE_CHECKING:
+    from .expr import NodeExpr
     from ..visitor import NodeVisitor, NodeTypeVisitor
+
+## Constants
+type NODE_TYPES = NodeType | NodeExpr
 
 
 ## Classes

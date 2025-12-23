@@ -10,8 +10,9 @@ from __future__ import annotations
 from collections.abc import Collection
 from typing import TYPE_CHECKING
 from .decl import NodeDecl
-from .decl_variable import NODE_TYPES, NodeDeclVariable
+from .decl_variable import NodeDeclVariable
 from .stmt import NodeStmt
+from .typed import NODE_TYPES
 from ...location import Location
 
 if TYPE_CHECKING:
@@ -28,12 +29,13 @@ class NodeDeclFunction(NodeDecl):
 
     # -Constructor
     def __init__(
-        self, location: Location, _id: str, return_type: NODE_TYPES,
+        self, location: Location, name: str, _type: NODE_TYPES,
         parameters: Collection[NodeDeclVariable], body: NodeStmt
     ) -> None:
         super().__init__(location)
-        self.id: str = _id
-        self.return_type: NODE_TYPES = return_type
+        self.id: int
+        self.name: str = name
+        self.type: NODE_TYPES = _type
         self.parameters: Collection[NodeDeclVariable] = parameters
         self.body: NodeStmt = body
 

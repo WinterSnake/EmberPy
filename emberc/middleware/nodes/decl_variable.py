@@ -11,15 +11,12 @@ from collections.abc import Collection
 from typing import TYPE_CHECKING
 from .decl import NodeDecl
 from .expr import NodeExpr
-from .typed import NodeType
+from .typed import NODE_TYPES
 from ...location import Location
 
 if TYPE_CHECKING:
     from ..visitor import NodeVisitor, NodeDeclVisitor
     from ...frontend import Token
-
-## Constants
-type NODE_TYPES = NodeType | NodeExpr
 
 
 ## Classes
@@ -31,11 +28,12 @@ class NodeDeclVariable(NodeDecl):
 
     # -Constructor
     def __init__(
-        self, location: Location, _type: NODE_TYPES, _id: str,
+        self, location: Location, _type: NODE_TYPES, name: str,
         initializer: NodeExpr | None
     ) -> None:
         super().__init__(location)
-        self.id: str = _id
+        self.id: int
+        self.name: str = name
         self.type: NODE_TYPES = _type
         self._initializer: NodeExpr | None = initializer
 
