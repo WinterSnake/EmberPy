@@ -5,6 +5,12 @@
 ## Middleware: Symbol Table      ##
 ##-------------------------------##
 
+## Imports
+from __future__ import annotations
+from enum import IntEnum, auto
+from .nodes import NodeType
+
+
 ## Classes
 class Symbol:
     """
@@ -14,9 +20,20 @@ class Symbol:
     """
 
     # -Constructor
-    def __init__(self, _id: int, name: str) -> None:
+    def __init__(
+        self, _id: int, name: str, kind: Symbol.Kind, _type: NodeType
+    ) -> None:
         self.id: int = _id
         self.name: str = name
+
+    # -Dunder Methods
+    def __str__(self) -> str:
+        return f"Symbol[{self.id}; {self.name}]"
+
+    # -Sub-Classes
+    class Kind(IntEnum):
+        Function = auto()
+        Variable = auto()
 
 
 class SymbolTable:
@@ -32,6 +49,10 @@ class SymbolTable:
         self._scopes: list[dict[str, int]] = [{}]
         self._symbols: list[Symbol] = []
 
+    # -Dunder Methods
+    def __str__(self) -> str:
+        return '[' + ','.join(str(symbol) for symbol in self._symbols) + ']'
+
     # -Instance Methods
     def push(self) -> None:
         self._scopes.append({})
@@ -41,12 +62,12 @@ class SymbolTable:
             raise RuntimeError("Tried popping global scope before final call")
         self._scopes.pop()
 
-    def add(self, name: str) -> int | None:
+    def add(self, name: str, kind: Symbol.Kind, _type: NodeType) -> int | None:
         '''Adds a symbol to the current scope and returns index into flat table'''
         if name in self.current_scope:
             return None
         index = len(self._symbols)
-        symbol = Symbol(index, name)
+        symbol = Symbol(index, name, kind, _type)
         self._symbols.append(symbol)
         self.current_scope[name] = index
         return index
