@@ -90,6 +90,16 @@ class LookaheadBuffer[TItem, TMatch](ABC):
         self.advance()
         return True
 
+    def match(self, expected: TMatch) -> bool:
+        '''Returns boolean of next TItem is TMatch; does not consume'''
+        value = self.peek()
+        if value is None:
+            return False
+        match: TMatch = _get_match_from_item(value, self._selector)
+        if match != expected:
+            return False
+        return True
+
     def matches(self, *expected: TMatch) -> TItem | None:
         '''Returns TItem if in TMatches else None; does not consume'''
         value = self.peek()
