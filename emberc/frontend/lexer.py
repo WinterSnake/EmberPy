@@ -9,9 +9,13 @@
 from __future__ import annotations
 from collections.abc import Iterator
 from pathlib import Path
+from typing import TYPE_CHECKING
 from .lookahead_buffer import LookaheadBuffer
-from .token import LITERAL_VALUE, Token
+from .token import Token
 from ..location import Location
+
+if TYPE_CHECKING:
+    from ..ast import LITERAL_VALUE
 
 ## Constants
 SYMBOLS = (
@@ -55,11 +59,10 @@ KEYWORDS = {
 ## Classes
 class Lexer(LookaheadBuffer[str, str]):
     """
-    Ember Language Lexer
-    Lookahead(1)
+    Ember Lexer: Lookahead(1)
 
-    Iterates over source file and yields a token where
-    each lexer state is represented as an internal method.
+    Handles iterating over a string and churns out Ember related tokens.
+    Can be used with either an iter(str) or a Pathlib file
     """
 
     # -Constructor
@@ -70,8 +73,7 @@ class Lexer(LookaheadBuffer[str, str]):
         self.offset: int = 0
         self.file: Path | None = file
 
-    # -Instance Methods
-    # --Lookahead
+    # -Instance Methods: Lookahead
     def advance(self) -> str | None:
         value = super().advance()
         if value == '\n':
@@ -83,9 +85,11 @@ class Lexer(LookaheadBuffer[str, str]):
             self.offset += 1
         return value
 
-    # --Lexing
+    # -Instance Methods: Lexing
     def lex(self) -> Iterator[Token]:
-        '''Returns an iterator of tokens from source iterator'''
+        '''
+        State: Default
+        '''
         while c := self.advance():
             token: Token | None = None
             # Default -> Symbol
@@ -102,9 +106,7 @@ class Lexer(LookaheadBuffer[str, str]):
 
     def _lex_symbol(self, buffer: str) -> Token | None:
         '''
-        Lexer State: Symbol
-
-        Returns a symbol token or handles inline and multi-line consumption
+        State: Symbol
         '''
         _type: Token.Type
         location = self.location
@@ -214,8 +216,7 @@ class Lexer(LookaheadBuffer[str, str]):
 
     def _lex_comment_inline(self) -> None:
         '''
-        Lexer State: Comment - Inline
-        Consumes characters until new line is reached
+        State: Comment - Inline
         '''
         c = self.advance()
         while c is not None and c != '\n':
@@ -223,9 +224,7 @@ class Lexer(LookaheadBuffer[str, str]):
 
     def _lex_comment_multiline(self) -> None:
         '''
-        Lexer State: Comment - Multiline
-        Consumes characters until a multiline comment terminator
-        is reached. Supports nested multiline comments.
+        State: Comment - Multiline
         '''
         while c := self.advance():
             if c == '/' and self.advance() == '*':
@@ -234,14 +233,15 @@ class Lexer(LookaheadBuffer[str, str]):
                 return
 
     def _lex_number(self, buffer: str) -> Token:
-        '''Lexer State: Number'''
+        '''
+        State: Number
+        '''
         base: int = 10
         location = self.location
         while c := self.peek():
             # -Number -> Number
             if c.isnumeric():
-                c = self.advance()
-                assert c is not None
+                c = self.next()
                 buffer += c
                 continue
             # -Number -> Default
@@ -250,13 +250,14 @@ class Lexer(LookaheadBuffer[str, str]):
         return Token(location, Token.Type.Integer, value)
 
     def _lex_word(self, buffer: str) -> Token:
-        '''Lexer State: Word'''
+        '''
+        State: Word
+        '''
         location = self.location
         while c := self.peek():
             # -Word -> Word
             if c.isalnum() or c == '_':
-                c = self.advance()
-                assert c is not None
+                c = self.next()
                 buffer += c
                 continue
             # -Word -> Default

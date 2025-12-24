@@ -8,10 +8,11 @@
 ## Imports
 from __future__ import annotations
 from enum import IntEnum, auto
+from typing import TYPE_CHECKING
 from ..location import Location
 
-## Constants
-type LITERAL_VALUE = bool | int | str
+if TYPE_CHECKING:
+    from ..ast import LITERAL_VALUE
 
 
 ## Classes

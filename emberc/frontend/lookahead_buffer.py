@@ -45,14 +45,17 @@ class LookaheadBuffer[TItem, TMatch](ABC):
         self._source: Iterator[TItem] = iterator
         self._buffer: deque[TItem] = deque()
         self._selector: TSelector[TItem, TMatch] = selector
+        self._is_at_end: bool = False
 
     # -Instance Methods
     def _next(self) -> TItem | None:
         '''Returns next TItem from source or None if end of iterator'''
-        try:
-            return next(self._source)
-        except StopIteration:
+        if self._is_at_end:
             return None
+        elem = next(self._source, None)
+        if elem is None:
+            self._is_at_end = True
+        return elem
 
     def _fill_buffer(self, count: int) -> None:
         '''Fills buffer with next N TItems from source'''
@@ -67,6 +70,12 @@ class LookaheadBuffer[TItem, TMatch](ABC):
         if self._buffer:
             return self._buffer.popleft()
         return self._next()
+
+    def next(self) -> TItem:
+        '''Returns next TItem from iterator; asserts TItem exists'''
+        item = self.advance()
+        assert item is not None
+        return item
 
     def peek(self, index: int = 0) -> TItem | None:
         '''Fills buffer to N TItem then returns buffer[N]'''
@@ -100,12 +109,20 @@ class LookaheadBuffer[TItem, TMatch](ABC):
             return False
         return True
 
-    def matches(self, *expected: TMatch) -> TItem | None:
-        '''Returns TItem if in TMatches else None; does not consume'''
+    def matches(self, *expected: TMatch) -> bool:
+        '''Returns boolean of next TItem in TMatches; does not consume'''
         value = self.peek()
         if value is None:
-            return None
+            return False
         match: TMatch = _get_match_from_item(value, self._selector)
         if match not in expected:
-            return None
-        return value
+            return False
+        return True
+
+    # -Properties
+    @property
+    def current(self) -> TItem:
+        '''Returns current TItem from iterator; asserts TItem exists'''
+        item = self.peek()
+        assert item is not None
+        return item
