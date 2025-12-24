@@ -10,6 +10,9 @@ from __future__ import annotations
 from enum import IntEnum, auto
 from ..location import Location
 
+## Constants
+type LITERAL_VALUE = bool | int | str
+
 
 ## Classes
 class Token:
@@ -18,22 +21,22 @@ class Token:
     # -Constructor
     def __init__(
         self, location: Location, _type: Token.Type,
-        value: int | str | None = None
+        value: LITERAL_VALUE | None = None
     ) -> None:
         self.location: Location = location
         self.type: Token.Type = _type
-        self._value: int | str | None = value
+        self._value: LITERAL_VALUE | None = value
 
     # -Dunder Methods
     def __str__(self) -> str:
-        _str = f"[{self.location}]{self.type.name}"
+        _str = self.type.name
         if self._value is not None:
             _str += f"({self.value})"
         return _str
 
     # -Properties
     @property
-    def value(self) -> int | str:
+    def value(self) -> LITERAL_VALUE:
         assert self._value is not None
         return self._value
 
@@ -42,8 +45,7 @@ class Token:
         # -Literal
         Identifier = auto()
         Integer = auto()
-        BooleanTrue = auto()
-        BooleanFalse = auto()
+        Boolean = auto()
         # -Keyword
         KeywordIf = auto()
         KeywordElse = auto()
@@ -63,14 +65,35 @@ class Token:
         KeywordUInt16 = auto()
         KeywordUInt32 = auto()
         KeywordUInt64 = auto()
-        # -Symbol: Operator
+        # -Symbol: Math
         SymbolEq = auto()
         SymbolBang = auto()
         SymbolPlus = auto()
+        SymbolPlusEq = auto()
         SymbolMinus = auto()
+        SymbolMinusEq = auto()
         SymbolStar = auto()
+        SymbolStarEq = auto()
         SymbolFSlash = auto()
+        SymbolFSlashEq = auto()
         SymbolPercent = auto()
+        SymbolPercentEq = auto()
+        # -Symbol: Bitwise
+        SymbolBitNeg = auto()
+        SymbolBitNegEq = auto()
+        SymbolBitXor = auto()
+        SymbolBitXorEq = auto()
+        SymbolBitAnd = auto()
+        SymbolBitAndEq = auto()
+        SymbolBitOr = auto()
+        SymbolBitOrEq = auto()
+        SymbolBitLShift = auto()
+        SymbolBitLShiftEq = auto()
+        SymbolBitRShift = auto()
+        SymbolBitRShiftEq = auto()
+        # -Symbol: Comparison
+        SymbolLogOr = auto()
+        SymbolLogAnd = auto()
         SymbolEqEq = auto()
         SymbolNtEq = auto()
         SymbolLt = auto()
@@ -78,10 +101,15 @@ class Token:
         SymbolLtEq = auto()
         SymbolGtEq = auto()
         # -Symbol: Misc
+        SymbolDot = auto()
+        SymbolDotDot = auto()
         SymbolComma = auto()
-        SymbolLParen = auto()
-        SymbolRParen = auto()
-        SymbolLBrace = auto()
-        SymbolRBrace = auto()
         SymbolColon = auto()
         SymbolSemicolon = auto()
+        SymbolAt = auto()
+        SymbolLParen = auto()
+        SymbolRParen = auto()
+        SymbolLBracket = auto()
+        SymbolRBracket = auto()
+        SymbolLBrace = auto()
+        SymbolRBrace = auto()

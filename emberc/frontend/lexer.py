@@ -10,16 +10,26 @@ from __future__ import annotations
 from collections.abc import Iterator
 from pathlib import Path
 from .lookahead_buffer import LookaheadBuffer
-from .token import Token
+from .token import LITERAL_VALUE, Token
 from ..location import Location
 
 ## Constants
 SYMBOLS = (
-    '=', '!', '<', '>',
+    # -Symbol: Math
+    '=', '!',
     '+', '-', '*', '/', '%',
-    ',', '(', ')', '{', '}', ':', ';',
+    # -Symbol: Bitwise
+    '~', '^', '&', '|',
+    # -Symbol: Comparison
+    '<', '>',
+    # -Symbol: Misc
+    '.', ',', ':', ';', '@',
+    '(', ')', '[', ']', '{', '}',
 )
 KEYWORDS = {
+    # -Literals
+    'true': Token.Type.Boolean,
+    'false': Token.Type.Boolean,
     # -Keywords
     'if': Token.Type.KeywordIf,
     'else': Token.Type.KeywordElse,
@@ -29,8 +39,6 @@ KEYWORDS = {
     'fn': Token.Type.KeywordFn,
     'return': Token.Type.KeywordReturn,
     # -Types
-    'true': Token.Type.BooleanTrue,
-    'false': Token.Type.BooleanFalse,
     'void': Token.Type.KeywordVoid,
     'bool': Token.Type.KeywordBoolean,
     'int8': Token.Type.KeywordInt8,
@@ -100,8 +108,9 @@ class Lexer(LookaheadBuffer[str, str]):
         '''
         _type: Token.Type
         location = self.location
+        peeked = self.peek()
         match buffer:
-            # -Operators
+            # -Symbol: Math
             case '=':
                 _type = Token.Type.SymbolEq
                 if self.consume('='):
@@ -110,20 +119,18 @@ class Lexer(LookaheadBuffer[str, str]):
                 _type = Token.Type.SymbolBang
                 if self.consume('='):
                     _type = Token.Type.SymbolNtEq
-            case '<':
-                _type = Token.Type.SymbolLt
-                if self.consume('='):
-                    _type = Token.Type.SymbolLtEq
-            case '>':
-                _type = Token.Type.SymbolGt
-                if self.consume('='):
-                    _type = Token.Type.SymbolGtEq
             case '+':
                 _type = Token.Type.SymbolPlus
+                if self.consume('='):
+                    _type = Token.Type.SymbolPlusEq
             case '-':
                 _type = Token.Type.SymbolMinus
+                if self.consume('='):
+                    _type = Token.Type.SymbolMinusEq
             case '*':
                 _type = Token.Type.SymbolStar
+                if self.consume('='):
+                    _type = Token.Type.SymbolStarEq
             case '/':
                 _type = Token.Type.SymbolFSlash
                 if self.consume('/'):
@@ -132,23 +139,75 @@ class Lexer(LookaheadBuffer[str, str]):
                 elif self.consume('*'):
                     self._lex_comment_multiline()
                     return None
+                elif self.consume('='):
+                    _type = Token.Type.SymbolFSlashEq
             case '%':
                 _type = Token.Type.SymbolPercent
-            # -Misc
+                if self.consume('='):
+                    _type = Token.Type.SymbolPercentEq
+            # -Symbol: Bitwise
+            case '~':
+                _type = Token.Type.SymbolBitNeg
+                if self.consume('='):
+                    _type = Token.Type.SymbolBitNegEq
+            case '^':
+                _type = Token.Type.SymbolBitXor
+                if self.consume('='):
+                    _type = Token.Type.SymbolBitXorEq
+            case '&':
+                _type = Token.Type.SymbolBitAnd
+                if self.consume('&'):
+                    _type = Token.Type.SymbolLogAnd
+                elif self.consume('='):
+                    _type = Token.Type.SymbolBitAndEq
+            case '|':
+                _type = Token.Type.SymbolBitOr
+                if self.consume('|'):
+                    _type = Token.Type.SymbolLogOr
+                elif self.consume('='):
+                    _type = Token.Type.SymbolBitOrEq
+            # -Symbol: Comparison
+            case '<':
+                _type = Token.Type.SymbolLt
+                if self.consume('='):
+                    _type = Token.Type.SymbolLtEq
+                elif self.consume('<'):
+                    _type = Token.Type.SymbolLShift
+                    if self.consume('='):
+                        _type = Token.Type.SymbolLShiftEq
+            case '>':
+                _type = Token.Type.SymbolGt
+                if self.consume('='):
+                    _type = Token.Type.SymbolGtEq
+                elif self.consume('>'):
+                    _type = Token.Type.SymbolRShift
+                    if self.consume('='):
+                        _type = Token.Type.SymbolRShiftEq
+            # -Symbol: Misc
+            case '.':
+                _type = Token.Type.SymbolDot
+                if self.consume('.'):
+                    _type = Token.Type.SymbolDotDot
             case ',':
                 _type = Token.Type.SymbolComma
-            case '(':
-                _type = Token.Type.SymbolLParen
-            case ')':
-                _type = Token.Type.SymbolRParen
-            case '{':
-                _type = Token.Type.SymbolLBrace
-            case '}':
-                _type = Token.Type.SymbolRBrace
             case ':':
                 _type = Token.Type.SymbolColon
             case ';':
                 _type = Token.Type.SymbolSemicolon
+            case '@':
+                _type = Token.Type.SymbolAt
+            case '(':
+                _type = Token.Type.SymbolLParen
+            case ')':
+                _type = Token.Type.SymbolRParen
+            case '[':
+                _type = Token.Type.SymbolLBracket
+            case ']':
+                _type = Token.Type.SymbolRBracket
+            case '{':
+                _type = Token.Type.SymbolLBrace
+            case '}':
+                _type = Token.Type.SymbolRBrace
             case _:
                 raise NotImplementedError(f"'{buffer}' not handled in _lex_symbols()")
         return Token(location, _type)
@@ -203,7 +262,11 @@ class Lexer(LookaheadBuffer[str, str]):
             # -Word -> Default
             break
         _type = KEYWORDS.get(buffer, Token.Type.Identifier)
-        value = buffer if _type == Token.Type.Identifier else None
+        value: LITERAL_VALUE | None = None
+        if _type == Token.Type.Boolean:
+            value = buffer == "true"
+        elif _type == Token.Type.Identifier:
+            value = buffer
         return Token(location, _type, value)
 
     # -Static Methods
