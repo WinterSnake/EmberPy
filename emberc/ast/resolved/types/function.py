@@ -28,4 +28,4 @@ class NodeTypeFunction(NodeType):
 
     @property
     def arity(self) -> int:
-        return len(parameter_types)
+        return len(self.parameter_types)
