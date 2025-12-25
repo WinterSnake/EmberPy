@@ -7,10 +7,13 @@
 
 ## Imports
 from __future__ import annotations
-from collections.abc import Collection
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 from enum import IntEnum, auto
 from .node import UnresolvedNode
+
+if TYPE_CHECKING:
+    from collections.abc import Collection
 
 ## Constants
 type LITERAL_VALUE = bool | int | str

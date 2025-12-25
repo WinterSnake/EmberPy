@@ -7,8 +7,8 @@
 
 ## Imports
 from .unresolved import (
-    UnresolvedNode, UnresolvedUnitNode,
-    UnresolvedTypeNode, UnresolvedDeclNode, UnresolvedStmtNode,
+    UnresolvedUnitNode,
+    UnresolvedTypeNode,
     UnresolvedDeclFunctionNode, UnresolvedDeclVariableNode,
     UnresolvedStmtBlockNode, UnresolvedStmtExpressionNode,
     UnresolvedStmtConditionalNode, UnresolvedStmtLoopWhileNode,

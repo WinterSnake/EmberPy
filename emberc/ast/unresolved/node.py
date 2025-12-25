@@ -8,10 +8,13 @@
 ## Imports
 from __future__ import annotations
 from abc import ABC
-from collections.abc import Collection
 from enum import IntEnum, auto
 from dataclasses import dataclass
-from ...location import Location
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Collection
+    from ...location import Location
 
 
 ## Classes

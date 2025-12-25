@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from .assign import UnresolvedAssignNode
 from .binary import UnresolvedBinaryNode
 from .declaration import (
-    UnresolvedDeclNode, UnresolvedDeclFunctionNode, UnresolvedDeclVariableNode,
+    UnresolvedDeclFunctionNode, UnresolvedDeclVariableNode,
 )
 from .group import UnresolvedGroupNode
 from .identifier import UnresolvedIdentifierNode

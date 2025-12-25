@@ -7,10 +7,13 @@
 
 ## Imports
 from __future__ import annotations
-from collections.abc import Collection
 from dataclasses import dataclass
 from enum import IntEnum, auto
+from typing import TYPE_CHECKING
 from .node import UnresolvedNode
+
+if TYPE_CHECKING:
+    from collections.abc import Collection
 
 
 ## Classes

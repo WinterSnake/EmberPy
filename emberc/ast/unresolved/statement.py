@@ -6,10 +6,14 @@
 ##-------------------------------##
 
 ## Imports
-from collections.abc import Collection
+from __future__ import annotations
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 from .node import UnresolvedNode
-from .declaration import UnresolvedDeclNode, UnresolvedDeclVariableNode
+
+if TYPE_CHECKING:
+    from collections.abc import Collection
+    from .declaration import UnresolvedDeclNode, UnresolvedDeclVariableNode
 
 ## Constants
 type BLOCK_TYPES = UnresolvedDeclNode | UnresolvedStmtNode

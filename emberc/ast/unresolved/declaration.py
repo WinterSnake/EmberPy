@@ -7,14 +7,14 @@
 
 ## Imports
 from __future__ import annotations
-from collections.abc import Collection
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 from .node import UnresolvedNode
-from ...location import Location
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
     from .statement import UnresolvedStmtNode
+    from ...location import Location
 
 
 ## Classes
@@ -40,6 +40,7 @@ class UnresolvedDeclFunctionNode(UnresolvedDeclNode):
     parameters: Collection[UnresolvedDeclFunctionNode.Parameter]
     type: UnresolvedNode
     body: UnresolvedStmtNode
+    id: int = field(init=False)
 
     @property
     def arity(self) -> int:
@@ -86,6 +87,7 @@ class UnresolvedDeclVariableNode(UnresolvedDeclNode):
         location: Location
         name: str
         _initializer: UnresolvedNode | None
+        id: int = field(init=False)
 
         @property
         def has_initializer(self) -> bool:

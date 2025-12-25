@@ -6,7 +6,7 @@
 ##-------------------------------##
 
 ## Imports
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from .node import UnresolvedNode
 
 
@@ -20,3 +20,4 @@ class UnresolvedIdentifierNode(UnresolvedNode):
     """
     # -Properties
     name: str
+    id: int = field(init=False)
