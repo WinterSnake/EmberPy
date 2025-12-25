@@ -61,11 +61,15 @@ class SymbolTable:
     """
 
     # -Constructor
-    def __init__(self, parent: dict[str, int] | None = None) -> None:
-        if parent is None:
-            parent = {}
-        self._scopes: list[dict[str, int]] = [parent]
+    def __init__(self, parent: SymbolTable | None = None) -> None:
         self._symbols: list[Symbol] = []
+        self._scopes: list[dict[str, int]] = []
+        if parent is not None:
+            assert parent.scope_depth == 0
+            self._symbols.extend(parent._symbols)
+            self._scopes.append(parent.root_scope)
+        else:
+            self._scopes.append({})
 
     # -Instance Methods
     def push(self) -> None:
@@ -113,6 +117,10 @@ class SymbolTable:
         return None
 
     # -Properties
+    @property
+    def root_scope(self) -> dict[str, int]:
+        return self._scopes[0]
+
     @property
     def current_scope(self) -> dict[str, int]:
         return self._scopes[-1]
