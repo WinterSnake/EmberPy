@@ -20,6 +20,13 @@ class NodeTypePrimitive(NodeType):
 
     A type representing the prititive and core types to the language
     """
+    # -Dunder Methods
+    def __str__(self) -> str:
+        return self.name
+
+    # -Properties
+    name: str
+
     # -Class Properties
     void: ClassVar[Self]
     boolean: ClassVar[Self]
@@ -34,13 +41,13 @@ class NodeTypePrimitive(NodeType):
 
 
 ## Body
-NodeTypePrimitive.void = NodeTypePrimitive()
-NodeTypePrimitive.boolean = NodeTypePrimitive()
-NodeTypePrimitive.int8 = NodeTypePrimitive()
-NodeTypePrimitive.int16 = NodeTypePrimitive()
-NodeTypePrimitive.int32 = NodeTypePrimitive()
-NodeTypePrimitive.int64 = NodeTypePrimitive()
-NodeTypePrimitive.uint8 = NodeTypePrimitive()
-NodeTypePrimitive.uint16 = NodeTypePrimitive()
-NodeTypePrimitive.uint32 = NodeTypePrimitive()
-NodeTypePrimitive.uint64 = NodeTypePrimitive()
+NodeTypePrimitive.void = NodeTypePrimitive("void")
+NodeTypePrimitive.boolean = NodeTypePrimitive("boolean")
+NodeTypePrimitive.int8 = NodeTypePrimitive("int8")
+NodeTypePrimitive.int16 = NodeTypePrimitive("int16")
+NodeTypePrimitive.int32 = NodeTypePrimitive("int32")
+NodeTypePrimitive.int64 = NodeTypePrimitive("int64")
+NodeTypePrimitive.uint8 = NodeTypePrimitive("uint8")
+NodeTypePrimitive.uint16 = NodeTypePrimitive("uint16")
+NodeTypePrimitive.uint32 = NodeTypePrimitive("uint32")
+NodeTypePrimitive.uint64 = NodeTypePrimitive("uint64")

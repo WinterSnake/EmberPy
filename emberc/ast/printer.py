@@ -93,7 +93,7 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
         return f"[Builtin:{node.type.name}]"
 
     def visit_decl_function(self, node: UnresolvedDeclFunctionNode) -> str:
-        header = f"{self._get_indent()}fn ("
+        header = f"{self._get_indent()}fn {node.name}("
         for i, parameter in enumerate(node.parameters):
             header += f"{self.visit(parameter.type)} {parameter.name}"
             if parameter.has_initializer:

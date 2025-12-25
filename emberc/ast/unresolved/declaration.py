@@ -40,7 +40,7 @@ class UnresolvedDeclFunctionNode(UnresolvedDeclNode):
     parameters: Collection[UnresolvedDeclFunctionNode.Parameter]
     type: UnresolvedNode
     body: UnresolvedStmtNode
-    id: int = field(init=False)
+    id: int = field(init=False, repr=False)
 
     @property
     def arity(self) -> int:
@@ -54,6 +54,7 @@ class UnresolvedDeclFunctionNode(UnresolvedDeclNode):
         type: UnresolvedNode
         name: str
         _initializer: UnresolvedNode | None
+        id: int = field(init=False, repr=False)
 
         @property
         def location(self) -> Location:
@@ -87,7 +88,7 @@ class UnresolvedDeclVariableNode(UnresolvedDeclNode):
         location: Location
         name: str
         _initializer: UnresolvedNode | None
-        id: int = field(init=False)
+        id: int = field(init=False, repr=False)
 
         @property
         def has_initializer(self) -> bool:

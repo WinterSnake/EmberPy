@@ -20,4 +20,4 @@ class UnresolvedIdentifierNode(UnresolvedNode):
     """
     # -Properties
     name: str
-    id: int = field(init=False)
+    id: int = field(init=False, repr=False)
