@@ -9,10 +9,11 @@
 from __future__ import annotations
 from enum import IntEnum, auto
 from typing import TYPE_CHECKING
+from ..ast import NodeTypeFunction
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Sequence
-    from ..ast import NodeType, NodeTypeFunction
+    from ..ast import NodeType
 
 ## Constants
 type Symbols = Sequence[Symbol]

@@ -1,0 +1,92 @@
+##-------------------------------##
+## Ember Compiler                ##
+## Written By: Ryan Smith        ##
+##-------------------------------##
+## Resolution: Type Factory      ##
+##-------------------------------##
+
+## Imports
+from ..symbol_table import SymbolTable
+from ...ast import (
+    # -Unresolved
+    UnresolvedUnitNode, UnresolvedTypeNode,
+    UnresolvedExprEmptyNode,
+    UnresolvedUnaryPrefixNode, UnresolvedUnaryPostfixNode,
+    UnresolvedIdentifierNode, UnresolvedArrayNode,
+    UnresolvedNodeVisitor, UnresolvedDefaultVisitorMixin,
+    # -Resolved
+    NodeType,
+    NodeTypePointer, NodeTypeSlice, NodeTypePrimitive,
+    NodeTypeArray, NodeTypeIdentifier,
+)
+
+
+## Classes
+class TypeFactoryVisitor(
+    UnresolvedDefaultVisitorMixin[NodeType],
+    UnresolvedNodeVisitor[NodeType | None]
+):
+    """
+    Type Factory Resolver
+
+    Visits specific nodes to build out a valid type node
+    to be used in resolved node synthesis
+    """
+
+    # -Constructor
+    def __init__(self, symbol_table: SymbolTable) -> None:
+        self._symbol_table = symbol_table
+
+    # -Instance Methods
+    def run(self, node: UnresolvedUnitNode) -> None:
+        raise RuntimeError("TypeFactoryVisitor is not meant to run standalone")
+
+    def visit_type(self, node: UnresolvedTypeNode) -> NodeType:
+        match node.type:
+            case UnresolvedTypeNode.Type.Void:
+                return NodeTypePrimitive.void
+            case UnresolvedTypeNode.Type.Boolean:
+                return NodeTypePrimitive.boolean
+            case UnresolvedTypeNode.Type.Int8:
+                return NodeTypePrimitive.int8
+            case UnresolvedTypeNode.Type.Int16:
+                return NodeTypePrimitive.int16
+            case UnresolvedTypeNode.Type.Int32:
+                return NodeTypePrimitive.int32
+            case UnresolvedTypeNode.Type.Int64:
+                return NodeTypePrimitive.int64
+            case UnresolvedTypeNode.Type.UInt8:
+                return NodeTypePrimitive.uint8
+            case UnresolvedTypeNode.Type.UInt16:
+                return NodeTypePrimitive.uint16
+            case UnresolvedTypeNode.Type.UInt32:
+                return NodeTypePrimitive.uint32
+            case UnresolvedTypeNode.Type.UInt64:
+                return NodeTypePrimitive.uint64
+
+    def visit_expr_empty(self, node: UnresolvedExprEmptyNode) -> None:
+        return None
+
+    def visit_unary_prefix(self, node: UnresolvedUnaryPrefixNode) -> NodeType:
+        target = self.visit(node.operand)
+        assert isinstance(target, NodeType)
+        match node.operator:
+            case UnresolvedUnaryPrefixNode.Operator.Ptr:
+                return NodeTypePointer(target)
+            case UnresolvedUnaryPrefixNode.Operator.Slice:
+                return NodeTypeSlice(False, target)
+            case UnresolvedUnaryPrefixNode.Operator.SlicePtr:
+                return NodeTypeSlice(True, target)
+            case _:
+                assert False, "TODO: Error handling"
+
+    def visit_unary_postfix(self, node: UnresolvedUnaryPostfixNode) -> None:
+        return None
+
+    def visit_identifier(self, node: UnresolvedIdentifierNode) -> NodeType:
+        idx = self._symbol_table.find(node.name)
+        assert idx is not None, "TODO: Error handling"
+        return NodeTypeIdentifier.from_id(idx)
+
+    def visit_array(self, node: UnresolvedArrayNode) -> None:
+        return None
