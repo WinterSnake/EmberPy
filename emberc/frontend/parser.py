@@ -6,509 +6,605 @@
 ##-------------------------------##
 
 ## Imports
+from __future__ import annotations
 from collections.abc import Iterator
-from typing import cast
 from .lookahead_buffer import LookaheadBuffer
 from .token import Token
-from ..errors import EmberError, EmberParserError
-from ..middleware.nodes import (
-    NODE_TYPES, VALUE_TYPES, BLOCK_TYPES,
-    NodeBase, NodeType, NodeDecl, NodeStmt, NodeExpr,
-    NodeTypeBuiltin, NodeTypeIdentifier,
-    NodeDeclUnit, NodeDeclFunction, NodeDeclVariable,
-    NodeStmtBlock, NodeStmtConditional, NodeStmtLoop,
-    NodeStmtReturn, NodeStmtExpression,
-    NodeExprAssignment, NodeExprGroup, NodeExprBinary, NodeExprUnary,
-    NodeExprCall, NodeExprVariable, NodeExprLiteral,
+from ..ast import (
+    BLOCK_TYPES,
+    UnresolvedNode, UnresolvedUnitNode,
+    UnresolvedTypeNode, UnresolvedDeclNode, UnresolvedStmtNode,
+    UnresolvedDeclFunctionNode, UnresolvedDeclVariableNode,
+    UnresolvedStmtBlockNode, UnresolvedStmtExpressionNode,
+    UnresolvedStmtConditionalNode, UnresolvedStmtLoopWhileNode,
+    UnresolvedStmtLoopDoNode, UnresolvedStmtLoopForNode,
+    UnresolvedStmtReturnNode, UnresolvedStmtEmptyNode,
+    UnresolvedGroupNode, UnresolvedExprEmptyNode,
+    UnresolvedAssignNode, UnresolvedBinaryNode,
+    UnresolvedUnaryPrefixNode, UnresolvedUnaryPostfixNode,
+    UnresolvedIdentifierNode, UnresolvedLiteralNode, UnresolvedArrayNode
 )
+from ..location import Location
 
 ## Constants
-BINARY_OPERATOR = {
-    Token.Type.SymbolEqEq: (NodeExprBinary.Operator.EqEq, 1),
-    Token.Type.SymbolNtEq: (NodeExprBinary.Operator.NtEq, 1),
-    Token.Type.SymbolLt: (NodeExprBinary.Operator.Lt, 2),
-    Token.Type.SymbolGt: (NodeExprBinary.Operator.Gt, 2),
-    Token.Type.SymbolLtEq: (NodeExprBinary.Operator.LtEq, 2),
-    Token.Type.SymbolGtEq: (NodeExprBinary.Operator.GtEq, 2),
-    Token.Type.SymbolPlus: (NodeExprBinary.Operator.Add, 3),
-    Token.Type.SymbolMinus: (NodeExprBinary.Operator.Sub, 3),
-    Token.Type.SymbolStar: (NodeExprBinary.Operator.Mul, 4),
-    Token.Type.SymbolFSlash: (NodeExprBinary.Operator.Div, 4),
-    Token.Type.SymbolPercent: (NodeExprBinary.Operator.Mod, 4),
-}
-UNARY_OPERATOR = {
-    Token.Type.SymbolMinus: NodeExprUnary.Operator.Negative,
-    Token.Type.SymbolBang: NodeExprUnary.Operator.Negate,
-}
 LITERALS = (
-    Token.Type.Identifier,
+    Token.Type.Boolean,
     Token.Type.Integer,
-    Token.Type.BooleanTrue, Token.Type.BooleanFalse,
 )
-BUILTIN_TYPES = (
-    Token.Type.KeywordVoid,
-    Token.Type.KeywordBoolean,
-    Token.Type.KeywordInt8,
-    Token.Type.KeywordInt16,
-    Token.Type.KeywordInt32,
-    Token.Type.KeywordInt64,
-    Token.Type.KeywordUInt8,
-    Token.Type.KeywordUInt16,
-    Token.Type.KeywordUInt32,
-    Token.Type.KeywordUInt64,
+UNARY_PREFIX_OPERATORS = {
+    Token.Type.SymbolMinus: UnresolvedUnaryPrefixNode.Operator.Negative,
+    Token.Type.SymbolBang: UnresolvedUnaryPrefixNode.Operator.LogNeg,
+    Token.Type.SymbolBitNeg: UnresolvedUnaryPrefixNode.Operator.BitNeg,
+    Token.Type.SymbolStar: UnresolvedUnaryPrefixNode.Operator.Ptr,
+    Token.Type.SymbolAt: UnresolvedUnaryPrefixNode.Operator.Ref,
+    Token.Type.SymbolBitXor: UnresolvedUnaryPrefixNode.Operator.Deref,
+}
+UNARY_POSTFIX_OPERATORS = {
+    Token.Type.SymbolLParen: (
+        UnresolvedUnaryPostfixNode.Kind.Call,
+        Token.Type.SymbolRParen,
+    ),
+    Token.Type.SymbolLBracket: (
+        UnresolvedUnaryPostfixNode.Kind.Subscript,
+        Token.Type.SymbolRBracket,
+    ),
+}
+BINARY_OPERATORS = {
+    Token.Type.SymbolLogOr: (UnresolvedBinaryNode.Operator.LogOr, 1),
+    Token.Type.SymbolLogAnd: (UnresolvedBinaryNode.Operator.LogAnd, 2),
+    Token.Type.SymbolEqEq: (UnresolvedBinaryNode.Operator.Eq, 3),
+    Token.Type.SymbolNtEq: (UnresolvedBinaryNode.Operator.NtEq, 3),
+    Token.Type.SymbolLt: (UnresolvedBinaryNode.Operator.Lt, 4),
+    Token.Type.SymbolGt: (UnresolvedBinaryNode.Operator.Gt, 4),
+    Token.Type.SymbolLtEq: (UnresolvedBinaryNode.Operator.LtEq, 4),
+    Token.Type.SymbolGtEq: (UnresolvedBinaryNode.Operator.GtEq, 4),
+    Token.Type.SymbolDotDot: (UnresolvedBinaryNode.Operator.Range, 5),
+    Token.Type.SymbolPlus: (UnresolvedBinaryNode.Operator.Add, 6),
+    Token.Type.SymbolMinus: (UnresolvedBinaryNode.Operator.Sub, 6),
+    Token.Type.SymbolBitOr: (UnresolvedBinaryNode.Operator.BitOr, 6),
+    Token.Type.SymbolBitXor: (UnresolvedBinaryNode.Operator.BitXor, 6),
+    Token.Type.SymbolStar: (UnresolvedBinaryNode.Operator.Mul, 7),
+    Token.Type.SymbolFSlash: (UnresolvedBinaryNode.Operator.Div, 7),
+    Token.Type.SymbolPercent: (UnresolvedBinaryNode.Operator.Mod, 7),
+    Token.Type.SymbolBitAnd: (UnresolvedBinaryNode.Operator.BitAnd, 7),
+    Token.Type.SymbolLShift: (UnresolvedBinaryNode.Operator.ShiftL, 8),
+    Token.Type.SymbolRShift: (UnresolvedBinaryNode.Operator.ShiftR, 8),
+}
+ASSIGNMENT_OPERATORS = {
+    Token.Type.SymbolEq: UnresolvedAssignNode.Operator.Eq,
+    Token.Type.SymbolPlusEq: UnresolvedAssignNode.Operator.AddEq,
+    Token.Type.SymbolMinusEq: UnresolvedAssignNode.Operator.SubEq,
+    Token.Type.SymbolStarEq: UnresolvedAssignNode.Operator.MulEq,
+    Token.Type.SymbolFSlashEq: UnresolvedAssignNode.Operator.DivEq,
+    Token.Type.SymbolPercentEq: UnresolvedAssignNode.Operator.ModEq,
+    Token.Type.SymbolBitNegEq: UnresolvedAssignNode.Operator.BitNegEq,
+    Token.Type.SymbolBitXorEq: UnresolvedAssignNode.Operator.BitXorEq,
+    Token.Type.SymbolBitAndEq: UnresolvedAssignNode.Operator.BitAndEq,
+    Token.Type.SymbolBitOrEq: UnresolvedAssignNode.Operator.BitOrEq,
+    Token.Type.SymbolLShiftEq: UnresolvedAssignNode.Operator.ShiftLEq,
+    Token.Type.SymbolRShiftEq: UnresolvedAssignNode.Operator.ShiftREq,
+}
+TYPE_TABLE = {
+    Token.Type.KeywordVoid: UnresolvedTypeNode.Type.Void,
+    Token.Type.KeywordBoolean: UnresolvedTypeNode.Type.Boolean,
+    Token.Type.KeywordInt8: UnresolvedTypeNode.Type.Int8,
+    Token.Type.KeywordInt16: UnresolvedTypeNode.Type.Int16,
+    Token.Type.KeywordInt32: UnresolvedTypeNode.Type.Int32,
+    Token.Type.KeywordInt64: UnresolvedTypeNode.Type.Int64,
+    Token.Type.KeywordUInt8: UnresolvedTypeNode.Type.UInt8,
+    Token.Type.KeywordUInt16: UnresolvedTypeNode.Type.UInt16,
+    Token.Type.KeywordUInt32: UnresolvedTypeNode.Type.UInt32,
+    Token.Type.KeywordUInt64: UnresolvedTypeNode.Type.UInt64,
+}
+EXPRESSION_STARTERS = (
+    Token.Type.Identifier, *LITERALS,
+    Token.Type.SymbolLParen, *UNARY_PREFIX_OPERATORS.keys(),
+    *TYPE_TABLE.keys(),
 )
-STATEMENT_TYPES = (
+EXPRESSION_TERMINATORS = (
+    Token.Type.SymbolComma,
+    Token.Type.SymbolRBracket,
+    Token.Type.SymbolSemicolon,
+)
+STATEMENT_STARTERS = (
     Token.Type.KeywordIf,
     Token.Type.KeywordWhile,
     Token.Type.KeywordDo,
     Token.Type.KeywordFor,
     Token.Type.KeywordReturn,
-    Token.Type.SymbolLBrace,
     Token.Type.SymbolSemicolon,
+    Token.Type.SymbolLBrace,
 )
 
 
 ## Functions
-def _create_typed_node(token: Token) -> NodeTypeBuiltin:
-    """Helper function for creating NodeTypeBuiltin by token"""
-    _type: NodeTypeBuiltin.Type
+def _create_literal_node(token: Token) -> UnresolvedLiteralNode:
+    """Helper function for creating node literals by type"""
     match token.type:
-        case Token.Type.KeywordVoid:
-            _type = NodeTypeBuiltin.Type.Void
-        case Token.Type.KeywordBoolean:
-            _type = NodeTypeBuiltin.Type.Boolean
-        case Token.Type.KeywordInt8:
-            _type = NodeTypeBuiltin.Type.Int8
-        case Token.Type.KeywordInt16:
-            _type = NodeTypeBuiltin.Type.Int16
-        case Token.Type.KeywordInt32:
-            _type = NodeTypeBuiltin.Type.Int32
-        case Token.Type.KeywordInt64:
-            _type = NodeTypeBuiltin.Type.Int64
-        case Token.Type.KeywordUInt8:
-            _type = NodeTypeBuiltin.Type.UInt8
-        case Token.Type.KeywordUInt16:
-            _type = NodeTypeBuiltin.Type.UInt16
-        case Token.Type.KeywordUInt32:
-            _type = NodeTypeBuiltin.Type.UInt32
-        case Token.Type.KeywordUInt64:
-            _type = NodeTypeBuiltin.Type.UInt64
-        case _:
-            raise TypeError(f"Unhandled token type ({token.type.name}) in create_typed_node")
-    return NodeTypeBuiltin(token.location, _type)
-
-
-def _create_literal_node(token: Token) -> NodeExprLiteral:
-    """Helper function for creating NodeExprLiteral by token type and value"""
-    match token.type:
+        case Token.Type.Boolean:
+            assert isinstance(token.value, bool)
+            return UnresolvedLiteralNode(
+                token.location, token.value, UnresolvedLiteralNode.Type.Boolean
+            )
         case Token.Type.Integer:
             assert isinstance(token.value, int)
-            return NodeExprLiteral.create_integer(token.location, token.value)
-        case Token.Type.BooleanTrue:
-            return NodeExprLiteral.create_boolean(token.location, True)
-        case Token.Type.BooleanFalse:
-            return NodeExprLiteral.create_boolean(token.location, False)
+            return UnresolvedLiteralNode(
+                token.location, token.value, UnresolvedLiteralNode.Type.Integer
+            )
         case _:
-            raise TypeError(f"Unhandled token type ({token.type.name}) in create_literal_node")
+            raise NotImplementedError("Token", token, "not handled in _create_literal")
+
+
+def _create_range_binary_operator(
+    parser: Parser, location: Location, precedence: int
+) -> UnresolvedNode:
+    """Helper function for handling parsing range infix binary"""
+    if parser.matches(*EXPRESSION_TERMINATORS):
+        return UnresolvedExprEmptyNode(location)
+    return parser._parse_expression_binary(precedence)
 
 
 ## Classes
 class Parser(LookaheadBuffer[Token, Token.Type]):
     """
-    Ember Language Parser
-    Lookahead(n)
+    Ember Parser: Lookahead(n)
 
-    Iterates over token stream and produces a given AST node
-    where each grammar rule is represented as an internal method.
+    Handles iterating over a token stream and produces an unresolved
+    and ambigious Ember AST. Later passes must sort and contextualize
+    the AST into resolved nodes.
     """
 
     # -Constructor
-    def __init__(self, tokens: Iterator[Token]):
-        super().__init__(tokens, lambda token: token.type)
+    def __init__(self, token_iter: Iterator[Token]) -> None:
+        super().__init__(token_iter, lambda token: token.type)
         self._last_token: Token
 
-    # -Instance Methods
+    # -Instance Methods: Lookahead
     def advance(self) -> Token | None:
-        value = super().advance()
-        if value:
-            self._last_token = value
-        return value
+        token = super().advance()
+        if token:
+            self._last_token = token
+        return token
 
     def require(self, expected: Token.Type) -> Token:
-        '''Throws error if next token is not expected type'''
+        '''Raises ParserError if next token is not expected type'''
         if self.consume(expected):
             return self._last_token
-        token = self.peek()
-        if token is None:
-            raise EmberParserError(
-                self._last_token.location,
-                f"Unexpected end of token stream, expected {expected}"
-            )
-        raise EmberParserError(token.location, f"Unexpected token {token.type.name}; expected {expected}")
+        print("Expected:", expected, "Got:", self.current)
+        assert False, "TODO: Error handling"
 
     def require_any(self, *expected: Token.Type) -> Token:
-        '''Throws error if next token is not in expected types'''
-        token = self.matches(*expected)
-        if token is not None:
-            self.advance()
+        '''Raises ParserError if next token is not in expected types'''
+        if self.matches(*expected):
+            token = self.advance()
+            assert token is not None
             return token
-        token = self.peek()
-        if token is None:
-            raise EmberParserError(
-                self._last_token.location,
-                f"Unexpected end of token stream, expected one of {expected}"
-            )
-        raise EmberParserError(token.location, f"Unexpected token {token.type.name}; expected one of {expected}")
+        print("Expected:", expected, "Got:", self.current)
+        assert False, "TODO: Error handling"
 
-    def _sync(self) -> None:
-        '''Sync the parser into the next correct state'''
-        while token := self.advance():
-            if token.type == Token.Type.SymbolSemicolon:
-                break
-
-    def parse(self) -> NodeDeclUnit:
+    # -Instance Methods: Parser
+    def parse(self) -> UnresolvedUnitNode:
         '''
         Grammar[Unit]
         declaration*;
         '''
-        body: list[NodeBase] = []
+        declarations: list[UnresolvedNode] = []
         while not self.is_at_end:
-            try:
-                decl = self._parse_declaration()
-                body.append(decl)
-            except EmberParserError as e:
-                print(e)
-                self._sync()
-        return NodeDeclUnit(body)
+            decl = self._parse_declaration()
+            declarations.append(decl)
+        return UnresolvedUnitNode(declarations)
 
-    def _parse_declaration(self) -> NodeBase:
+    def _try_parse_type(self) -> tuple[bool, UnresolvedNode]:
+        '''Tries parsing a type and returns True if considered decl scope'''
+        expr = self._parse_type()
+        is_decl = self.match(Token.Type.Identifier)
+        return (is_decl, expr)
+
+    def _parse_type(self) -> UnresolvedNode:
+        '''Returns either a parsed type or partially parsed expression'''
+        return self._parse_unary_prefix()
+
+    def _parse_declaration(self) -> UnresolvedNode:
         '''
         Grammar[Declaration]
-        declaration_function | declaration_statement;
+        declaration_function | declaration_variable;
         '''
-        if self.consume(Token.Type.KeywordFn):
+        if self.match(Token.Type.KeywordFn):
             return self._parse_declaration_function()
-        return self._parse_declaration_statement()
+        return self._parse_declaration_variable()
 
-    def _parse_declaration_function(self) -> NodeDeclFunction:
+    def _parse_declaration_function(self) -> UnresolvedDeclFunctionNode:
         '''
         Grammar[Declaration:Function]
         'fn' IDENTIFIER '(' (parameter (',' parameter)*)? ')' ':' TYPE '{' declaration_statement* '}'
-
-        parameter: TYPE IDENTIFIER
         '''
-        # -Internal Functions
-        def _parse_parameter() -> NodeDeclVariable:
+        # -Internal Methods
+        def _parse_parameter() -> UnresolvedDeclFunctionNode.Parameter:
+            '''parameter: TYPE IDENTIFIER ('=' expression)?;'''
             _type = self._parse_type()
             ident = self.require(Token.Type.Identifier)
             assert isinstance(ident.value, str)
-            return NodeDeclVariable(_type.location, _type, ident.value, None)
-
+            initializer: UnresolvedNode | None = None
+            if self.consume(Token.Type.SymbolEq):
+                initializer = self._parse_expression()
+            return UnresolvedDeclFunctionNode.Parameter(_type, ident.value, initializer)
         # -Body
+        token = self.require(Token.Type.KeywordFn)
         ident = self.require(Token.Type.Identifier)
         assert isinstance(ident.value, str)
         self.require(Token.Type.SymbolLParen)
-        # -Parameters
-        parameters: list[NodeDeclVariable] = []
-        # --Zero
+        parameters: list = []
+        # -Params: Zero
         if not self.consume(Token.Type.SymbolRParen):
-            # --One
+            # -Params: One
             parameters.append(_parse_parameter())
-            # --Multi
+            # -Params: Multi
             while self.consume(Token.Type.SymbolComma):
                 parameters.append(_parse_parameter())
             self.require(Token.Type.SymbolRParen)
         self.require(Token.Type.SymbolColon)
-        return_type = self._parse_type()
-        self.require(Token.Type.SymbolLBrace)
+        _type = self._parse_type()
         body = self._parse_statement_block()
-        return NodeDeclFunction(
-            ident.location, ident.value, return_type, parameters, body
+        return UnresolvedDeclFunctionNode(
+            token.location, ident.value, parameters, _type, body
         )
 
-    def _parse_declaration_statement(self) -> NodeDecl | NodeStmt:
+    def _parse_declaration_statement(self) -> UnresolvedDeclNode | UnresolvedStmtNode:
         '''
         Grammar[Declaration:Statement]
         declaration_variable | statement;
         '''
-        token = self.peek()
-        # -Statement blocks
-        if token is not None and token.type in STATEMENT_TYPES:
+        if self.matches(*STATEMENT_STARTERS):
             return self._parse_statement()
-        # -Type declarations
-        is_decl, node = self._try_parse_type_decl()
+        is_decl, head = self._try_parse_type()
         if is_decl:
-            return self._parse_declaration_variable(node)
-        # -Statement Expression
-        return self._parse_statement(cast(NodeExpr, node))
-
-    def _parse_type(self) -> NODE_TYPES:
-        '''Returns a parsed type node'''
-        return cast(NODE_TYPES, self._parse_expression_unary())
-
-    def _try_parse_type_decl(self) -> tuple[bool, NODE_TYPES]:
-        '''Try to parse a type token and return if type declaration'''
-        _type = self._parse_type()
-        token = self.peek()
-        is_type = True if token is not None and token.type == Token.Type.Identifier else False
-        return (is_type, _type)
+            return self._parse_declaration_variable(head)
+        return self._parse_statement_expression(head)
 
     def _parse_declaration_variable(
-        self, type_node: NODE_TYPES | None = None
-    ) -> NodeDeclVariable:
+        self, head: UnresolvedNode | None = None
+    ) -> UnresolvedDeclVariableNode:
         '''
         Grammar[Declaration:Variable]
-        TYPE IDENTIFIER ('=' expression)? ';';
-        '''
-        if type_node is None:
-            type_node = self._parse_type()
-        assert type_node is not None
-        ident = self.require(Token.Type.Identifier)
-        assert isinstance(ident.value, str)
-        initializer: NodeExpr | None = None
-        if self.consume(Token.Type.SymbolEq):
-            initializer = cast(NodeExpr, self._parse_expression())
-        self.require(Token.Type.SymbolSemicolon)
-        return NodeDeclVariable(ident.location, type_node, ident.value, initializer)
+        TYPE entry ( ',' entry )* ';';
 
-    def _parse_statement(self, node: NodeExpr | None = None) -> NodeDecl | NodeStmt:
+        entry: IDENTIFIER ( '=' expression )?;
+        '''
+        # -Internal Methods
+        def _parse_entry() -> UnresolvedDeclVariableNode.Entry:
+            ident = self.require(Token.Type.Identifier)
+            assert isinstance(ident.value, str)
+            initializer: UnresolvedNode | None = None
+            if self.consume(Token.Type.SymbolEq):
+                initializer = self._parse_expression()
+            return UnresolvedDeclVariableNode.Entry(
+                ident.location, ident.value, initializer
+            )
+        # -Body
+        if head is None:
+            head = self._parse_type()
+        # -One
+        entries: list[UnresolvedDeclVariableNode.Entry] = [_parse_entry()]
+        # -Multi
+        while self.consume(Token.Type.SymbolComma):
+            entries.append(_parse_entry())
+        self.require(Token.Type.SymbolSemicolon)
+        return UnresolvedDeclVariableNode(head.location, head, entries)
+
+    def _parse_statement(self) -> UnresolvedStmtNode:
         '''
         Grammar[Statement]
-        statement_block | statement_condition | statement_expression | ';';
-        '''
-        if node is None:
-            # -Block statement
-            if self.consume(Token.Type.SymbolLBrace):
-                return self._parse_statement_block()
-            # -Conditional statement
-            elif self.consume(Token.Type.KeywordIf):
-                return self._parse_statement_conditional()
-            # -Loop:While statement
-            elif self.consume(Token.Type.KeywordWhile):
-                return self._parse_statement_loop_while()
-            # -Loop:Do statement
-            elif self.consume(Token.Type.KeywordDo):
-                return self._parse_statement_loop_do()
-            # -Loop:For statement
-            elif self.consume(Token.Type.KeywordFor):
-                return self._parse_statement_loop_for()
-            # -Return statement
-            elif self.consume(Token.Type.KeywordReturn):
-                return self._parse_statement_return()
-            # -Empty statement
-            elif self.consume(Token.Type.SymbolSemicolon):
-                return NodeStmtExpression(self._last_token.location, None)
-            return self._parse_statement_expression()
-        return self._continue_statement_expression(node)
+        statement_empty | statement_block | statement_loop | statement_expression;
 
-    def _parse_statement_block(self) -> NodeStmtBlock:
+        statement_loop: statement_loop_while | statement_loop_do | statement_loop_for;
+        '''
+        # -Statement: Empty
+        if self.consume(Token.Type.SymbolSemicolon):
+            return UnresolvedStmtEmptyNode(self.last_location)
+        # -Statement: Block
+        elif self.match(Token.Type.SymbolLBrace):
+            return self._parse_statement_block()
+        # -Statement: Conditional
+        elif self.match(Token.Type.KeywordIf):
+            return self._parse_statement_conditional()
+        # -Statement: Loop - While
+        elif self.match(Token.Type.KeywordWhile):
+            return self._parse_statement_loop_while()
+        # -Statement: Loop - Do
+        elif self.match(Token.Type.KeywordDo):
+            return self._parse_statement_loop_do()
+        # -Statement: Loop - For
+        elif self.match(Token.Type.KeywordFor):
+            return self._parse_statement_loop_for()
+        # -Statement: Return
+        elif self.match(Token.Type.KeywordReturn):
+            return self._parse_statement_return()
+        # -Statement: Expression
+        return self._parse_statement_expression()
+
+    def _parse_statement_block(self) -> UnresolvedStmtBlockNode:
         '''
         Grammar[Statement:Block]
-        '{' declaration_statement* '}';
+        '{' declaration_statement '}';
         '''
-        token = self._last_token
+        token = self.require(Token.Type.SymbolLBrace)
         body: list[BLOCK_TYPES] = []
-        while not self.consume(Token.Type.SymbolRBrace):
-            elem = cast(BLOCK_TYPES, self._parse_declaration_statement())
+        while not self.match(Token.Type.SymbolRBrace) and not self.is_at_end:
+            elem = self._parse_declaration_statement()
             body.append(elem)
-        return NodeStmtBlock(token.location, body)
+        self.require(Token.Type.SymbolRBrace)
+        return UnresolvedStmtBlockNode(token.location, body)
 
-    def _parse_statement_conditional(self) -> NodeStmtConditional:
+    def _parse_statement_conditional(self) -> UnresolvedStmtConditionalNode:
         '''
         Grammar[Statement:Conditional]
-        if '(' expression ')' statement ('else' statement)?;
+        if '(' expression ')' statement ( 'else' statement )?;
         '''
-        token = self._last_token
+        token = self.require(Token.Type.KeywordIf)
         self.require(Token.Type.SymbolLParen)
-        condition = cast(NodeExpr, self._parse_expression())
+        condition = self._parse_expression()
         self.require(Token.Type.SymbolRParen)
-        body = cast(NodeStmt, self._parse_statement())
-        else_body: NodeStmt | None = None
+        if_branch = self._parse_statement()
+        else_branch: UnresolvedStmtNode | None = None
         if self.consume(Token.Type.KeywordElse):
-            else_body = cast(NodeStmt, self._parse_statement())
-        return NodeStmtConditional(token.location, condition, body, else_body)
+            else_branch = self._parse_statement()
+        return UnresolvedStmtConditionalNode(
+            token.location, condition, if_branch, else_branch
+        )
 
-    def _parse_statement_loop_while(self) -> NodeStmtLoop:
+    def _parse_statement_loop_while(self) -> UnresolvedStmtLoopWhileNode:
         '''
         Grammar[Statement:Loop:While]
-        'while' '(' expression ')' statement;
+        while '(' expression ')' statement;
         '''
-        token = self._last_token
+        token = self.require(Token.Type.KeywordWhile)
         self.require(Token.Type.SymbolLParen)
-        condition = cast(NodeExpr, self._parse_expression())
+        condition = self._parse_expression()
         self.require(Token.Type.SymbolRParen)
-        body = cast(NodeStmt, self._parse_statement())
-        return NodeStmtLoop(token.location, condition, body)
+        body = self._parse_statement()
+        return UnresolvedStmtLoopWhileNode(token.location, condition, body)
 
-    def _parse_statement_loop_do(self) -> NodeStmtBlock:
+    def _parse_statement_loop_do(self) -> UnresolvedStmtLoopDoNode:
         '''
-        Grammar[Statement:Loop:Do]
-        'do' statement 'while' '(' expression ')' ';';
+        Grammar[Statement:Loop:While]
+        do statement while '(' expression ')' ';';
         '''
-        do_token = self._last_token
-        body = cast(NodeStmt, self._parse_statement())
-        while_token = self.require(Token.Type.KeywordWhile)
+        token = self.require(Token.Type.KeywordDo)
+        body = self._parse_statement()
+        self.require(Token.Type.KeywordWhile)
         self.require(Token.Type.SymbolLParen)
-        condition = cast(NodeExpr, self._parse_expression())
+        condition = self._parse_expression()
         self.require(Token.Type.SymbolRParen)
         self.require(Token.Type.SymbolSemicolon)
-        loop = NodeStmtLoop(while_token.location, condition, body)
-        return NodeStmtBlock(do_token.location, [body, loop])
+        return UnresolvedStmtLoopDoNode(token.location, condition, body)
 
-    def _parse_statement_loop_for(self) -> NodeStmtBlock | NodeStmtLoop:
+    def _parse_statement_loop_for(self) -> UnresolvedStmtLoopForNode:
         '''
         Grammar[Statement:Loop:For]
-        'for' '(' (declaration_variable | statement_expression | ';') expression? ';' expression? ')' statement;
+        'for' '(' (declaration_variable | expression? ';') expression? ';' expression? ')' statement;
         '''
+        token = self.require(Token.Type.KeywordFor)
         self.require(Token.Type.SymbolLParen)
         # -<Initializer>-
-        init: BLOCK_TYPES | None = None
+        initializer: UnresolvedNode | None = None
         if not self.consume(Token.Type.SymbolSemicolon):
-            is_decl, node = self._try_parse_type_decl()
+            is_decl, node = self._try_parse_type()
             if is_decl:
-                init = self._parse_declaration_variable(node)
+                initializer = self._parse_declaration_variable(node)
             else:
-                init = self._continue_statement_expression(cast(NodeExpr, node))
+                initializer = self._parse_expression(node)
+                self.require(Token.Type.SymbolSemicolon)
         # -<Condition>-
-        condition: NodeExpr
+        condition: UnresolvedNode
         if not self.consume(Token.Type.SymbolSemicolon):
-            condition = cast(NodeExpr, self._parse_expression())
+            condition = self._parse_expression()
             self.require(Token.Type.SymbolSemicolon)
         else:
-            token = self._last_token
-            condition = NodeExprLiteral.create_boolean(token.location, True)
+            condition = UnresolvedLiteralNode(
+                self.last_location, True, UnresolvedLiteralNode.Type.Boolean
+            )
         # -<Increment>-
-        inc: NodeStmt | None = None
-        if not self.consume(Token.Type.SymbolRParen):
-            inc_expr = cast(NodeExpr, self._parse_expression())
-            self.require(Token.Type.SymbolRParen)
-            inc = NodeStmtExpression(self._last_token.location, inc_expr)
+        increment: UnresolvedNode | None = None
+        if not self.match(Token.Type.SymbolRParen):
+            increment = self._parse_expression()
         # -<Body>-
-        body = cast(NodeStmt, self._parse_statement())
-        if inc is not None:
-            body = NodeStmtBlock(body.location, [body, inc])
-        loop = NodeStmtLoop(condition.location, condition, body)
-        if init is None:
-            return loop
-        return NodeStmtBlock(init.location, [init, loop])
+        self.require(Token.Type.SymbolRParen)
+        body = self._parse_statement()
+        return UnresolvedStmtLoopForNode(
+            token.location, initializer, condition, increment, body
+        )
 
-    def _parse_statement_return(self) -> NodeStmtReturn:
+    def _parse_statement_return(self) -> UnresolvedStmtReturnNode:
         '''
-        Grammar[Statement:Block]
+        Grammar[Statement:Return]
         return expression? ';';
         '''
-        token = self._last_token
-        value: NodeExpr | None = None
+        token = self.require(Token.Type.KeywordReturn)
+        value: UnresolvedNode | None = None
         if not self.consume(Token.Type.SymbolSemicolon):
             value = self._parse_expression()
             self.require(Token.Type.SymbolSemicolon)
-        return NodeStmtReturn(token.location, value)
-
-    def _continue_statement_expression(self, expr: NodeExpr) -> NodeStmtExpression:
-        '''Handles forwarding expression node through expression and statement parsing'''
-        expr = self._parse_expression(expr)
-        return self._parse_statement_expression(expr)
+        return UnresolvedStmtReturnNode(token.location, value)
 
     def _parse_statement_expression(
-        self, expr: NodeExpr | None = None
-    ) -> NodeStmtExpression:
+        self, head: UnresolvedNode | None = None
+    ) -> UnresolvedStmtExpressionNode:
         '''
         Grammar[Statement:Expression]
         expression ';';
         '''
-        if expr is None:
-            expr = cast(NodeExpr, self._parse_expression())
+        if head is not None and self.consume(Token.Type.SymbolSemicolon):
+            return UnresolvedStmtExpressionNode(self.last_location, head)
+        head = self._parse_expression(head)
         self.require(Token.Type.SymbolSemicolon)
-        return NodeStmtExpression(expr.location, expr)
+        return UnresolvedStmtExpressionNode(self.last_location, head)
 
-    def _parse_expression(self, l_value: NodeExpr | None = None) -> NodeExpr:
+    def _parse_expression(
+        self, head: UnresolvedNode | None = None
+    ) -> UnresolvedNode:
         '''
         Grammar[Expression]
-        expression_binary ('=' expression)?;
+        expression_binary (ASSIGNMENT_OPERATOR expression_binary)?;
         '''
-        l_value = self._parse_expression_binary(lhs=l_value)
-        if self.consume(Token.Type.SymbolEq):
-            location = self._last_token.location
+        l_value = self._parse_expression_binary(lhs=head)
+        if self.matches(*ASSIGNMENT_OPERATORS.keys()):
+            token = self.next()
+            operator = ASSIGNMENT_OPERATORS[token.type]
             r_value = self._parse_expression()
-            l_value = NodeExprAssignment(location, l_value, r_value)
+            l_value = UnresolvedAssignNode(token.location, operator, l_value, r_value)
         return l_value
 
     def _parse_expression_binary(
-        self, current: int = 0, lhs: NodeExpr | None = None
-    ) -> NodeExpr:
+        self, current: int = 0, lhs: UnresolvedNode | None = None
+    ) -> UnresolvedNode:
         '''
         Grammar[Expression:Binary]
-        expression_unary (BINARY_OPERATOR expression_binary)*;
+        unary_prefix (BINARY_OPERATOR expression_binary)*;
         '''
         if lhs is None:
-            lhs = cast(NodeExpr, self._parse_expression_unary())
-        while token := self.matches(*BINARY_OPERATOR.keys()):
-            operator, precedence = BINARY_OPERATOR[token.type]
+            lhs = self._parse_unary_prefix()
+        while self.matches(*BINARY_OPERATORS.keys()):
+            token = self.current
+            operator, precedence = BINARY_OPERATORS[token.type]
             if precedence <= current:
                 break
-            self.advance()
-            rhs = cast(NodeExpr, self._parse_expression_binary(precedence))
-            lhs = NodeExprBinary(token.location, operator, lhs, rhs)
+            token = self.next()
+            rhs: UnresolvedNode
+            if operator == UnresolvedBinaryNode.Operator.Range:
+                rhs = _create_range_binary_operator(
+                    self, token.location, precedence
+                )
+            else:
+                rhs = self._parse_expression_binary(precedence)
+            lhs = UnresolvedBinaryNode(token.location, operator, lhs, rhs)
         return lhs
 
-    def _parse_expression_unary(self) -> NodeExpr:
+    def _parse_unary_prefix(self) -> UnresolvedNode:
         '''
-        Grammar[Expression:Unary]
-        UNARY_OPERATOR expression_unary | expression_primary;
+        Grammar[Unary]
+        UNARY_PREFIX unary_prefix | primary;
         '''
-        if token := self.matches(*UNARY_OPERATOR.keys()):
-            operator = UNARY_OPERATOR[token.type]
-            self.advance()
-            expression = self._parse_expression_unary()
-            return NodeExprUnary(token.location, operator, expression)
-        return self._parse_expression_call()
-
-    def _parse_expression_call(self) -> NodeExpr:
-        '''
-        Grammar[Expression:Unary]
-        expression_primary ('(' (expression (',' expression)*)? ')')*;
-        '''
-        expr = self._parse_expression_primary()
-        # -Expr: Primary
-        if not self.consume(Token.Type.SymbolLParen):
-            return expr
-        # -Expr: Call
-        token = self._last_token
-        arguments: list[NodeExpr] = []
-        # --Zero
-        if not self.consume(Token.Type.SymbolRParen):
-            # --One
-            arguments.append(self._parse_expression())
-            # --Multi
-            while self.consume(Token.Type.SymbolComma):
-                arguments.append(self._parse_expression())
-            self.require(Token.Type.SymbolRParen)
-        return NodeExprCall(token.location, expr, arguments)
-
-    def _parse_expression_primary(self) -> NodeExpr:
-        '''
-        Grammar[Expression:Primary]
-        '(' expression ')' | expression_literal;
-        '''
-        if not self.consume(Token.Type.SymbolLParen):
-            return cast(NodeExpr, self._parse_expression_literal())
-        location = self._last_token.location
-        expression = cast(NodeExpr, self._parse_expression())
-        self.require(Token.Type.SymbolRParen)
-        return NodeExprGroup(location, expression)
-
-    def _parse_expression_literal(self) -> NODE_TYPES:
-        '''
-        Grammar[Expression:Literal]
-        TYPE | IDENTIFIER | BOOLEAN | INTEGER;
-        '''
-        if token := self.matches(*BUILTIN_TYPES):
-            self.advance()
-            return _create_typed_node(token)
-        elif self.consume(Token.Type.Identifier):
+        # -Unary: Range
+        if self.consume(Token.Type.SymbolDotDot):
             token = self._last_token
+            bin_operator, precedence = BINARY_OPERATORS[token.type]
+            lhs = UnresolvedExprEmptyNode(token.location)
+            rhs = _create_range_binary_operator(self, token.location, precedence)
+            return UnresolvedBinaryNode(token.location, bin_operator, lhs, rhs)
+        # -Unary: Slice
+        if self.match(Token.Type.SymbolLBracket):
+            next = self.peek(1)
+            if next and next.type in (Token.Type.SymbolStar, Token.Type.SymbolRBracket):
+                token = self.next()
+                _type = UnresolvedUnaryPrefixNode.Operator.Slice
+                if not self.consume(Token.Type.SymbolRBracket):
+                    self.require(Token.Type.SymbolStar)
+                    _type = UnresolvedUnaryPrefixNode.Operator.SlicePtr
+                    self.require(Token.Type.SymbolRBracket)
+                operand = self._parse_unary_prefix()
+                return UnresolvedUnaryPrefixNode(token.location, _type, operand)
+        # -Unary: Base
+        elif self.matches(*UNARY_PREFIX_OPERATORS.keys()):
+            token = self.next()
+            operator = UNARY_PREFIX_OPERATORS[token.type]
+            operand = self._parse_unary_prefix()
+            return UnresolvedUnaryPrefixNode(token.location, operator, operand)
+        # -Primary
+        return self._parse_primary()
+
+    def _parse_primary(self) -> UnresolvedNode:
+        '''
+        Grammar[Primary]
+        primary_group | primary_array | literal;
+        '''
+        # -Group
+        if self.match(Token.Type.SymbolLParen):
+            return self._parse_primary_group()
+        # -Array
+        elif self.match(Token.Type.SymbolLBracket):
+            return self._parse_primary_array()
+        # -Literal
+        node = self._parse_literal()
+        return self._parse_unary_postfix(node)
+
+    def _parse_primary_group(self) -> UnresolvedGroupNode:
+        '''
+        Grammar[Primary:Group]
+        '(' expression ')';
+        '''
+        token = self.require(Token.Type.SymbolLParen)
+        inner = self._parse_expression()
+        self.require(Token.Type.SymbolRParen)
+        inner = self._parse_unary_postfix(inner)
+        node = UnresolvedGroupNode(token.location, inner)
+        if self.matches(*EXPRESSION_STARTERS):
+            node._target = self._parse_unary_prefix()
+        return node
+
+    def _parse_primary_array(self) -> UnresolvedArrayNode:
+        '''
+        Grammar[Primary:Array]
+        '[' expression ( ',' expression )* ']';
+        '''
+        # -Body
+        token = self.require(Token.Type.SymbolLBracket)
+        values: list[UnresolvedNode] = [self._parse_expression()]
+        while self.consume(Token.Type.SymbolComma):
+            values.append(self._parse_expression())
+        self.require(Token.Type.SymbolRBracket)
+        return UnresolvedArrayNode(token.location, values)
+
+    def _parse_unary_postfix(self, head: UnresolvedNode) -> UnresolvedNode:
+        '''
+        Grammar[Unary:Postfix]
+        expression ( '[' arguments? ']' | '(' arguments? ')' )*;
+        '''
+        # -Internal Functions
+        def _parse_argument(is_index: bool) -> UnresolvedNode:
+            '''Handles parse separation of indexing and calling postfix'''
+            # -Call
+            if not is_index:
+                return self._parse_expression()
+            # -Index: Empty
+            elif self.matches(Token.Type.SymbolComma, Token.Type.SymbolRBracket):
+                return UnresolvedExprEmptyNode(self.current.location)
+            # -Index: Expression
+            return self._parse_expression()
+        # -Body
+        while self.matches(*UNARY_POSTFIX_OPERATORS.keys()):
+            token = self.next()
+            kind, closer = UNARY_POSTFIX_OPERATORS[token.type]
+            is_index = kind == UnresolvedUnaryPostfixNode.Kind.Subscript
+            # -Arguments: Zero
+            arguments: list[UnresolvedNode] = []
+            if not self.consume(closer):
+                # -Arugments: One
+                arguments.append(_parse_argument(is_index))
+                # -Arguments: Multi
+                while self.consume(Token.Type.SymbolComma):
+                    arguments.append(_parse_argument(is_index))
+                self.require(closer)
+            head = UnresolvedUnaryPostfixNode(
+                token.location, head, kind, arguments
+            )
+        return head
+
+    def _parse_literal(self) -> UnresolvedNode:
+        '''
+        Grammar[Literal]
+        TYPE | IDENTIFIER | BOOL | INTEGER;
+        '''
+        # -Types
+        if self.matches(*TYPE_TABLE.keys()):
+            token = self.next()
+            _type = TYPE_TABLE[token.type]
+            return UnresolvedTypeNode(token.location, _type)
+        # -Identifier
+        elif self.match(Token.Type.Identifier):
+            token = self.next()
             assert isinstance(token.value, str)
-            return NodeExprVariable(token.location, token.value)
+            return UnresolvedIdentifierNode(token.location, token.value)
+        # -Literals
         token = self.require_any(*LITERALS)
         return _create_literal_node(token)
 
@@ -516,3 +612,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     @property
     def is_at_end(self) -> bool:
         return self.peek() is None
+
+    @property
+    def last_location(self) -> Location:
+        return self._last_token.location
