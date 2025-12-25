@@ -71,8 +71,11 @@ ASSIGN_OPERATORS = {
 
 
 ## Classes
-class UnresolvedNodePrinter(UnresolvedNodeVisitor):
+class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
     """
+    Ember Unresolved Visitor: Printer
+
+    Traverses the unresolved parse tree and prints each node (roughly) as it's input
     """
 
     # -Constructor

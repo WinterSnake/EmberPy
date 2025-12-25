@@ -19,7 +19,7 @@ from .unresolved import (
     UnresolvedAssignNode, UnresolvedBinaryNode,
     UnresolvedUnaryPrefixNode, UnresolvedUnaryPostfixNode,
     UnresolvedIdentifierNode, UnresolvedLiteralNode, UnresolvedArrayNode,
-    UnresolvedNodeVisitor,
+    UnresolvedNodeVisitor, UnresolvedDefaultVisitorMixin
 )
 from .printer import unresolved_printer
 
@@ -38,7 +38,7 @@ __all__ = (
     "UnresolvedAssignNode", "UnresolvedBinaryNode",
     "UnresolvedUnaryPrefixNode", "UnresolvedUnaryPostfixNode",
     "UnresolvedIdentifierNode", "UnresolvedLiteralNode", "UnresolvedArrayNode",
-    "UnresolvedNodeVisitor",
+    "UnresolvedNodeVisitor", "UnresolvedDefaultVisitorMixin",
     "unresolved_printer",
     # -Resolved
 )

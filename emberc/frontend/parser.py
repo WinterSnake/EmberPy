@@ -233,7 +233,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         ident = self.require(Token.Type.Identifier)
         assert isinstance(ident.value, str)
         self.require(Token.Type.SymbolLParen)
-        parameters: list = []
+        parameters: list[UnresolvedDeclFunctionNode.Parameter] = []
         # -Params: Zero
         if not self.consume(Token.Type.SymbolRParen):
             # -Params: One

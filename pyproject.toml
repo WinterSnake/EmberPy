@@ -5,3 +5,6 @@ description = "A compiler for the Ember language written in python"
 
 [project.scripts]
 emberc = "emberc.__main__:_entry"
+
+[tool.mypy]
+strict = true
