@@ -1,4 +1,3 @@
-6 + 1;
 fn test() : void
 {
 	int16 b = 24;
@@ -9,12 +8,10 @@ fn area(int32 shape) : int32
 {
 	int8 a = 10;
 	int64 b = 2555;
-	a + b;
+	(int32)a + b;
 }
 
-fn beetle(uint32 t, uint64 value):bool
+fn beetle(uint32 t = 20, uint64 value):bool
 {
-	area(93);
+	return area(93);
 }
-
-beetle(9, 10);

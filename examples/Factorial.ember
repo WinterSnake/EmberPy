@@ -1,7 +1,6 @@
 fn __start__(): void
 {
 	int32 i = factorial(8 + 3);
-	print(i);
 }
 
 fn factorial(int32 n): int32
