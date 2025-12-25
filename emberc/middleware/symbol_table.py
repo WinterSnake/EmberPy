@@ -38,7 +38,7 @@ class Symbol:
 
     # -Dunder Methods
     def __str__(self) -> str:
-        return f"[Symbol({self.id}:{self.name}); kind={self.kind.name}]"
+        return f"[Symbol({self.id}:{self.name}); kind={self.kind.name}, type={self.type}]"
 
     # -Properties
     @property
@@ -99,12 +99,18 @@ class SymbolTable:
         _type = NodeTypeFunction(_type, parameters)
         return self.add(name, Symbol.Kind.Function, _type)
 
+    def add_parameter(self, name: str, _type: NodeType) -> int | None:
+        return self.add(name, Symbol.Kind.Parameter, _type)
+
     def add_variable(self, name: str, _type: NodeType) -> int | None:
         return self.add(name, Symbol.Kind.Variable, _type)
 
     def assign_type(self, _id: int, _type: NodeType) -> None:
         symbol = self._symbols[_id]
         symbol._type = _type
+
+    def get(self, _id: int) -> Symbol:
+        return self._symbols[_id]
 
     def find_local(self, name: str) -> int | None:
         '''Finds the given name within the current scope'''
