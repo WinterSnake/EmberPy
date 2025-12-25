@@ -6,6 +6,11 @@
 ##-------------------------------##
 
 ## Imports
+from .resolved import (
+    ResolvedNode, NodeType,
+    NodeTypePointer, NodeTypeSlice, NodeTypePrimitive,
+    NodeTypeArray, NodeTypeFunction, NodeTypeIdentifier,
+)
 from .unresolved import (
     BLOCK_TYPES, LITERAL_VALUE,
     UnresolvedNode, UnresolvedUnitNode,
@@ -41,4 +46,7 @@ __all__ = (
     "UnresolvedNodeVisitor", "UnresolvedDefaultVisitorMixin",
     "unresolved_printer",
     # -Resolved
+    "ResolvedNode", "NodeType",
+    "NodeTypePointer", "NodeTypeSlice", "NodeTypePrimitive",
+    "NodeTypeArray", "NodeTypeFunction", "NodeTypeIdentifier",
 )
