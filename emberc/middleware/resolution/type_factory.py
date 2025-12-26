@@ -6,19 +6,22 @@
 ##-------------------------------##
 
 ## Imports
-from ..symbol_table import SymbolTable
+from __future__ import annotations
+from typing import TYPE_CHECKING
 from ...ast import (
     # -Unresolved
-    UnresolvedUnitNode, UnresolvedTypeNode,
-    UnresolvedExprEmptyNode,
-    UnresolvedUnaryPrefixNode, UnresolvedUnaryPostfixNode,
-    UnresolvedIdentifierNode, UnresolvedArrayNode,
     UnresolvedNodeVisitor, UnresolvedDefaultVisitorMixin,
+    UnresolvedTypeNode,
+    UnresolvedUnaryPrefixNode, UnresolvedUnaryPostfixNode,
     # -Resolved
-    NodeType,
-    NodeTypePointer, NodeTypeSlice, NodeTypePrimitive,
-    NodeTypeArray, NodeTypeIdentifier,
+    NodeType, NodeTypePrimitive,
+    NodeTypePointer, NodeTypeSlice,
+    NodeTypePendingArray, NodeTypeIdentifier,
 )
+
+if TYPE_CHECKING:
+    from ..symbol_table import SymbolTable
+    from ...ast import UnresolvedUnitNode, UnresolvedIdentifierNode
 
 
 ## Classes
@@ -29,8 +32,8 @@ class TypeFactoryVisitor(
     """
     Type Factory Resolver
 
-    Visits specific nodes to build out a valid type node
-    to be used in resolved node synthesis
+    Walks a type expression and builds a nested resolved or pending
+    typed node for a resolved AST tree
     """
 
     # -Constructor
@@ -38,7 +41,7 @@ class TypeFactoryVisitor(
         self._symbol_table = symbol_table
 
     # -Instance Methods
-    def run(self, node: UnresolvedUnitNode) -> None:
+    def run(self, ast: UnresolvedUnitNode) -> None:
         raise RuntimeError("TypeFactoryVisitor is not meant to run standalone")
 
     def visit_type(self, node: UnresolvedTypeNode) -> NodeType:
@@ -64,12 +67,9 @@ class TypeFactoryVisitor(
             case UnresolvedTypeNode.Type.UInt64:
                 return NodeTypePrimitive.uint64
 
-    def visit_expr_empty(self, node: UnresolvedExprEmptyNode) -> None:
-        return None
-
     def visit_unary_prefix(self, node: UnresolvedUnaryPrefixNode) -> NodeType:
         target = self.visit(node.operand)
-        assert isinstance(target, NodeType)
+        assert isinstance(target, NodeType), "TODO: Error handling"
         match node.operator:
             case UnresolvedUnaryPrefixNode.Operator.Ptr:
                 return NodeTypePointer(target)
@@ -80,13 +80,14 @@ class TypeFactoryVisitor(
             case _:
                 assert False, "TODO: Error handling"
 
-    def visit_unary_postfix(self, node: UnresolvedUnaryPostfixNode) -> None:
-        return None
+    def visit_unary_postfix(self, node: UnresolvedUnaryPostfixNode) -> NodeType:
+        if node.kind != UnresolvedUnaryPostfixNode.Kind.Subscript:
+            assert False, "TODO: Error handling"
+        head = self.visit(node.head)
+        assert head is not None, "TODO: Error handling"
+        return NodeTypePendingArray(head, node.arguments)
 
     def visit_identifier(self, node: UnresolvedIdentifierNode) -> NodeType:
-        idx = self._symbol_table.find(node.name)
-        assert idx is not None, "TODO: Error handling"
-        return NodeTypeIdentifier.from_id(idx)
-
-    def visit_array(self, node: UnresolvedArrayNode) -> None:
-        return None
+        _id = self._symbol_table.find(node.name)
+        assert _id is not None, "TODO: Error handling"
+        return NodeTypeIdentifier.from_id(_id)
