@@ -9,7 +9,7 @@
 from __future__ import annotations
 from enum import IntEnum, auto
 from typing import TYPE_CHECKING
-from ..ast import NodeTypeFunction
+from ..ast import LITERAL_VALUE, NodeTypeFunction
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Sequence
@@ -35,6 +35,7 @@ class Symbol:
         self.name: str = name
         self.kind: Symbol.Kind = kind
         self._type: NodeType | None = _type
+        self._value: LITERAL_VALUE | None = None
 
     # -Dunder Methods
     def __str__(self) -> str:
@@ -45,6 +46,15 @@ class Symbol:
     def type(self) -> NodeType:
         assert self._type is not None
         return self._type
+
+    @property
+    def has_value(self) -> bool:
+        return self._value is not None
+
+    @property
+    def value(self) -> LITERAL_VALUE:
+        assert self._value is not None
+        return self._value
 
     # -Sub-Classes
     class Kind(IntEnum):
