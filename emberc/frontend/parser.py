@@ -39,16 +39,10 @@ UNARY_PREFIX_OPERATORS = {
     Token.Type.SymbolAt: UnresolvedUnaryPrefixNode.Operator.Ref,
     Token.Type.SymbolBitXor: UnresolvedUnaryPrefixNode.Operator.Deref,
 }
-UNARY_POSTFIX_OPERATORS = {
-    Token.Type.SymbolLParen: (
-        UnresolvedUnaryPostfixNode.Kind.Call,
-        Token.Type.SymbolRParen,
-    ),
-    Token.Type.SymbolLBracket: (
-        UnresolvedUnaryPostfixNode.Kind.Subscript,
-        Token.Type.SymbolRBracket,
-    ),
-}
+UNARY_POSTFIX_OPERATORS = (
+    Token.Type.SymbolLParen,
+    Token.Type.SymbolLBracket,
+)
 BINARY_OPERATORS = {
     Token.Type.SymbolLogOr: (UnresolvedBinaryNode.Operator.LogOr, 1),
     Token.Type.SymbolLogAnd: (UnresolvedBinaryNode.Operator.LogAnd, 2),
@@ -170,7 +164,6 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         '''Raises ParserError if next token is not expected type'''
         if self.consume(expected):
             return self._last_token
-        print("Expected:", expected, "Got:", self.current)
         assert False, "TODO: Error handling"
 
     def require_any(self, *expected: Token.Type) -> Token:
@@ -179,7 +172,6 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             token = self.advance()
             assert token is not None
             return token
-        print("Expected:", expected, "Got:", self.current)
         assert False, "TODO: Error handling"
 
     # -Instance Methods: Parser
@@ -557,37 +549,61 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _parse_unary_postfix(self, head: UnresolvedNode) -> UnresolvedNode:
         '''
         Grammar[Unary:Postfix]
-        expression ( '[' arguments? ']' | '(' arguments? ')' )*;
+        expression ( unary_call | unary_subscript)*;
+        '''
+        while self.matches(*UNARY_POSTFIX_OPERATORS):
+            token = self.current
+            match token.type:
+                case Token.Type.SymbolLParen:
+                    head = self._parse_unary_call(head)
+                case Token.Type.SymbolLBracket:
+                    head = self._parse_unary_subscript(head)
+        return head
+
+    def _parse_unary_call(self, head: UnresolvedNode) -> UnresolvedNode:
+        '''
+        Grammar[Unary:Postfix:Call]
+        '(' ( expression ( ',' expression )* )? ')'
+        '''
+        token = self.require(Token.Type.SymbolLParen)
+        # -Arguments: Zero
+        arguments: list[UnresolvedNode] = []
+        if not self.consume(Token.Type.SymbolRParen):
+            # -Arguments: One
+            arguments.append(self._parse_expression())
+            # -Arguments: Multi
+            while self.consume(Token.Type.SymbolComma):
+                arguments.append(self._parse_expression())
+            self.require(Token.Type.SymbolRParen)
+        return UnresolvedUnaryPostfixNode(
+            token.location, head,
+            UnresolvedUnaryPostfixNode.Kind.Call, arguments
+        )
+
+    def _parse_unary_subscript(self, head: UnresolvedNode) -> UnresolvedNode:
+        '''
+        Grammar[Unary:Postfix:Subscript]
+        '[' ( expression? ( ',' expression? )* )? ']'
         '''
         # -Internal Functions
-        def _parse_argument(is_index: bool) -> UnresolvedNode:
-            '''Handles parse separation of indexing and calling postfix'''
-            # -Call
-            if not is_index:
-                return self._parse_expression()
-            # -Index: Empty
-            elif self.matches(Token.Type.SymbolComma, Token.Type.SymbolRBracket):
-                return UnresolvedExprEmptyNode(self.current.location)
-            # -Index: Expression
+        def _parse_argument() -> UnresolvedNode:
+            if self.match(Token.Type.SymbolComma):
+                return UnresolvedExprEmptyNode(token.location)
+            elif self.match(Token.Type.SymbolRBracket):
+                return UnresolvedExprEmptyNode(self.last_location)
             return self._parse_expression()
         # -Body
-        while self.matches(*UNARY_POSTFIX_OPERATORS.keys()):
-            token = self.next()
-            kind, closer = UNARY_POSTFIX_OPERATORS[token.type]
-            is_index = kind == UnresolvedUnaryPostfixNode.Kind.Subscript
-            # -Arguments: Zero
-            arguments: list[UnresolvedNode] = []
-            if not self.consume(closer):
-                # -Arugments: One
-                arguments.append(_parse_argument(is_index))
-                # -Arguments: Multi
-                while self.consume(Token.Type.SymbolComma):
-                    arguments.append(_parse_argument(is_index))
-                self.require(closer)
-            head = UnresolvedUnaryPostfixNode(
-                token.location, head, kind, arguments
-            )
-        return head
+        token = self.require(Token.Type.SymbolLBracket)
+        # -Arguments: One
+        arguments: list[UnresolvedNode] = [_parse_argument()]
+        # -Arguments: Multi
+        while self.consume(Token.Type.SymbolComma):
+            arguments.append(_parse_argument())
+        self.require(Token.Type.SymbolRBracket)
+        return UnresolvedUnaryPostfixNode(
+            token.location, head,
+            UnresolvedUnaryPostfixNode.Kind.Subscript, arguments
+        )
 
     def _parse_literal(self) -> UnresolvedNode:
         '''
