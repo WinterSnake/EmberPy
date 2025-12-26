@@ -2,7 +2,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Resolution: Value Discovery   ##
+## Resolution: Global Binding    ##
 ##-------------------------------##
 
 ## Imports
@@ -19,15 +19,15 @@ from ...ast import (
 
 
 ## Classes
-class GlobalValueDiscoveryVisitor(
+class GlobalBindingVisitor(
     UnresolvedDefaultVisitorMixin[None],
     UnresolvedNodeVisitor[UnresolvedUnitNode | None]
 ):
     """
-    Global Value Discovery
+    Global Binding
 
-    Iterates over global functions and variables and registers heir type
-    information with their name to the symbol table in root scope
+    Iterates over global functions and variables and registers their
+    type information and name to the symbol table in root scope
     """
 
     # -Constructor
@@ -36,20 +36,20 @@ class GlobalValueDiscoveryVisitor(
         self._type_factory = TypeFactoryVisitor(symbol_table)
 
     # -Instance Methods
-    def run(self, node: UnresolvedUnitNode) -> UnresolvedUnitNode:
-        for child in node.children:
+    def run(self, ast: UnresolvedUnitNode) -> UnresolvedUnitNode:
+        for child in ast.children:
             self.visit(child)
-        return node
+        return ast
 
     def visit_decl_function(self, node: UnresolvedDeclFunctionNode) -> None:
         _type = self._type_factory.visit(node.type)
         assert _type is not None
-        parameters: list[NodeType] = []
+        parameter_types: list[NodeType] = []
         for parameter in node.parameters:
-            param = self._type_factory.visit(parameter.type)
-            assert param is not None
-            parameters.append(param)
-        _id = self._symbol_table.add_function(node.name, _type, parameters)
+            parameter_type = self._type_factory.visit(parameter.type)
+            assert parameter_type is not None
+            parameter_types.append(parameter_type)
+        _id = self._symbol_table.add_function(node.name, _type, parameter_types)
         assert _id is not None
         node.id = _id
 
