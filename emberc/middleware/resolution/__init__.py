@@ -2,19 +2,26 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Middleware: Resolution Pass   ##
+## Pass: Resolution              ##
 ##-------------------------------##
 
 ## Imports
+from __future__ import annotations
+from typing import TYPE_CHECKING
+from .global_binding import GlobalBindingVisitor
+from .local_binding import LocalBindingVisitor
 from .type_factory import TypeFactoryVisitor
-from .value_discovery import GlobalValueDiscoveryVisitor
+from .variable_evaluator import VariableEvaluatorVisitor
 from ..symbol_table import SymbolTable
-from ...ast import UnresolvedUnitNode
+
+if TYPE_CHECKING:
+    from ...ast import UnresolvedUnitNode
 
 ## Constants
 __all__ = (
-    "GlobalValueDiscoveryVisitor",
-    "resolve_ast",
+    "GlobalBindingVisitor", "LocalBindingVisitor",
+    "TypeFactoryVisitor", "VariableEvaluatorVisitor",
+    "resolve_ast"
 )
 
 
@@ -22,7 +29,8 @@ __all__ = (
 def resolve_ast(
     ast: UnresolvedUnitNode, root: SymbolTable | None = None
 ) -> UnresolvedUnitNode:
-    """Runs discovery and binding passes to produce a resolved AST tree"""
+    """Runs binding passes and returns a lowered resolved AST"""
     table = SymbolTable(root)
-    ast = GlobalValueDiscoveryVisitor(table).run(ast)
+    ast = GlobalBindingVisitor(table).run(ast)
+    ast = LocalBindingVisitor(table).run(ast)
     return ast
