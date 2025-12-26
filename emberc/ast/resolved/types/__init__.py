@@ -2,28 +2,27 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## AST: Resolved                 ##
+## Resolved Node: Type           ##
 ##-------------------------------##
 
 ## Imports
-from .node import ResolvedNode
-from .types import (
-    NodeType,
-    NodeTypePrimitive, NodeTypeArray, NodeTypeIdentifier,
-    NodeTypePointer, NodeTypeSlice, NodeTypeFunction,
-    NodeTypePendingArray,
-    NodeTypeVisitor, NodeTypePendingVisitor,
-)
+from .array import NodeTypePendingArray, NodeTypeArray
+from .base import NodeType
+from .function import NodeTypeFunction
+from .identifier import NodeTypeIdentifier
+from .pointer import NodeTypePointer
+from .primitive import NodeTypePrimitive
+from .slice import NodeTypeSlice
+from .visitor import NodeTypeVisitor, NodeTypePendingVisitor
 
 ## Constants
 __all__ = (
-    "ResolvedNode", "NodeType",
-    # -Type: Core
+    # -Core
     "NodeType",
     "NodeTypePrimitive", "NodeTypeArray", "NodeTypeIdentifier",
     "NodeTypePointer", "NodeTypeSlice", "NodeTypeFunction",
-    # -Type: Pending
+    # -Pending
     "NodeTypePendingArray",
-    # -Type: Visitors
+    # -Visitors
     "NodeTypeVisitor", "NodeTypePendingVisitor",
 )

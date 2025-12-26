@@ -8,8 +8,12 @@
 ## Imports
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Any, ClassVar, Self
+from typing import TYPE_CHECKING, Any, ClassVar, Self
 from .base import NodeType
+
+if TYPE_CHECKING:
+    from .visitor import NodeTypeVisitor
+    from ...unresolved import UnresolvedNodeVisitor
 
 
 ## Classes
@@ -23,6 +27,11 @@ class NodeTypeIdentifier(NodeType):
 
     Uses a cache map to store single instances
     """
+    # -Instance Methods
+    def accept[T](self, visitor: NodeTypeVisitor[T]) -> T:
+        return visitor.visit_type_identifier(self)
+
+    def bind[T](self, visitor: UnresolvedNodeVisitor[T]) -> None: ...
 
     # -Class Methods
     @classmethod

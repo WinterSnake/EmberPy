@@ -9,7 +9,8 @@
 from .resolved import (
     ResolvedNode, NodeType,
     NodeTypePointer, NodeTypeSlice, NodeTypePrimitive,
-    NodeTypeArray, NodeTypeFunction, NodeTypeIdentifier,
+    NodeTypeArray, NodeTypePendingArray,
+    NodeTypeFunction, NodeTypeIdentifier,
 )
 from .unresolved import (
     BLOCK_TYPES, LITERAL_VALUE,
@@ -48,5 +49,6 @@ __all__ = (
     # -Resolved
     "ResolvedNode", "NodeType",
     "NodeTypePointer", "NodeTypeSlice", "NodeTypePrimitive",
-    "NodeTypeArray", "NodeTypeFunction", "NodeTypeIdentifier",
+    "NodeTypeArray", "NodeTypePendingArray",
+    "NodeTypeFunction", "NodeTypeIdentifier",
 )

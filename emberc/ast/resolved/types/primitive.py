@@ -8,8 +8,12 @@
 ## Imports
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import ClassVar, Self
+from typing import TYPE_CHECKING, ClassVar, Self
 from .base import NodeType
+
+if TYPE_CHECKING:
+    from .visitor import NodeTypeVisitor
+    from ...unresolved import UnresolvedNodeVisitor
 
 
 ## Classes
@@ -23,6 +27,12 @@ class NodeTypePrimitive(NodeType):
     # -Dunder Methods
     def __str__(self) -> str:
         return self.name
+
+    # -Instance Methods
+    def accept[T](self, visitor: NodeTypeVisitor[T]) -> T:
+        return visitor.visit_type_primitive(self)
+
+    def bind[T](self, visitor: UnresolvedNodeVisitor[T]) -> None: ...
 
     # -Properties
     name: str

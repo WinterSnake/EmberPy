@@ -38,7 +38,7 @@ class UnresolvedNodeVisitor[TReturn](ABC):
 
     # -Instance Methods
     @abstractmethod
-    def run(self, node: UnresolvedUnitNode) -> TReturn: ...
+    def run(self, ast: UnresolvedUnitNode) -> TReturn: ...
     def visit(self, node: UnresolvedNode) -> TReturn:
         match node:
             case UnresolvedTypeNode():
