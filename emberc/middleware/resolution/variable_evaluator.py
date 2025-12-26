@@ -12,9 +12,10 @@ from typing import TYPE_CHECKING
 from ...ast import UnresolvedNodeVisitor, UnresolvedDefaultVisitorMixin
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
     from ..symbol_table import SymbolTable
     from ...ast import (
-        UnresolvedDeclVariableNode,
+        UnresolvedDeclVariableNode, UnresolvedDeclFunctionNode,
         UnresolvedNode, UnresolvedUnitNode, UnresolvedTypeNode,
         UnresolvedGroupNode, UnresolvedExprEmptyNode,
         UnresolvedAssignNode, UnresolvedBinaryNode,
@@ -40,7 +41,18 @@ class VariableEvaluatorVisitor(
     def run(self, ast: UnresolvedUnitNode) -> None:
         raise RuntimeError("VariableEvaluatorVisitor is not meant to run standalone")
 
-    def validate(self, variable: UnresolvedDeclVariableNode) -> bool:
+    def validate_parameters(
+        self, parameters: Collection[UnresolvedDeclFunctionNode.Parameter]
+    ) -> bool:
+        known = set(parameter.id for parameter in parameters)
+        for parameter in parameters:
+            if parameter.has_initializer:
+                for _id in self._visit_iterator(parameter.initializer):
+                    if _id in known:
+                        return False
+        return True
+
+    def validate_variable(self, variable: UnresolvedDeclVariableNode) -> bool:
         known = set(entry.id for entry in variable.entries)
         current = []
         for _id in self._visit_iterator(variable.type):

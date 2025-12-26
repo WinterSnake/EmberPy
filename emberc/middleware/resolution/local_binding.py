@@ -73,6 +73,9 @@ class LocalBindingVisitor(
             _id = self._symbol_table.add_parameter(parameter.name, parameter_type)
             assert _id is not None, "TODO: Error handling"
             parameter.id = _id
+            if parameter.has_initializer:
+                self.visit(parameter.initializer)
+        assert self._variable_eval.validate_parameters(node.parameters), "TODO: Error handling"
         self.visit(node.body)
         self._symbol_table.pop()
 
@@ -90,7 +93,7 @@ class LocalBindingVisitor(
                 self.visit(entry.initializer)
             symbol = self._symbol_table.get(entry.id)
             symbol.type.bind(self)
-        assert self._variable_eval.validate(node), "TODO: Error handling"
+        assert self._variable_eval.validate_variable(node), "TODO: Error handling"
 
     def visit_stmt_block(self, node: UnresolvedStmtBlockNode) -> None:
         self._symbol_table.push()
