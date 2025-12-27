@@ -121,7 +121,7 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
         self._indent_level += 1
         body = '\n'.join(
             f"{self._get_indent()}{self.visit(elem)}"
-            for elem in node.body
+            for elem in node.elements
         )
         self._indent_level -= 1
         return f"{header}{body}\n}}"

@@ -47,7 +47,7 @@ class UnresolvedStmtBlockNode(UnresolvedStmtNode):
     A statement containing a list of inner declarations or statements
     """
     # -Properties
-    body: Collection[BLOCK_TYPES]
+    elements: Collection[BLOCK_TYPES]
 
 
 @dataclass

@@ -105,7 +105,7 @@ class LocalBindingVisitor(
 
     def visit_stmt_block(self, node: UnresolvedStmtBlockNode) -> None:
         self._symbol_table.push()
-        for element in node.body:
+        for element in node.elements:
             self.visit(element)
         self._symbol_table.pop()
 
