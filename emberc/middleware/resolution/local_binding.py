@@ -8,6 +8,7 @@
 ## Imports
 from __future__ import annotations
 from typing import TYPE_CHECKING
+from .subscript_evaluator import SubscriptFinalizerVisitor
 from .type_factory import TypeFactoryVisitor
 from .variable_evaluator import VariableEvaluatorVisitor
 from ...ast import (
@@ -52,6 +53,9 @@ class LocalBindingVisitor(
     def __init__(self, symbol_table: SymbolTable) -> None:
         self._symbol_table = symbol_table
         self._mapped_initializers: dict[int, UnresolvedNode] = {}
+        self._subscript_eval = SubscriptFinalizerVisitor(
+            symbol_table, self._mapped_initializers
+        )
         self._type_factory = TypeFactoryVisitor(symbol_table)
         self._variable_eval = VariableEvaluatorVisitor()
 
@@ -66,6 +70,7 @@ class LocalBindingVisitor(
             assert False, "TODO: Error handling"
         symbol = self._symbol_table.get(node.id)
         symbol.type.bind(self)
+        symbol._type = symbol.type.accept(self._subscript_eval)
         assert isinstance(symbol.type, NodeTypeFunction), "TODO: Error handling"
         parameter_types = symbol.type.parameter_types
         self._symbol_table.push()
@@ -91,8 +96,11 @@ class LocalBindingVisitor(
             if entry.has_initializer:
                 self._mapped_initializers[entry.id] = entry.initializer
                 self.visit(entry.initializer)
+                self._subscript_eval.current_initializer = entry.initializer
             symbol = self._symbol_table.get(entry.id)
             symbol.type.bind(self)
+            symbol._type = symbol.type.accept(self._subscript_eval)
+            self._subscript_eval.reset_initializer()
         assert self._variable_eval.validate_variable(node), "TODO: Error handling"
 
     def visit_stmt_block(self, node: UnresolvedStmtBlockNode) -> None:
