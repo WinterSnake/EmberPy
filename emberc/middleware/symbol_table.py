@@ -12,8 +12,9 @@ from typing import TYPE_CHECKING
 from ..ast import LITERAL_VALUE, NodeTypeFunction
 
 if TYPE_CHECKING:
-    from collections.abc import Collection, Sequence
+    from collections.abc import Sequence
     from ..ast import NodeType
+    from ..mutable_collection import MutableCollection
 
 ## Constants
 type Symbols = Sequence[Symbol]
@@ -104,7 +105,8 @@ class SymbolTable:
         return index
 
     def add_function(
-        self, name: str, _type: NodeType, parameters: Collection[NodeType]
+        self, name: str, _type: NodeType,
+        parameters: MutableCollection[NodeType]
     ) -> int | None:
         _type = NodeTypeFunction(_type, parameters)
         return self.add(name, Symbol.Kind.Function, _type)

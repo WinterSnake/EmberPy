@@ -11,6 +11,7 @@ from .resolved import (
     NodeTypePointer, NodeTypeSlice, NodeTypePrimitive,
     NodeTypeArray, NodeTypePendingArray,
     NodeTypeFunction, NodeTypeIdentifier,
+    NodeTypeVisitor, NodeTypePendingVisitor,
 )
 from .unresolved import (
     BLOCK_TYPES, LITERAL_VALUE,
@@ -51,4 +52,5 @@ __all__ = (
     "NodeTypePointer", "NodeTypeSlice", "NodeTypePrimitive",
     "NodeTypeArray", "NodeTypePendingArray",
     "NodeTypeFunction", "NodeTypeIdentifier",
+    "NodeTypeVisitor", "NodeTypePendingVisitor",
 )

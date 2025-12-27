@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 ## Classes
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class NodeTypePointer(NodeType):
     """
     Ember Type: Pointer

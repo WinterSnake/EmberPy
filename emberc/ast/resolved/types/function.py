@@ -12,13 +12,13 @@ from typing import TYPE_CHECKING
 from .base import NodeType
 
 if TYPE_CHECKING:
-    from collections.abc import Collection
     from .visitor import NodeTypeVisitor
     from ...unresolved import UnresolvedNodeVisitor
+    from ....mutable_collection import MutableCollection
 
 
 ## Classes
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class NodeTypeFunction(NodeType):
     """
     Ember Type: Function
@@ -36,7 +36,7 @@ class NodeTypeFunction(NodeType):
 
     # -Properties
     return_type: NodeType
-    parameter_types: Collection[NodeType]
+    parameter_types: MutableCollection[NodeType]
 
     @property
     def arity(self) -> int:
