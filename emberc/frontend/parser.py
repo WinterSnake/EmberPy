@@ -212,16 +212,16 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _try_parse_type(self) -> tuple[bool, UnresolvedNode]:
         '''Tries parsing a type and returns True if considered decl scope'''
         is_decl = self.matches(*UNARY_PREFIX_MODIFIERS.keys())
-        expr = self._parse_type(not is_decl)
+        expr = self._parse_type()
         if is_decl:
             assert self.match(Token.Type.Identifier)
         else:
             is_decl = self.match(Token.Type.Identifier)
         return (is_decl, expr)
 
-    def _parse_type(self, allow_greedy: bool = False) -> UnresolvedNode:
+    def _parse_type(self) -> UnresolvedNode:
         '''Returns either a parsed type or partially parsed expression'''
-        return self._parse_unary_prefix(allow_greedy)
+        return self._parse_unary_prefix()
 
     def _parse_declaration(self) -> UnresolvedNode:
         '''
@@ -498,7 +498,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             lhs = UnresolvedBinaryNode(token.location, operator, lhs, rhs)
         return lhs
 
-    def _parse_unary_prefix(self, allow_greedy: bool = True) -> UnresolvedNode:
+    def _parse_unary_prefix(self) -> UnresolvedNode:
         '''
         Grammar[Unary]
         UNARY_PREFIX unary_prefix | primary;
@@ -531,17 +531,11 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         # -Unary: Type Modifier
         elif self.matches(*UNARY_PREFIX_MODIFIERS.keys()):
             token = self.next()
-            _type = UNARY_PREFIX_MODIFIERS[token.type]
+            modifier = UNARY_PREFIX_MODIFIERS[token.type]
             target = self._parse_unary_prefix()
-            return UnresolvedUnaryModifierNode(token.location, _type, target)
+            return UnresolvedUnaryModifierNode(token.location, modifier, target)
         # -Primary
-        possible_cast: bool = self.match(Token.Type.SymbolLParen)
-        node = self._parse_primary()
-        # -Greedy cast
-        if allow_greedy and possible_cast and self.matches(*EXPRESSION_STARTERS):
-            assert isinstance(node, UnresolvedGroupNode)
-            node._target = self._parse_unary_prefix()
-        return node
+        return self._parse_primary()
 
     def _parse_primary(self) -> UnresolvedNode:
         '''
@@ -566,8 +560,12 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         token = self.require(Token.Type.SymbolLParen)
         inner = self._parse_expression()
         self.require(Token.Type.SymbolRParen)
+        is_array = self.match(Token.Type.SymbolLBracket)
         inner = self._parse_unary_postfix(inner)
-        return UnresolvedGroupNode(token.location, inner)
+        node = UnresolvedGroupNode(token.location, inner)
+        if not is_array and self.matches(*EXPRESSION_STARTERS):
+            node._target = self._parse_unary_prefix()
+        return node
 
     def _parse_primary_array(self) -> UnresolvedArrayNode:
         '''
