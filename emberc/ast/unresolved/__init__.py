@@ -9,41 +9,73 @@
 from .assign import UnresolvedAssignNode
 from .binary import UnresolvedBinaryNode
 from .declaration import (
-    UnresolvedDeclNode, UnresolvedDeclFunctionNode, UnresolvedDeclVariableNode,
+    UnresolvedDeclNode,
+    UnresolvedDeclFunctionNode,
+    UnresolvedDeclVariableNode,
 )
 from .group import UnresolvedGroupNode
 from .identifier import UnresolvedIdentifierNode
 from .literal import (
     LITERAL_VALUE,
-    UnresolvedLiteralNode, UnresolvedArrayNode, UnresolvedExprEmptyNode
+    UnresolvedLiteralNode,
+    UnresolvedArrayNode,
+    UnresolvedExprEmptyNode
 )
-from .node import UnresolvedNode, UnresolvedTypeNode, UnresolvedUnitNode
+from .node import (
+    UnresolvedNode,
+    UnresolvedTypeNode,
+    UnresolvedUnitNode
+)
 from .statement import (
     BLOCK_TYPES,
     UnresolvedStmtNode,
-    UnresolvedStmtBlockNode, UnresolvedStmtExpressionNode,
-    UnresolvedStmtConditionalNode, UnresolvedStmtLoopWhileNode,
-    UnresolvedStmtLoopDoNode, UnresolvedStmtLoopForNode,
-    UnresolvedStmtReturnNode, UnresolvedStmtEmptyNode,
+    UnresolvedStmtBlockNode,
+    UnresolvedStmtExpressionNode,
+    UnresolvedStmtConditionalNode,
+    UnresolvedStmtLoopWhileNode,
+    UnresolvedStmtLoopDoNode,
+    UnresolvedStmtLoopForNode,
+    UnresolvedStmtReturnNode,
+    UnresolvedStmtEmptyNode,
 )
-from .unary import UnresolvedUnaryPrefixNode, UnresolvedUnaryPostfixNode
+from .unary import (
+    UnresolvedUnaryPrefixNode,
+    UnresolvedUnaryModifierNode,
+    UnresolvedUnaryPostfixNode
+)
 from .visitor import UnresolvedNodeVisitor
 
 ## Constants
 __all__ = (
-    "BLOCK_TYPES", "LITERAL_VALUE",
-    "UnresolvedNode", "UnresolvedUnitNode",
-    "UnresolvedTypeNode", "UnresolvedDeclNode", "UnresolvedStmtNode",
-    "UnresolvedDeclFunctionNode", "UnresolvedDeclVariableNode",
-    "UnresolvedStmtBlockNode", "UnresolvedStmtExpressionNode",
-    "UnresolvedStmtConditionalNode", "UnresolvedStmtLoopWhileNode",
-    "UnresolvedStmtLoopDoNode", "UnresolvedStmtLoopForNode",
-    "UnresolvedStmtReturnNode", "UnresolvedStmtEmptyNode",
-    "UnresolvedGroupNode", "UnresolvedExprEmptyNode",
-    "UnresolvedAssignNode", "UnresolvedBinaryNode",
-    "UnresolvedUnaryPrefixNode", "UnresolvedUnaryPostfixNode",
-    "UnresolvedIdentifierNode", "UnresolvedLiteralNode", "UnresolvedArrayNode",
-    "UnresolvedNodeVisitor", "UnresolvedDefaultVisitorMixin",
+    "BLOCK_TYPES",
+    "LITERAL_VALUE",
+    "UnresolvedNode",
+    "UnresolvedUnitNode",
+    "UnresolvedTypeNode",
+    "UnresolvedDeclNode",
+    "UnresolvedStmtNode",
+    "UnresolvedDeclFunctionNode",
+    "UnresolvedDeclVariableNode",
+    "UnresolvedStmtBlockNode",
+    "UnresolvedStmtExpressionNode",
+    "UnresolvedStmtConditionalNode",
+    "UnresolvedStmtLoopWhileNode",
+    "UnresolvedStmtLoopDoNode",
+    "UnresolvedStmtLoopForNode",
+    "UnresolvedStmtReturnNode",
+    "UnresolvedStmtEmptyNode",
+    "UnresolvedGroupNode",
+    "UnresolvedExprEmptyNode",
+    "UnresolvedAssignNode",
+    "UnresolvedBinaryNode",
+    "UnresolvedUnaryModifierNode",
+    "UnresolvedUnaryPrefixNode",
+    "UnresolvedUnaryPostfixNode",
+    "UnresolvedIdentifierNode",
+    "UnresolvedLiteralNode",
+    "UnresolvedArrayNode",
+    "UnresolvedNodeVisitor",
+    "UnresolvedDefaultVisitorMixin",
 )
 
 
@@ -83,6 +115,8 @@ class UnresolvedDefaultVisitorMixin[TReturn]:
     def visit_assignment(self, node: UnresolvedAssignNode) -> TReturn | None:
         return None
     def visit_binary(self, node: UnresolvedBinaryNode) -> TReturn | None:
+        return None
+    def visit_unary_modifier(self, node: UnresolvedUnaryModifierNode) -> TReturn | None:
         return None
     def visit_unary_prefix(self, node: UnresolvedUnaryPrefixNode) -> TReturn | None:
         return None

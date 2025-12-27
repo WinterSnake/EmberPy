@@ -42,6 +42,21 @@ class UnresolvedUnaryPrefixNode(UnresolvedNode):
 
 
 @dataclass
+class UnresolvedUnaryModifierNode(UnresolvedNode):
+    """
+    Ember Unresolved Node: Unary Modifier
+
+    A node for storing a unary type modifier and it's target node
+    """
+    # -Properties
+    type: UnresolvedUnaryModifierNode.Type
+    target: UnresolvedNode
+    # -Sub-Classes
+    class Type(IntEnum):
+        Const = auto()
+
+
+@dataclass
 class UnresolvedUnaryPostfixNode(UnresolvedNode):
     """
     Ember Unresolved Node: Unary Postfix

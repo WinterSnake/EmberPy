@@ -19,10 +19,15 @@ from .visitor import NodeTypeVisitor, NodeTypePendingVisitor
 __all__ = (
     # -Core
     "NodeType",
-    "NodeTypePrimitive", "NodeTypeArray", "NodeTypeIdentifier",
-    "NodeTypePointer", "NodeTypeSlice", "NodeTypeFunction",
+    "NodeTypePrimitive",
+    "NodeTypeArray",
+    "NodeTypeIdentifier",
+    "NodeTypePointer",
+    "NodeTypeSlice",
+    "NodeTypeFunction",
     # -Pending
     "NodeTypePendingArray",
     # -Visitors
-    "NodeTypeVisitor", "NodeTypePendingVisitor",
+    "NodeTypeVisitor",
+    "NodeTypePendingVisitor",
 )

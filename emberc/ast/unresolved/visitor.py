@@ -10,22 +10,37 @@ from abc import ABC, abstractmethod
 from .assign import UnresolvedAssignNode
 from .binary import UnresolvedBinaryNode
 from .declaration import (
-    UnresolvedDeclFunctionNode, UnresolvedDeclVariableNode,
+    UnresolvedDeclFunctionNode,
+    UnresolvedDeclVariableNode,
 )
 from .group import UnresolvedGroupNode
 from .identifier import UnresolvedIdentifierNode
 from .literal import (
-    UnresolvedLiteralNode, UnresolvedArrayNode, UnresolvedExprEmptyNode
+    UnresolvedLiteralNode,
+    UnresolvedArrayNode,
+    UnresolvedExprEmptyNode
 )
-from .node import UnresolvedNode, UnresolvedTypeNode, UnresolvedUnitNode
+from .node import (
+    UnresolvedNode,
+    UnresolvedTypeNode,
+    UnresolvedUnitNode
+)
 from .statement import (
     UnresolvedStmtNode,
-    UnresolvedStmtBlockNode, UnresolvedStmtExpressionNode,
-    UnresolvedStmtConditionalNode, UnresolvedStmtLoopWhileNode,
-    UnresolvedStmtLoopDoNode, UnresolvedStmtLoopForNode,
-    UnresolvedStmtReturnNode, UnresolvedStmtEmptyNode,
+    UnresolvedStmtBlockNode,
+    UnresolvedStmtExpressionNode,
+    UnresolvedStmtConditionalNode,
+    UnresolvedStmtLoopWhileNode,
+    UnresolvedStmtLoopDoNode,
+    UnresolvedStmtLoopForNode,
+    UnresolvedStmtReturnNode,
+    UnresolvedStmtEmptyNode,
 )
-from .unary import UnresolvedUnaryPrefixNode, UnresolvedUnaryPostfixNode
+from .unary import (
+    UnresolvedUnaryPrefixNode,
+    UnresolvedUnaryModifierNode,
+    UnresolvedUnaryPostfixNode
+)
 
 
 ## Classes
@@ -69,6 +84,8 @@ class UnresolvedNodeVisitor[TReturn](ABC):
                 return self.visit_assignment(node)
             case UnresolvedBinaryNode():
                 return self.visit_binary(node)
+            case UnresolvedUnaryModifierNode():
+                return self.visit_unary_modifier(node)
             case UnresolvedUnaryPrefixNode():
                 return self.visit_unary_prefix(node)
             case UnresolvedUnaryPostfixNode():
@@ -112,6 +129,8 @@ class UnresolvedNodeVisitor[TReturn](ABC):
     def visit_assignment(self, node: UnresolvedAssignNode) -> TReturn: ...
     @abstractmethod
     def visit_binary(self, node: UnresolvedBinaryNode) -> TReturn: ...
+    @abstractmethod
+    def visit_unary_modifier(self, node: UnresolvedUnaryModifierNode) -> TReturn: ...
     @abstractmethod
     def visit_unary_prefix(self, node: UnresolvedUnaryPrefixNode) -> TReturn: ...
     @abstractmethod

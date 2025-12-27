@@ -12,17 +12,31 @@ from .lookahead_buffer import LookaheadBuffer
 from .token import Token
 from ..ast import (
     BLOCK_TYPES,
-    UnresolvedNode, UnresolvedUnitNode,
-    UnresolvedTypeNode, UnresolvedDeclNode, UnresolvedStmtNode,
-    UnresolvedDeclFunctionNode, UnresolvedDeclVariableNode,
-    UnresolvedStmtBlockNode, UnresolvedStmtExpressionNode,
-    UnresolvedStmtConditionalNode, UnresolvedStmtLoopWhileNode,
-    UnresolvedStmtLoopDoNode, UnresolvedStmtLoopForNode,
-    UnresolvedStmtReturnNode, UnresolvedStmtEmptyNode,
-    UnresolvedGroupNode, UnresolvedExprEmptyNode,
-    UnresolvedAssignNode, UnresolvedBinaryNode,
-    UnresolvedUnaryPrefixNode, UnresolvedUnaryPostfixNode,
-    UnresolvedIdentifierNode, UnresolvedLiteralNode, UnresolvedArrayNode
+    UnresolvedNode,
+    UnresolvedUnitNode,
+    UnresolvedTypeNode,
+    UnresolvedDeclNode,
+    UnresolvedStmtNode,
+    UnresolvedDeclFunctionNode,
+    UnresolvedDeclVariableNode,
+    UnresolvedStmtBlockNode,
+    UnresolvedStmtExpressionNode,
+    UnresolvedStmtConditionalNode,
+    UnresolvedStmtLoopWhileNode,
+    UnresolvedStmtLoopDoNode,
+    UnresolvedStmtLoopForNode,
+    UnresolvedStmtReturnNode,
+    UnresolvedStmtEmptyNode,
+    UnresolvedGroupNode,
+    UnresolvedExprEmptyNode,
+    UnresolvedAssignNode,
+    UnresolvedBinaryNode,
+    UnresolvedUnaryModifierNode,
+    UnresolvedUnaryPrefixNode,
+    UnresolvedUnaryPostfixNode,
+    UnresolvedIdentifierNode,
+    UnresolvedLiteralNode,
+    UnresolvedArrayNode
 )
 from ..location import Location
 
@@ -39,6 +53,9 @@ UNARY_PREFIX_OPERATORS = {
     Token.Type.SymbolStar: UnresolvedUnaryPrefixNode.Operator.Ptr,
     Token.Type.SymbolAt: UnresolvedUnaryPrefixNode.Operator.Ref,
     Token.Type.SymbolBitXor: UnresolvedUnaryPrefixNode.Operator.Deref,
+}
+UNARY_PREFIX_MODIFIERS = {
+    Token.Type.KeywordConst: UnresolvedUnaryModifierNode.Type.Const,
 }
 UNARY_POSTFIX_OPERATORS = (
     Token.Type.SymbolLParen,
@@ -194,13 +211,17 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
 
     def _try_parse_type(self) -> tuple[bool, UnresolvedNode]:
         '''Tries parsing a type and returns True if considered decl scope'''
-        expr = self._parse_type()
-        is_decl = self.match(Token.Type.Identifier)
+        is_decl = self.matches(*UNARY_PREFIX_MODIFIERS.keys())
+        expr = self._parse_type(not is_decl)
+        if is_decl:
+            assert self.match(Token.Type.Identifier)
+        else:
+            is_decl = self.match(Token.Type.Identifier)
         return (is_decl, expr)
 
-    def _parse_type(self) -> UnresolvedNode:
+    def _parse_type(self, allow_greedy: bool = False) -> UnresolvedNode:
         '''Returns either a parsed type or partially parsed expression'''
-        return self._parse_unary_prefix(False)
+        return self._parse_unary_prefix(allow_greedy)
 
     def _parse_declaration(self) -> UnresolvedNode:
         '''
@@ -507,9 +528,16 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             operator = UNARY_PREFIX_OPERATORS[token.type]
             operand = self._parse_unary_prefix()
             return UnresolvedUnaryPrefixNode(token.location, operator, operand)
+        # -Unary: Type Modifier
+        elif self.matches(*UNARY_PREFIX_MODIFIERS.keys()):
+            token = self.next()
+            _type = UNARY_PREFIX_MODIFIERS[token.type]
+            target = self._parse_unary_prefix()
+            return UnresolvedUnaryModifierNode(token.location, _type, target)
         # -Primary
         possible_cast: bool = self.match(Token.Type.SymbolLParen)
         node = self._parse_primary()
+        # -Greedy cast
         if allow_greedy and possible_cast and self.matches(*EXPRESSION_STARTERS):
             assert isinstance(node, UnresolvedGroupNode)
             node._target = self._parse_unary_prefix()

@@ -6,20 +6,37 @@
 ##-------------------------------##
 
 ## Imports
+from __future__ import annotations
+from typing import TYPE_CHECKING
 from .unresolved import (
-    UnresolvedUnitNode,
-    UnresolvedTypeNode,
-    UnresolvedDeclFunctionNode, UnresolvedDeclVariableNode,
-    UnresolvedStmtBlockNode, UnresolvedStmtExpressionNode,
-    UnresolvedStmtConditionalNode, UnresolvedStmtLoopWhileNode,
-    UnresolvedStmtLoopDoNode, UnresolvedStmtLoopForNode,
-    UnresolvedStmtReturnNode, UnresolvedStmtEmptyNode,
-    UnresolvedGroupNode, UnresolvedExprEmptyNode,
-    UnresolvedAssignNode, UnresolvedBinaryNode,
-    UnresolvedUnaryPrefixNode, UnresolvedUnaryPostfixNode,
-    UnresolvedIdentifierNode, UnresolvedLiteralNode, UnresolvedArrayNode,
+    UnresolvedAssignNode,
+    UnresolvedBinaryNode,
+    UnresolvedUnaryModifierNode,
+    UnresolvedUnaryPrefixNode,
+    UnresolvedUnaryPostfixNode,
     UnresolvedNodeVisitor,
 )
+
+if TYPE_CHECKING:
+    from .unresolved import (
+        UnresolvedUnitNode,
+        UnresolvedTypeNode,
+        UnresolvedDeclFunctionNode,
+        UnresolvedDeclVariableNode,
+        UnresolvedStmtBlockNode,
+        UnresolvedStmtExpressionNode,
+        UnresolvedStmtConditionalNode,
+        UnresolvedStmtLoopWhileNode,
+        UnresolvedStmtLoopDoNode,
+        UnresolvedStmtLoopForNode,
+        UnresolvedStmtReturnNode,
+        UnresolvedStmtEmptyNode,
+        UnresolvedGroupNode,
+        UnresolvedExprEmptyNode,
+        UnresolvedIdentifierNode,
+        UnresolvedLiteralNode,
+        UnresolvedArrayNode,
+    )
 
 ## Constants
 __all__ = ("unresolved_printer",)
@@ -179,6 +196,12 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
         operator = BINARY_OPERATORS[node.operator]
         rhs = self.visit(node.rhs)
         return f"({lhs} {operator} {rhs})"
+
+    def visit_unary_modifier(self, node: UnresolvedUnaryModifierNode) -> str:
+        target = self.visit(node.target)
+        match node.type:
+            case UnresolvedUnaryModifierNode.Type.Const:
+                return f"const {target}"
 
     def visit_unary_prefix(self, node: UnresolvedUnaryPrefixNode) -> str:
         expr = self.visit(node.operand)
