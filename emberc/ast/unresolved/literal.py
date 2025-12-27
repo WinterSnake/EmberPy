@@ -13,7 +13,7 @@ from enum import IntEnum, auto
 from .node import UnresolvedNode
 
 if TYPE_CHECKING:
-    from collections.abc import Collection
+    from collections.abc import Sequence
 
 ## Constants
 type LITERAL_VALUE = bool | int | str
@@ -44,7 +44,7 @@ class UnresolvedArrayNode(UnresolvedNode):
     A node for storing a array values
     """
     # -Properties
-    values: Collection[UnresolvedNode]
+    values: Sequence[UnresolvedNode]
 
     @property
     def count(self) -> int:

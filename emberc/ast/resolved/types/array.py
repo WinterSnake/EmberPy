@@ -13,7 +13,7 @@ from .base import NodeType
 from .visitor import NodeTypePendingVisitor
 
 if TYPE_CHECKING:
-    from collections.abc import Collection
+    from collections.abc import Sequence
     from .visitor import NodeTypeVisitor
     from ...unresolved import UnresolvedNode, UnresolvedNodeVisitor
 
@@ -40,7 +40,7 @@ class NodeTypePendingArray(NodeType):
 
     # -Properties
     target: NodeType
-    dimensions: Collection[UnresolvedNode]
+    dimensions: Sequence[UnresolvedNode]
 
 
 @dataclass(slots=True)
@@ -59,6 +59,7 @@ class NodeTypeArray(NodeType):
     # -Properties
     target: NodeType
     dimensions: tuple[int, ...]
+    is_jagged: bool = False
 
     @property
     def dimension_count(self) -> int:

@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from .node import UnresolvedNode
 
 if TYPE_CHECKING:
-    from collections.abc import Collection
+    from collections.abc import Sequence
 
 
 ## Classes
@@ -51,7 +51,7 @@ class UnresolvedUnaryPostfixNode(UnresolvedNode):
     # -Properties
     head: UnresolvedNode
     kind: UnresolvedUnaryPostfixNode.Kind
-    arguments: Collection[UnresolvedNode]
+    arguments: Sequence[UnresolvedNode]
 
     @property
     def argument_count(self) -> int:
