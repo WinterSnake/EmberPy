@@ -13,6 +13,7 @@ from ...ast import (
     UnresolvedNodeVisitor, UnresolvedDefaultVisitorMixin,
     UnresolvedTypeNode,
     UnresolvedUnaryPrefixNode, UnresolvedUnaryPostfixNode,
+    UnresolvedGroupNode,
     # -Resolved
     NodeType, NodeTypePrimitive,
     NodeTypePointer, NodeTypeSlice,
@@ -86,6 +87,12 @@ class TypeFactoryVisitor(
         head = self.visit(node.head)
         assert head is not None, "TODO: Error handling"
         return NodeTypePendingArray(head, node.arguments)
+
+    def visit_group(self, node: UnresolvedGroupNode) -> NodeType:
+        assert not node.has_target, "TODO: Error handling"
+        inner = self.visit(node.inner)
+        assert inner is not None
+        return inner
 
     def visit_identifier(self, node: UnresolvedIdentifierNode) -> NodeType:
         _id = self._symbol_table.find(node.name)

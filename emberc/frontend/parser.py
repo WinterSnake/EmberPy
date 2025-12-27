@@ -200,7 +200,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
 
     def _parse_type(self) -> UnresolvedNode:
         '''Returns either a parsed type or partially parsed expression'''
-        return self._parse_unary_prefix()
+        return self._parse_unary_prefix(False)
 
     def _parse_declaration(self) -> UnresolvedNode:
         '''
@@ -477,7 +477,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             lhs = UnresolvedBinaryNode(token.location, operator, lhs, rhs)
         return lhs
 
-    def _parse_unary_prefix(self) -> UnresolvedNode:
+    def _parse_unary_prefix(self, allow_greedy: bool = True) -> UnresolvedNode:
         '''
         Grammar[Unary]
         UNARY_PREFIX unary_prefix | primary;
@@ -508,7 +508,12 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             operand = self._parse_unary_prefix()
             return UnresolvedUnaryPrefixNode(token.location, operator, operand)
         # -Primary
-        return self._parse_primary()
+        possible_cast: bool = self.match(Token.Type.SymbolLParen)
+        node = self._parse_primary()
+        if allow_greedy and possible_cast and self.matches(*EXPRESSION_STARTERS):
+            assert isinstance(node, UnresolvedGroupNode)
+            node._target = self._parse_unary_prefix()
+        return node
 
     def _parse_primary(self) -> UnresolvedNode:
         '''
@@ -534,10 +539,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         inner = self._parse_expression()
         self.require(Token.Type.SymbolRParen)
         inner = self._parse_unary_postfix(inner)
-        node = UnresolvedGroupNode(token.location, inner)
-        if self.matches(*EXPRESSION_STARTERS):
-            node._target = self._parse_unary_prefix()
-        return node
+        return UnresolvedGroupNode(token.location, inner)
 
     def _parse_primary_array(self) -> UnresolvedArrayNode:
         '''
