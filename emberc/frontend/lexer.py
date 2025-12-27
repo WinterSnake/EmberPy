@@ -56,6 +56,27 @@ KEYWORDS = {
 }
 
 
+## Functions
+def _get_unescaped_sequence(char: str) -> str:
+    """Returns the correct escape sequence string from a given char"""
+    match char:
+        case 'n':
+            return '\n'
+        case 'r':
+            return '\r'
+        case 't':
+            return '\t'
+        case '0':
+            return '\0'
+        case '\\':
+            return '\\'
+        case '\'':
+            return '\''
+        case '"':
+            return '"'
+    assert False, "TODO: Error handling"
+
+
 ## Classes
 class Lexer(LookaheadBuffer[str, str]):
     """
@@ -85,6 +106,10 @@ class Lexer(LookaheadBuffer[str, str]):
             self.offset += 1
         return value
 
+    def require(self, expected: str) -> None:
+        if not self.consume(expected):
+            assert False, "TODO: Error handling"
+
     # -Instance Methods: Lexing
     def lex(self) -> Iterator[Token]:
         '''
@@ -101,6 +126,12 @@ class Lexer(LookaheadBuffer[str, str]):
             # Default -> Word
             elif c.isalpha() or c == '_':
                 token = self._lex_word(c)
+            # Default -> Char
+            elif c == '\'':
+                token = self._lex_char()
+            # Default -> String
+            elif c == '"':
+                token = self._lex_string()
             if token:
                 yield token
 
@@ -218,9 +249,8 @@ class Lexer(LookaheadBuffer[str, str]):
         '''
         State: Comment - Inline
         '''
-        c = self.advance()
-        while c is not None and c != '\n':
-            c = self.advance()
+        while (c := self.advance()) and c != '\n':
+            pass
 
     def _lex_comment_multiline(self) -> None:
         '''
@@ -231,11 +261,13 @@ class Lexer(LookaheadBuffer[str, str]):
                 self._lex_comment_multiline()
             elif c == '*' and self.advance() == '/':
                 return
+        assert False, "TODO: Error handling"
 
     def _lex_number(self, buffer: str) -> Token:
         '''
         State: Number
         '''
+        # -TODO: handle different bases
         base: int = 10
         location = self.location
         while c := self.peek():
@@ -269,6 +301,37 @@ class Lexer(LookaheadBuffer[str, str]):
         elif _type == Token.Type.Identifier:
             value = buffer
         return Token(location, _type, value)
+
+    def _lex_char(self) -> Token:
+        '''
+        State: Char
+        '''
+        location = self.location
+        value = self.next()
+        if value == '\\':
+            value = _get_unescaped_sequence(self.next())
+        self.require('\'')
+        return Token(location, Token.Type.Integer, ord(value))
+
+    def _lex_string(self) -> Token:
+        '''
+        State: String
+        '''
+        location = self.location
+        buffer = ""
+        is_terminated = False
+        while c := self.next():
+            # -String -> Default
+            if c == '"':
+                is_terminated = True
+                break
+            # -String -> Escaped
+            elif c == '\\':
+                c = _get_unescaped_sequence(self.next())
+            buffer += c
+        if not is_terminated:
+            assert False, "TODO: Error handling"
+        return Token(location, Token.Type.String, buffer)
 
     # -Static Methods
     @staticmethod

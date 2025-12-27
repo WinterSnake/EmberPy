@@ -30,6 +30,7 @@ from ..location import Location
 LITERALS = (
     Token.Type.Boolean,
     Token.Type.Integer,
+    Token.Type.String,
 )
 UNARY_PREFIX_OPERATORS = {
     Token.Type.SymbolMinus: UnresolvedUnaryPrefixNode.Operator.Negative,
@@ -125,8 +126,13 @@ def _create_literal_node(token: Token) -> UnresolvedLiteralNode:
             return UnresolvedLiteralNode(
                 token.location, token.value, UnresolvedLiteralNode.Type.Integer
             )
+        case Token.Type.String:
+            assert isinstance(token.value, str)
+            return UnresolvedLiteralNode(
+                token.location, token.value, UnresolvedLiteralNode.Type.String
+            )
         case _:
-            raise NotImplementedError("Token", token, "not handled in _create_literal")
+            raise NotImplementedError(f"Token.Type {token.type.name} not handled in _create_literal")
 
 
 def _create_range_binary_operator(

@@ -34,6 +34,7 @@ class UnresolvedLiteralNode(UnresolvedNode):
     class Type(IntEnum):
         Integer = auto()
         Boolean = auto()
+        String = auto()
 
 
 @dataclass

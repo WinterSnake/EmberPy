@@ -45,8 +45,9 @@ class Token:
     class Type(IntEnum):
         # -Literal
         Identifier = auto()
-        Integer = auto()
         Boolean = auto()
+        Integer = auto()
+        String = auto()
         # -Keyword
         KeywordIf = auto()
         KeywordElse = auto()
