@@ -23,7 +23,7 @@ class NodeTypeIdentifier(NodeType):
     Ember Type: Identifier
 
     A type representing a bound identifier
-    used for lookups to what identity represents
+    used for lookups to what type id represents
 
     Uses a cache map to store single instances
     """
