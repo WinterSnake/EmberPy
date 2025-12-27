@@ -39,7 +39,7 @@ if TYPE_CHECKING:
 ## Classes
 class LocalBindingVisitor(
     UnresolvedDefaultVisitorMixin[None],
-    UnresolvedNodeVisitor[UnresolvedUnitNode | None]
+    UnresolvedNodeVisitor[None]
 ):
     """
     Local Binding
@@ -60,10 +60,9 @@ class LocalBindingVisitor(
         self._variable_eval = VariableEvaluatorVisitor()
 
     # -Instance Methods
-    def run(self, ast: UnresolvedUnitNode) -> UnresolvedUnitNode:
+    def run(self, ast: UnresolvedUnitNode) -> None:
         for child in ast.children:
             self.visit(child)
-        return ast
 
     def visit_decl_function(self, node: UnresolvedDeclFunctionNode) -> None:
         if self._symbol_table.scope_depth > 0:

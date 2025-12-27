@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 ## Classes
 class GlobalBindingVisitor(
     UnresolvedDefaultVisitorMixin[None],
-    UnresolvedNodeVisitor[UnresolvedUnitNode | None]
+    UnresolvedNodeVisitor[None]
 ):
     """
     Global Binding
@@ -38,10 +38,9 @@ class GlobalBindingVisitor(
         self._type_factory = TypeFactoryVisitor(symbol_table)
 
     # -Instance Methods
-    def run(self, ast: UnresolvedUnitNode) -> UnresolvedUnitNode:
+    def run(self, ast: UnresolvedUnitNode) -> None:
         for child in ast.children:
             self.visit(child)
-        return ast
 
     def visit_decl_function(self, node: UnresolvedDeclFunctionNode) -> None:
         _type = self._type_factory.visit(node.type)
