@@ -56,6 +56,7 @@ class Token:
         KeywordFor = auto()
         KeywordFn = auto()
         KeywordReturn = auto()
+        KeywordEnum = auto()
         # -Keyword: Types
         KeywordVoid = auto()
         KeywordBoolean = auto()

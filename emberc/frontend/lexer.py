@@ -42,6 +42,7 @@ KEYWORDS = {
     'for': Token.Type.KeywordFor,
     'fn': Token.Type.KeywordFn,
     'return': Token.Type.KeywordReturn,
+    'enum': Token.Type.KeywordEnum,
     # -Types
     'void': Token.Type.KeywordVoid,
     'bool': Token.Type.KeywordBoolean,
@@ -56,6 +57,10 @@ KEYWORDS = {
     # -Type Modifiers
     'const': Token.Type.KeywordConst,
 }
+HEX_LETTERS = (
+    'a', 'b', 'c', 'd', 'e', 'f',
+    'A', 'B', 'C', 'D', 'E', 'F',
+)
 
 
 ## Functions
@@ -269,14 +274,24 @@ class Lexer(LookaheadBuffer[str, str]):
         '''
         State: Number
         '''
-        # -TODO: handle different bases
         base: int = 10
+        if buffer == '0' and self.matches('b', 'o', 'x'):
+            if self.consume('x'):
+                base = 16
+            elif self.consume('o'):
+                base = 8
+            elif self.consume('b'):
+                base = 2
+            buffer = ""
         location = self.location
         while c := self.peek():
-            # -Number -> Number
+            # -Number: Digit
             if c.isnumeric():
-                c = self.next()
-                buffer += c
+                buffer += self.next()
+                continue
+            # -Number: Hex
+            elif base == 16 and c in HEX_LETTERS:
+                buffer += self.next()
                 continue
             # -Number -> Default
             break
