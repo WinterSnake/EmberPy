@@ -53,7 +53,9 @@ class UnresolvedUnaryModifierNode(UnresolvedNode):
     target: UnresolvedNode
     # -Sub-Classes
     class Type(IntEnum):
+        Static = auto()
         Const = auto()
+        Immut = auto()
 
 
 @dataclass

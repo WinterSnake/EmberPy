@@ -55,7 +55,9 @@ KEYWORDS = {
     'uint32': Token.Type.KeywordUInt32,
     'uint64': Token.Type.KeywordUInt64,
     # -Type Modifiers
+    'static': Token.Type.KeywordStatic,
     'const': Token.Type.KeywordConst,
+    'immut': Token.Type.KeywordImmut,
 }
 HEX_LETTERS = (
     'a', 'b', 'c', 'd', 'e', 'f',

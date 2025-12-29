@@ -57,7 +57,9 @@ UNARY_PREFIX_OPERATORS = {
     Token.Type.SymbolBitXor: UnresolvedUnaryPrefixNode.Operator.Deref,
 }
 UNARY_PREFIX_MODIFIERS = {
+    Token.Type.KeywordStatic: UnresolvedUnaryModifierNode.Type.Static,
     Token.Type.KeywordConst: UnresolvedUnaryModifierNode.Type.Const,
+    Token.Type.KeywordImmut: UnresolvedUnaryModifierNode.Type.Immut,
 }
 UNARY_POSTFIX_OPERATORS = (
     Token.Type.SymbolLParen,

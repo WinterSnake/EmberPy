@@ -220,8 +220,12 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
     def visit_unary_modifier(self, node: UnresolvedUnaryModifierNode) -> str:
         target = self.visit(node.target)
         match node.type:
+            case UnresolvedUnaryModifierNode.Type.Static:
+                return f"static {target}"
             case UnresolvedUnaryModifierNode.Type.Const:
                 return f"const {target}"
+            case UnresolvedUnaryModifierNode.Type.Immut:
+                return f"immut {target}"
 
     def visit_unary_prefix(self, node: UnresolvedUnaryPrefixNode) -> str:
         expr = self.visit(node.operand)
