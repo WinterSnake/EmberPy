@@ -21,3 +21,15 @@ class UnresolvedIdentifierNode(UnresolvedNode):
     # -Properties
     name: str
     id: int = field(init=False, repr=False)
+
+
+@dataclass
+class UnresolvedMemberNode(UnresolvedNode):
+    """
+    Ember Unresolved Node: Member
+
+    A node for storing a member access of head node
+    """
+    # -Properties
+    head: UnresolvedNode
+    member: str

@@ -34,6 +34,7 @@ if TYPE_CHECKING:
         UnresolvedStmtEmptyNode,
         UnresolvedGroupNode,
         UnresolvedExprEmptyNode,
+        UnresolvedMemberNode,
         UnresolvedIdentifierNode,
         UnresolvedLiteralNode,
         UnresolvedArrayNode,
@@ -241,6 +242,9 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
         if node.has_target:
             expr = f"({expr}; target={self.visit(node.target)})"
         return expr
+
+    def visit_member_access(self, node: UnresolvedMemberNode) -> str:
+        return f"[{self.visit(node.head)}.{node.member}]"
 
     def visit_array(self, node: UnresolvedArrayNode) -> str:
         return '[' + ','.join(self.visit(elem) for elem in node.values) + ']'

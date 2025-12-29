@@ -15,7 +15,7 @@ from .declaration import (
     UnresolvedDeclVariableNode,
 )
 from .group import UnresolvedGroupNode
-from .identifier import UnresolvedIdentifierNode
+from .identifier import UnresolvedIdentifierNode, UnresolvedMemberNode
 from .literal import (
     LITERAL_VALUE,
     UnresolvedLiteralNode,
@@ -73,6 +73,7 @@ __all__ = (
     "UnresolvedUnaryModifierNode",
     "UnresolvedUnaryPrefixNode",
     "UnresolvedUnaryPostfixNode",
+    "UnresolvedMemberNode",
     "UnresolvedIdentifierNode",
     "UnresolvedLiteralNode",
     "UnresolvedArrayNode",
@@ -133,4 +134,6 @@ class UnresolvedDefaultVisitorMixin[TReturn]:
     def visit_literal(self, node: UnresolvedLiteralNode) -> TReturn | None:
         return None
     def visit_identifier(self, node: UnresolvedIdentifierNode) -> TReturn | None:
+        return None
+    def visit_member_access(self, node: UnresolvedMemberNode) -> TReturn | None:
         return None

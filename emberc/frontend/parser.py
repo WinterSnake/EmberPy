@@ -35,6 +35,7 @@ from ..ast import (
     UnresolvedUnaryModifierNode,
     UnresolvedUnaryPrefixNode,
     UnresolvedUnaryPostfixNode,
+    UnresolvedMemberNode,
     UnresolvedIdentifierNode,
     UnresolvedLiteralNode,
     UnresolvedArrayNode
@@ -61,6 +62,7 @@ UNARY_PREFIX_MODIFIERS = {
 UNARY_POSTFIX_OPERATORS = (
     Token.Type.SymbolLParen,
     Token.Type.SymbolLBracket,
+    Token.Type.SymbolDot,
 )
 BINARY_OPERATORS = {
     Token.Type.SymbolLogOr: (UnresolvedBinaryNode.Operator.LogOr, 1),
@@ -625,6 +627,11 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
                     head = self._parse_unary_call(head)
                 case Token.Type.SymbolLBracket:
                     head = self._parse_unary_subscript(head)
+                case Token.Type.SymbolDot:
+                    token = self.next()
+                    member = self.require(Token.Type.Identifier)
+                    assert isinstance(member.value, str)
+                    head = UnresolvedMemberNode(token.location, head, member.value)
         return head
 
     def _parse_unary_call(self, head: UnresolvedNode) -> UnresolvedNode:

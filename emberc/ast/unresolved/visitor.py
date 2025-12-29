@@ -15,7 +15,7 @@ from .declaration import (
     UnresolvedDeclVariableNode,
 )
 from .group import UnresolvedGroupNode
-from .identifier import UnresolvedIdentifierNode
+from .identifier import UnresolvedIdentifierNode, UnresolvedMemberNode
 from .literal import (
     UnresolvedLiteralNode,
     UnresolvedArrayNode,
@@ -101,6 +101,8 @@ class UnresolvedNodeVisitor[TReturn](ABC):
                 return self.visit_literal(node)
             case UnresolvedIdentifierNode():
                 return self.visit_identifier(node)
+            case UnresolvedMemberNode():
+                return self.visit_member_access(node)
             case _:
                 raise RuntimeError("Unhandled node type", node, "in NodeVisitor")
 
@@ -148,3 +150,5 @@ class UnresolvedNodeVisitor[TReturn](ABC):
     def visit_literal(self, node: UnresolvedLiteralNode) -> TReturn: ...
     @abstractmethod
     def visit_identifier(self, node: UnresolvedIdentifierNode) -> TReturn: ...
+    @abstractmethod
+    def visit_member_access(self, node: UnresolvedMemberNode) -> TReturn: ...
