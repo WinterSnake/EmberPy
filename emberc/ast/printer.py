@@ -22,6 +22,7 @@ if TYPE_CHECKING:
         UnresolvedUnitNode,
         UnresolvedTypeNode,
         UnresolvedDeclFunctionNode,
+        UnresolvedDeclEnumNode,
         UnresolvedDeclVariableNode,
         UnresolvedStmtBlockNode,
         UnresolvedStmtExpressionNode,
@@ -119,6 +120,24 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
                 header += ','
         header += f"):{self.visit(node.type)}\n"
         return header + self.visit(node.body)
+
+    def visit_decl_enum(self, node: UnresolvedDeclEnumNode) -> str:
+        header = f"{self._get_indent()}enum {node.name}"
+        if node.has_type:
+            header += f":{self.visit(node.type)}"
+        header += "{\n"
+        buffer = ""
+        self._indent_level += 1
+        for i, entry in enumerate(node.entries):
+            buffer += self._get_indent()
+            buffer += entry.name
+            if entry.has_initializer:
+                buffer += f" = {self.visit(entry.initializer)}"
+            if i < len(node.entries) - 1:
+                buffer += ','
+            buffer += '\n'
+        self._indent_level -= 1
+        return header + buffer + '}'
 
     def visit_decl_variable(self, node: UnresolvedDeclVariableNode) -> str:
         decl = f"{self._get_indent()}{self.visit(node.type)}["

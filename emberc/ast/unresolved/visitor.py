@@ -11,6 +11,7 @@ from .assign import UnresolvedAssignNode
 from .binary import UnresolvedBinaryNode
 from .declaration import (
     UnresolvedDeclFunctionNode,
+    UnresolvedDeclEnumNode,
     UnresolvedDeclVariableNode,
 )
 from .group import UnresolvedGroupNode
@@ -60,6 +61,8 @@ class UnresolvedNodeVisitor[TReturn](ABC):
                 return self.visit_type(node)
             case UnresolvedDeclFunctionNode():
                 return self.visit_decl_function(node)
+            case UnresolvedDeclEnumNode():
+                return self.visit_decl_enum(node)
             case UnresolvedDeclVariableNode():
                 return self.visit_decl_variable(node)
             case UnresolvedStmtEmptyNode():
@@ -105,6 +108,8 @@ class UnresolvedNodeVisitor[TReturn](ABC):
     def visit_type(self, node: UnresolvedTypeNode) -> TReturn: ...
     @abstractmethod
     def visit_decl_function(self, node: UnresolvedDeclFunctionNode) -> TReturn: ...
+    @abstractmethod
+    def visit_decl_enum(self, node: UnresolvedDeclEnumNode) -> TReturn: ...
     @abstractmethod
     def visit_decl_variable(self, node: UnresolvedDeclVariableNode) -> TReturn: ...
     @abstractmethod

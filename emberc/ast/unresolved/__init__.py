@@ -11,6 +11,7 @@ from .binary import UnresolvedBinaryNode
 from .declaration import (
     UnresolvedDeclNode,
     UnresolvedDeclFunctionNode,
+    UnresolvedDeclEnumNode,
     UnresolvedDeclVariableNode,
 )
 from .group import UnresolvedGroupNode
@@ -55,6 +56,7 @@ __all__ = (
     "UnresolvedDeclNode",
     "UnresolvedStmtNode",
     "UnresolvedDeclFunctionNode",
+    "UnresolvedDeclEnumNode",
     "UnresolvedDeclVariableNode",
     "UnresolvedStmtBlockNode",
     "UnresolvedStmtExpressionNode",
@@ -91,6 +93,8 @@ class UnresolvedDefaultVisitorMixin[TReturn]:
     def visit_type(self, node: UnresolvedTypeNode) -> TReturn | None:
         return None
     def visit_decl_function(self, node: UnresolvedDeclFunctionNode) -> TReturn | None:
+        return None
+    def visit_decl_enum(self, node: UnresolvedDeclEnumNode) -> TReturn | None:
         return None
     def visit_decl_variable(self, node: UnresolvedDeclVariableNode) -> TReturn | None:
         return None

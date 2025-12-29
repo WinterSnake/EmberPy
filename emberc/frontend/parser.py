@@ -18,6 +18,7 @@ from ..ast import (
     UnresolvedDeclNode,
     UnresolvedStmtNode,
     UnresolvedDeclFunctionNode,
+    UnresolvedDeclEnumNode,
     UnresolvedDeclVariableNode,
     UnresolvedStmtBlockNode,
     UnresolvedStmtExpressionNode,
@@ -226,10 +227,12 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _parse_declaration(self) -> UnresolvedNode:
         '''
         Grammar[Declaration]
-        declaration_function | declaration_variable;
+        declaration_function | declaration_enum | declaration_variable;
         '''
         if self.match(Token.Type.KeywordFn):
             return self._parse_declaration_function()
+        elif self.match(Token.Type.KeywordEnum):
+            return self._parse_declaration_enum()
         return self._parse_declaration_variable()
 
     def _parse_declaration_function(self) -> UnresolvedDeclFunctionNode:
@@ -237,7 +240,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         Grammar[Declaration:Function]
         'fn' IDENTIFIER '(' (parameter (',' parameter)*)? ')' ':' TYPE '{' declaration_statement* '}'
         '''
-        # -Internal Methods
+        # -Internal Functions
         def _parse_parameter() -> UnresolvedDeclFunctionNode.Parameter:
             '''parameter: TYPE IDENTIFIER ('=' expression)?;'''
             _type = self._parse_type()
@@ -268,6 +271,39 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             token.location, ident.value, parameters, _type, body
         )
 
+    def _parse_declaration_enum(self) -> UnresolvedDeclEnumNode:
+        '''
+        Grammar[Declaration:Enum]
+        'enum' IDENTIFIER ( ':' TYPE )? '{' entry ( ',' entry )* ','? '}';
+        '''
+        # -Internal Functions
+        def _parse_entry() -> UnresolvedDeclEnumNode.Entry:
+            '''IDENTIFIER ( '=' expression )?;'''
+            ident = self.require(Token.Type.Identifier)
+            assert isinstance(ident.value, str)
+            initializer: UnresolvedNode | None = None
+            if self.consume(Token.Type.SymbolEq):
+                initializer = self._parse_expression()
+            return UnresolvedDeclEnumNode.Entry(
+                ident.location, ident.value, initializer
+            )
+        # -Body
+        token = self.require(Token.Type.KeywordEnum)
+        ident = self.require(Token.Type.Identifier)
+        assert isinstance(ident.value, str)
+        _type: UnresolvedNode | None = None
+        if self.consume(Token.Type.SymbolColon):
+            _type = self._parse_type()
+        self.require(Token.Type.SymbolLBrace)
+        entries: list[UnresolvedDeclEnumNode.Entry] = [_parse_entry()]
+        while self.consume(Token.Type.SymbolComma):
+            if not self.match(Token.Type.SymbolRBrace):
+                entries.append(_parse_entry())
+        self.require(Token.Type.SymbolRBrace)
+        return UnresolvedDeclEnumNode(
+            token.location, ident.value, _type, entries
+        )
+
     def _parse_declaration_statement(self) -> UnresolvedDeclNode | UnresolvedStmtNode:
         '''
         Grammar[Declaration:Statement]
@@ -286,11 +322,10 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         '''
         Grammar[Declaration:Variable]
         TYPE entry ( ',' entry )* ';';
-
-        entry: IDENTIFIER ( '=' expression )?;
         '''
-        # -Internal Methods
+        # -Internal Functions
         def _parse_entry() -> UnresolvedDeclVariableNode.Entry:
+            '''IDENTIFIER ( '=' expression )?;'''
             ident = self.require(Token.Type.Identifier)
             assert isinstance(ident.value, str)
             initializer: UnresolvedNode | None = None
@@ -419,9 +454,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             condition = self._parse_expression()
             self.require(Token.Type.SymbolSemicolon)
         else:
-            condition = UnresolvedLiteralNode(
-                self.last_location, True, UnresolvedLiteralNode.Type.Boolean
-            )
+            condition = UnresolvedExprEmptyNode(self.last_location)
         # -<Increment>-
         increment: UnresolvedNode | None = None
         if not self.match(Token.Type.SymbolRParen):
