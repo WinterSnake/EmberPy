@@ -2,7 +2,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Mutable Collection            ##
+## Core: Mutable Collection      ##
 ##-------------------------------##
 
 ## Imports

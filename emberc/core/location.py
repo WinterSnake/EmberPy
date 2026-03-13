@@ -2,7 +2,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Location                      ##
+## Core: Location                ##
 ##-------------------------------##
 
 ## Imports
@@ -11,7 +11,7 @@ from pathlib import Path
 
 ## Classes
 class Location:
-    """Location for file and position"""
+    """Source location for file and position"""
 
     # -Constructor
     def __init__(self, file: Path | None, position: tuple[int, int, int]) -> None:

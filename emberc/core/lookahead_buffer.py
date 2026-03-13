@@ -2,7 +2,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Frontend: Lookahead Buffer    ##
+## Core: Lookahead Buffer        ##
 ##-------------------------------##
 
 ## Imports
@@ -31,86 +31,69 @@ def _get_match_from_item(item: TItem, selector: TSelector[TItem, TMatch]) -> TMa
 ## Classes
 class LookaheadBuffer[TItem, TMatch](ABC):
     """
-    Lookahead(n) Base
+    Lookahead(n) Buffer
 
-    Defines an implementation for a lookahead(n) buffer
-    Sub-classes must implement a _next() method
+    A generic wrapper for iterators that provides arbitrary 
+    lookahead and item matching without premature consumption.
     """
 
     # -Constructor
     def __init__(
-        self, iterator: Iterator[TItem],
+        self, source: Iterator[TItem],
         selector: TSelector[TItem, TMatch] = None
     ) -> None:
-        self._source: Iterator[TItem] = iterator
-        self._buffer: deque[TItem] = deque()
+        self._source: Iterator[TItem] = source
         self._selector: TSelector[TItem, TMatch] = selector
-        self._is_at_end: bool = False
+        self._buffer: deque[TItem] = deque()
+        self.is_at_end: bool = False
 
     # -Instance Methods
-    def _next(self) -> TItem | None:
-        '''Returns next TItem from source or None if end of iterator'''
-        if self._is_at_end:
-            return None
-        elem = next(self._source, None)
-        if elem is None:
-            self._is_at_end = True
-        return elem
-
-    def _fill_buffer(self, count: int) -> None:
-        '''Fills buffer with next N TItems from source'''
-        for i in range(count):
-            item = self._next()
-            if item is None:
-                break
-            self._buffer.append(item)
-
     def advance(self) -> TItem | None:
-        '''Returns TItem from buffer.left or next TItem from source'''
-        if self._buffer:
+        '''Returns next TItem from buffer or source iterator; None if at end'''
+        if self.is_at_end:
+            return None
+        elif self._buffer:
             return self._buffer.popleft()
-        return self._next()
+        item = next(self._source, None)
+        if item is None:
+            self.is_at_end = True
+        return item
 
     def next(self) -> TItem:
-        '''Returns next TItem from iterator; asserts TItem exists'''
+        '''Returns next TItem; asserts TItem exists'''
         item = self.advance()
         assert item is not None
         return item
 
     def peek(self, index: int = 0) -> TItem | None:
-        '''Fills buffer to N TItem then returns buffer[N]'''
+        '''Fills buffer to N+1 TItem then returns buffer[N]; None if beyond source iterator'''
         if index < 0:
             raise IndexError(f"Tried to peek a negative amount ({index})")
         buffer_count = len(self._buffer)
         if buffer_count <= index:
-            self._fill_buffer(index - buffer_count + 1)
-        if len(self._buffer) <= index:
+            for _ in range(index - buffer_count + 1):
+                item = next(self._source, None)
+                if item is None:
+                    break
+                self._buffer.append(item)
+                buffer_count += 1
+        if buffer_count <= index:
             return None
         return self._buffer[index]
 
     def consume(self, expected: TMatch) -> bool:
-        '''Returns boolean of next TItem is TMatch'''
+        '''Returns boolean if next TItem is TMatch; consumes'''
         value = self.peek()
         if value is None:
             return False
         match: TMatch = _get_match_from_item(value, self._selector)
         if match != expected:
             return False
-        self.advance()
-        return True
-
-    def match(self, expected: TMatch) -> bool:
-        '''Returns boolean of next TItem is TMatch; does not consume'''
-        value = self.peek()
-        if value is None:
-            return False
-        match: TMatch = _get_match_from_item(value, self._selector)
-        if match != expected:
-            return False
+        _ = self.advance()
         return True
 
     def matches(self, *expected: TMatch) -> bool:
-        '''Returns boolean of next TItem in TMatches; does not consume'''
+        '''Returns boolean if next TItem in TMatches; does not consume'''
         value = self.peek()
         if value is None:
             return False
