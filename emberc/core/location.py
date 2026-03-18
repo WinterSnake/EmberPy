@@ -6,26 +6,19 @@
 ##-------------------------------##
 
 ## Imports
+from dataclasses import dataclass
 from pathlib import Path
 
 
 ## Classes
+@dataclass
 class Location:
     """Source location for file and position"""
 
-    # -Constructor
-    def __init__(self, file: Path | None, position: tuple[int, int, int]) -> None:
-        self.file: Path | None = file
-        self.position: tuple[int, int, int] = position
-
-    # -Dunder Methods
-    def __str__(self) -> str:
-        _str: str = f"{self.row}:{self.column}:{self.offset}"
-        if self.file is not None:
-            return f"{self.file}:{_str}"
-        return _str
-
     # -Properties
+    file: Path | None
+    position: tuple[int, int, int]
+
     @property
     def column(self) -> int:
         return self.position[1]

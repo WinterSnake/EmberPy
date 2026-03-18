@@ -45,18 +45,18 @@ class LookaheadBuffer[TItem, TMatch](ABC):
         self._source: Iterator[TItem] = source
         self._selector: TSelector[TItem, TMatch] = selector
         self._buffer: deque[TItem] = deque()
-        self.is_at_end: bool = False
+        self._is_at_end: bool = False
 
     # -Instance Methods
     def advance(self) -> TItem | None:
         '''Returns next TItem from buffer or source iterator; None if at end'''
-        if self.is_at_end:
+        if self._is_at_end:
             return None
         elif self._buffer:
             return self._buffer.popleft()
         item = next(self._source, None)
         if item is None:
-            self.is_at_end = True
+            self._is_at_end = True
         return item
 
     def next(self) -> TItem:
@@ -109,3 +109,9 @@ class LookaheadBuffer[TItem, TMatch](ABC):
         item = self.peek()
         assert item is not None
         return item
+
+    @property
+    def is_at_end(self) -> bool:
+        if self._is_at_end:
+            return True
+        return self.peek() is None
