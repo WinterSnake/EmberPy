@@ -2,263 +2,334 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## AST: Printer                  ##
+## AST: Printers                 ##
 ##-------------------------------##
 
 ## Imports
-from __future__ import annotations
 from typing import TYPE_CHECKING
 from .unresolved import (
-    UnresolvedAssignNode,
+    AST_LITERAL_TYPES,
+    UnresolvedNodeVisitor,
+    UnresolvedTypeNode,
+    UnresolvedModifierNode,
+    UnresolvedFlowNode,
+    UnresolvedAssignmentNode,
     UnresolvedBinaryNode,
-    UnresolvedUnaryModifierNode,
     UnresolvedUnaryPrefixNode,
     UnresolvedUnaryPostfixNode,
-    UnresolvedNodeVisitor,
+    UnresolvedLiteralNode,
 )
 
 if TYPE_CHECKING:
     from .unresolved import (
+        UnresolvedNode,
         UnresolvedUnitNode,
-        UnresolvedTypeNode,
-        UnresolvedDeclFunctionNode,
-        UnresolvedDeclEnumNode,
-        UnresolvedDeclVariableNode,
-        UnresolvedStmtBlockNode,
-        UnresolvedStmtExpressionNode,
-        UnresolvedStmtConditionalNode,
-        UnresolvedStmtLoopWhileNode,
-        UnresolvedStmtLoopDoNode,
-        UnresolvedStmtLoopForNode,
-        UnresolvedStmtReturnNode,
-        UnresolvedStmtEmptyNode,
+        UnresolvedFunctionNode,
+        UnresolvedVariableNode,
+        UnresolvedBlockNode,
+        UnresolvedConditionalNode,
+        UnresolvedWhileNode,
+        UnresolvedDoNode,
+        UnresolvedForNode,
+        UnresolvedReturnNode,
+        UnresolvedExprNode,
         UnresolvedGroupNode,
-        UnresolvedExprEmptyNode,
-        UnresolvedMemberNode,
         UnresolvedIdentifierNode,
-        UnresolvedLiteralNode,
-        UnresolvedArrayNode,
+        UnresolvedEmptyNode,
     )
-
-## Constants
-__all__ = ("unresolved_printer",)
-UNARY_PREFIX_OPERATORS = {
-    UnresolvedUnaryPrefixNode.Operator.Negative: '-',
-    UnresolvedUnaryPrefixNode.Operator.LogNeg: '!',
-    UnresolvedUnaryPrefixNode.Operator.BitNeg: '~',
-    UnresolvedUnaryPrefixNode.Operator.Ptr: '*',
-    UnresolvedUnaryPrefixNode.Operator.Ref: '^',
-    UnresolvedUnaryPrefixNode.Operator.Deref: '@',
-    UnresolvedUnaryPrefixNode.Operator.Slice: '[]',
-    UnresolvedUnaryPrefixNode.Operator.SlicePtr: '[*]',
-}
-BINARY_OPERATORS = {
-    UnresolvedBinaryNode.Operator.Range: '..',
-    UnresolvedBinaryNode.Operator.Add: '+',
-    UnresolvedBinaryNode.Operator.Sub: '-',
-    UnresolvedBinaryNode.Operator.Mul: '*',
-    UnresolvedBinaryNode.Operator.Div: '/',
-    UnresolvedBinaryNode.Operator.Mod: '%',
-    UnresolvedBinaryNode.Operator.BitXor: '^',
-    UnresolvedBinaryNode.Operator.BitAnd: '&',
-    UnresolvedBinaryNode.Operator.BitOr: '|',
-    UnresolvedBinaryNode.Operator.ShiftL: '<<',
-    UnresolvedBinaryNode.Operator.ShiftR: '>>',
-    UnresolvedBinaryNode.Operator.LogAnd: '&&',
-    UnresolvedBinaryNode.Operator.LogOr: '||',
-    UnresolvedBinaryNode.Operator.Eq: '==',
-    UnresolvedBinaryNode.Operator.NtEq: '!=',
-    UnresolvedBinaryNode.Operator.Lt: '<',
-    UnresolvedBinaryNode.Operator.Gt: '>',
-    UnresolvedBinaryNode.Operator.LtEq: '<=',
-    UnresolvedBinaryNode.Operator.GtEq: '>=',
-}
-ASSIGN_OPERATORS = {
-    UnresolvedAssignNode.Operator.Eq: '=',
-    UnresolvedAssignNode.Operator.AddEq: '+=',
-    UnresolvedAssignNode.Operator.SubEq: '-=',
-    UnresolvedAssignNode.Operator.MulEq: '*=',
-    UnresolvedAssignNode.Operator.DivEq: '/=',
-    UnresolvedAssignNode.Operator.ModEq: '%=',
-    UnresolvedAssignNode.Operator.BitNegEq: '~=',
-    UnresolvedAssignNode.Operator.BitXorEq: '^=',
-    UnresolvedAssignNode.Operator.BitAndEq: '&=',
-    UnresolvedAssignNode.Operator.BitOrEq: '|=',
-    UnresolvedAssignNode.Operator.ShiftLEq: '<<=',
-    UnresolvedAssignNode.Operator.ShiftREq: '>>=',
-}
 
 
 ## Classes
 class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
     """
-    Ember Unresolved Visitor: Printer
+    A diagnostic visitor that transforms an Unresolved AST into a human-readable string.
 
-    Traverses the unresolved parse tree and prints each node (roughly) as it's input
+    This printer is designed for the 'Unresolved' phase of the Ember compiler, where
+    identifiers are not yet bound and C-style ambiguities (like type-casts vs. 
+    multiplications) are still present in the tree.
     """
 
     # -Constructor
     def __init__(self) -> None:
-        self._indent_level: int = 0
+        self.indent: int = 0
 
-    # -Instance Methods
-    def _get_indent(self) -> str:
-        return ' ' * self._indent_level
-
-    def run(self, node: UnresolvedUnitNode) -> str:
-        return '\n'.join(self.visit(elem) for elem in node.children)
-
+    # -Instance Methods: Visitor
     def visit_type(self, node: UnresolvedTypeNode) -> str:
-        return f"[Builtin:{node.type.name}]"
+        match node.kind:
+            case UnresolvedTypeNode.Kind.Void:
+                return "void"
+            case UnresolvedTypeNode.Kind.Boolean:
+                return "bool"
+            case UnresolvedTypeNode.Kind.Int8:
+                return "int8"
+            case UnresolvedTypeNode.Kind.Int16:
+                return "int16"
+            case UnresolvedTypeNode.Kind.Int32:
+                return "int32"
+            case UnresolvedTypeNode.Kind.Int64:
+                return "int64"
+            case UnresolvedTypeNode.Kind.UInt8:
+                return "uint8"
+            case UnresolvedTypeNode.Kind.UInt16:
+                return "uint16"
+            case UnresolvedTypeNode.Kind.UInt32:
+                return "uint32"
+            case UnresolvedTypeNode.Kind.UInt64:
+                return "uint64"
 
-    def visit_decl_function(self, node: UnresolvedDeclFunctionNode) -> str:
-        header = f"{self._get_indent()}fn {node.name}("
-        for i, parameter in enumerate(node.parameters):
-            header += f"{self.visit(parameter.type)} {parameter.name}"
-            if parameter.has_initializer:
-                header += f" = {self.visit(parameter.initializer)}"
-            if i < node.arity - 1:
-                header += ','
-        header += f"):{self.visit(node.type)}\n"
-        return header + self.visit(node.body)
+    def visit_modifier(self, node: UnresolvedModifierNode) -> str:
+        match node.kind:
+            case UnresolvedModifierNode.Kind.Const:
+                return f"const"
 
-    def visit_decl_enum(self, node: UnresolvedDeclEnumNode) -> str:
-        header = f"{self._get_indent()}enum {node.name}"
-        if node.has_type:
-            header += f":{self.visit(node.type)}"
-        header += "{\n"
-        buffer = ""
-        self._indent_level += 1
-        for i, entry in enumerate(node.entries):
-            buffer += self._get_indent()
-            buffer += entry.name
+    def visit_decl_unit(self, node: UnresolvedUnitNode) -> str:
+        EMPTY = f"[Unit: {node.location.file} -- Empty]"
+        if not node.nodes:
+            return EMPTY
+        nodes: list[str] = []
+        for _node in node.nodes:
+            if (_str := self.visit(_node)) != '':
+                nodes.append(_str)
+        if not nodes:
+            return EMPTY
+        return '\n'.join((f"[Unit: {node.location.file}]", *nodes))
+
+    def visit_decl_function(self, node: UnresolvedFunctionNode) -> str:
+        header = f"{self._get_indent()}Function Decl[Name={node.name} ; Return="
+        ret_type, ret_modifiers = self._get_type_chain(node.return_type)
+        ret_modifier_str = ','.join(ret_modifiers) if ret_modifiers else "None"
+        header += f"{{Type={ret_type} ; Modifiers={ret_modifier_str}}}]"
+        self.indent += 1
+        # -Parameters
+        parameters_str: str
+        if node.arity == 0:
+            parameters_str = f"{self._get_indent()}Parameters=None"
+        else:
+            parameters: list[str] = []
+            for parameter in node.parameters:
+                param_type, param_modifiers = self._get_type_chain(parameter.type)
+                param_modifiers_str = ','.join(param_modifiers) if param_modifiers else "None"
+                parameter_str = f"{self._get_indent()}Parameter={{Type={param_type} ; Modifier={param_modifiers_str}}} {parameter.name}"
+                if parameter.has_initializer:
+                    parameter_str += f" = {self.visit(parameter.initializer)}"
+                parameters.append(parameter_str)
+            parameters_str = '\n'.join(parameters)
+        # -Body
+        self.indent += 1
+        body = self.visit(node.body)
+        self.indent -= 2
+        return '\n'.join((header, parameters_str, body))
+
+    def visit_decl_variable(self, node: UnresolvedVariableNode) -> str:
+        base_type, modifiers = self._get_type_chain(node.type)
+        modifier_str = ','.join(modifiers) if modifiers else "None"
+        header = f"{self._get_indent()}Variable Decl[Type={base_type} ; Modifiers={modifier_str}]"
+        entries = []
+        self.indent += 1
+        for entry in node.entries:
+            entry_str = f"{self._get_indent()}Entry: {entry.name}"
             if entry.has_initializer:
-                buffer += f" = {self.visit(entry.initializer)}"
-            if i < len(node.entries) - 1:
-                buffer += ','
-            buffer += '\n'
-        self._indent_level -= 1
-        return header + buffer + '}'
+                entry_str += f" = {self.visit(entry.initializer)}"
+            entries.append(entry_str)
+        self.indent -= 1
+        return '\n'.join((header, *entries))
 
-    def visit_decl_variable(self, node: UnresolvedDeclVariableNode) -> str:
-        decl = f"{self._get_indent()}{self.visit(node.type)}["
-        for i, entry in enumerate(node.entries):
-            decl += entry.name
-            if entry.has_initializer:
-                decl += f"={self.visit(entry.initializer)}"
-            if i < len(node.entries) - 1:
-                decl += ','
-        return decl + ']'
+    def visit_stmt_block(self, node: UnresolvedBlockNode) -> str:
+        header = f"{self._get_indent()}{{"
+        nodes: list[str] = []
+        self.indent += 2
+        for _node in node.nodes:
+            if (_str := self.visit(_node)) != '':
+                nodes.append(_str)
+        self.indent -= 2
+        footer = f"{self._get_indent()}}}"
+        return '\n'.join((header, *nodes, footer))
 
-    def visit_stmt_empty(self, node: UnresolvedStmtEmptyNode) -> str:
-        return ""
-
-    def visit_stmt_block(self, node: UnresolvedStmtBlockNode) -> str:
-        header = f"{self._get_indent()}{{\n"
-        self._indent_level += 1
-        body = '\n'.join(
-            f"{self._get_indent()}{self.visit(elem)}"
-            for elem in node.elements
-        )
-        self._indent_level -= 1
-        return f"{header}{body}\n}}"
-
-    def visit_stmt_condition(self, node: UnresolvedStmtConditionalNode) -> str:
-        condition = self.visit(node.condition)
-        header = f"{self._get_indent()}if ({condition})\n"
-        header += self.visit(node.if_branch) + '\n'
+    def visit_stmt_conditional(self, node: UnresolvedConditionalNode) -> str:
+        header = f"{self._get_indent()}if ({self.visit(node.condition)})"
+        self.indent += 1
+        output = [header, self.visit(node.if_branch)]
+        self.indent -= 1
         if node.has_else_branch:
-            header += f"{self._get_indent()}else "
-            header += self.visit(node.else_branch)
-        return header
+            output.append(f"{self._get_indent()}else")
+            self.indent += 1
+            output.append(self.visit(node.else_branch))
+            self.indent -= 1
+        return '\n'.join(output)
 
-    def visit_stmt_loop_while(self, node: UnresolvedStmtLoopWhileNode) -> str:
-        header = f"{self._get_indent()}while({self.visit(node.condition)})\n"
-        return header + self.visit(node.body)
+    def visit_stmt_while(self, node: UnresolvedWhileNode) -> str:
+        header = f"{self._get_indent()}while ({self.visit(node.condition)})"
+        self.indent += 1
+        body = self.visit(node.body)
+        self.indent -= 1
+        return '\n'.join((header, body))
 
-    def visit_stmt_loop_do(self, node: UnresolvedStmtLoopDoNode) -> str:
-        header = f"{self._get_indent()}do\n"
-        header += self.visit(node.body)
-        header += f"while({self.visit(node.condition)})"
-        return header
+    def visit_stmt_do(self, node: UnresolvedDoNode) -> str:
+        header = f"{self._get_indent()}do"
+        self.indent += 1
+        body = self.visit(node.body)
+        self.indent -= 1
+        return '\n'.join((
+            header, body,
+            f"{self._get_indent()}while ({self.visit(node.condition)})"
+        ))
 
-    def visit_stmt_loop_for(self, node: UnresolvedStmtLoopForNode) -> str:
-        header = f"{self._get_indent()}for("
-        if node.has_initializer:
-            header += self.visit(node.initializer)
-        header += ';'
-        header += self.visit(node.condition) + ';'
-        if node.has_increment:
-            header += self.visit(node.increment)
-        header += ")\n"
-        return header + self.visit(node.body)
+    def visit_stmt_for(self, node: UnresolvedForNode) -> str:
+        init = self.visit(node.initializer) if node.has_initializer else ""
+        condition = self.visit(node.condition)
+        inc = self.visit(node.increment) if node.has_increment else ""
+        header = f"{self._get_indent()}for ({init};{condition};{inc})"
+        self.indent += 1
+        body = self.visit(node.body)
+        self.indent -= 1
+        return '\n'.join((header, body))
 
-    def visit_stmt_return(self, node: UnresolvedStmtReturnNode) -> str:
-        header = f"{self._get_indent()}return"
-        if node.has_value:
-            return header + self.visit(node.value)
-        return header
+    def visit_stmt_flow(self, node: UnresolvedFlowNode) -> str:
+        flow_str: str
+        match node.kind:
+            case UnresolvedFlowNode.Kind.Break:
+                flow_str = "break"
+            case UnresolvedFlowNode.Kind.Continue:
+                flow_str = "continue"
+        return f"{self._get_indent()}{flow_str}"
 
-    def visit_stmt_expression(self, node: UnresolvedStmtExpressionNode) -> str:
+    def visit_stmt_return(self, node: UnresolvedReturnNode) -> str:
+        output = f"{self._get_indent()}return"
+        if not node.has_expression:
+            return output
+        return f"{output} {self.visit(node.expression)}"
+
+    def visit_stmt_expression(self, node: UnresolvedExprNode) -> str:
+        if not node.has_expression:
+            return ''
         return f"{self._get_indent()}{self.visit(node.expression)}"
 
-    def visit_expr_empty(self, node: UnresolvedExprEmptyNode) -> str:
-        return ""
+    def visit_expr_group(self, node: UnresolvedGroupNode) -> str:
+        inner = self.visit(node.inner)
+        if not node.has_target:
+            return f"({inner})"
+        return f"({inner} -> [{self.visit(node.target)}])"
 
-    def visit_assignment(self, node: UnresolvedAssignNode) -> str:
+    def visit_expr_assignment(self, node: UnresolvedAssignmentNode) -> str:
         l_value = self.visit(node.l_value)
-        operator = ASSIGN_OPERATORS[node.operator]
         r_value = self.visit(node.r_value)
-        return f"{{{l_value} {operator} {r_value}}}"
+        match node.operator:
+            case UnresolvedAssignmentNode.Operator.Eq:
+                return f"({l_value} = {r_value})"
+            case UnresolvedAssignmentNode.Operator.AddEq:
+                return f"({l_value} += {r_value})"
+            case UnresolvedAssignmentNode.Operator.SubEq:
+                return f"({l_value} -= {r_value})"
+            case UnresolvedAssignmentNode.Operator.MulEq:
+                return f"({l_value} *= {r_value})"
+            case UnresolvedAssignmentNode.Operator.DivEq:
+                return f"({l_value} /= {r_value})"
+            case UnresolvedAssignmentNode.Operator.ModEq:
+                return f"({l_value} %= {r_value})"
+            case UnresolvedAssignmentNode.Operator.BitXorEq:
+                return f"({l_value} ^= {r_value})"
+            case UnresolvedAssignmentNode.Operator.BitAndEq:
+                return f"({l_value} &= {r_value})"
+            case UnresolvedAssignmentNode.Operator.BitOrEq:
+                return f"({l_value} |= {r_value})"
+            case UnresolvedAssignmentNode.Operator.ShiftLEq:
+                return f"({l_value} <<= {r_value})"
+            case UnresolvedAssignmentNode.Operator.ShiftREq:
+                return f"({l_value} >>= {r_value})"
 
-    def visit_binary(self, node: UnresolvedBinaryNode) -> str:
+    def visit_expr_binary(self, node: UnresolvedBinaryNode) -> str:
         lhs = self.visit(node.lhs)
-        operator = BINARY_OPERATORS[node.operator]
         rhs = self.visit(node.rhs)
-        return f"({lhs} {operator} {rhs})"
+        match node.operator:
+            # -Math
+            case UnresolvedBinaryNode.Operator.Add:
+                return f"({lhs} + {rhs})"
+            case UnresolvedBinaryNode.Operator.Sub:
+                return f"({lhs} - {rhs})"
+            case UnresolvedBinaryNode.Operator.Mul:
+                return f"({lhs} * {rhs})"
+            case UnresolvedBinaryNode.Operator.Div:
+                return f"({lhs} / {rhs})"
+            case UnresolvedBinaryNode.Operator.Mod:
+                return f"({lhs} % {rhs})"
+            # -Bitwise
+            case UnresolvedBinaryNode.Operator.BitXor:
+                return f"({lhs} ^ {rhs})"
+            case UnresolvedBinaryNode.Operator.BitAnd:
+                return f"({lhs} & {rhs})"
+            case UnresolvedBinaryNode.Operator.BitOr:
+                return f"({lhs} | {rhs})"
+            case UnresolvedBinaryNode.Operator.ShiftL:
+                return f"({lhs} << {rhs})"
+            case UnresolvedBinaryNode.Operator.ShiftR:
+                return f"({lhs} >> {rhs})"
+            # -Comparisons
+            case UnresolvedBinaryNode.Operator.LogOr:
+                return f"({lhs} or {rhs})"
+            case UnresolvedBinaryNode.Operator.LogAnd:
+                return f"({lhs} and {rhs})"
+            case UnresolvedBinaryNode.Operator.Eq:
+                return f"({lhs} == {rhs})"
+            case UnresolvedBinaryNode.Operator.NtEq:
+                return f"({lhs} != {rhs})"
+            case UnresolvedBinaryNode.Operator.Lt:
+                return f"({lhs} < {rhs})"
+            case UnresolvedBinaryNode.Operator.Gt:
+                return f"({lhs} > {rhs})"
+            case UnresolvedBinaryNode.Operator.LtEq:
+                return f"({lhs} <= {rhs})"
+            case UnresolvedBinaryNode.Operator.GtEq:
+                return f"({lhs} >= {rhs})"
 
-    def visit_unary_modifier(self, node: UnresolvedUnaryModifierNode) -> str:
-        target = self.visit(node.target)
-        match node.type:
-            case UnresolvedUnaryModifierNode.Type.Static:
-                return f"static {target}"
-            case UnresolvedUnaryModifierNode.Type.Const:
-                return f"const {target}"
-            case UnresolvedUnaryModifierNode.Type.Immut:
-                return f"immut {target}"
+    def visit_expr_unary_prefix(self, node: UnresolvedUnaryPrefixNode) -> str:
+        operand = self.visit(node.operand)
+        match node.operator:
+            # -Math
+            case UnresolvedUnaryPrefixNode.Operator.NumericalNegate:
+                return f"(-{operand})"
+            case UnresolvedUnaryPrefixNode.Operator.LogicalNegate:
+                return f"(!{operand})"
+            case UnresolvedUnaryPrefixNode.Operator.BitwiseNegate:
+                return f"(~{operand})"
+            # -Typing
+            case UnresolvedUnaryPrefixNode.Operator.Pointer:
+                return f"*{operand}"
+            case UnresolvedUnaryPrefixNode.Operator.AddressOf:
+                return f"(@{operand})"
+            case UnresolvedUnaryPrefixNode.Operator.Dereference:
+                return f"({operand}.*)"
 
-    def visit_unary_prefix(self, node: UnresolvedUnaryPrefixNode) -> str:
-        expr = self.visit(node.operand)
-        operator = UNARY_PREFIX_OPERATORS[node.operator]
-        return f"({operator}{expr})"
-
-    def visit_unary_postfix(self, node: UnresolvedUnaryPostfixNode) -> str:
+    def visit_expr_unary_postfix(self, node: UnresolvedUnaryPostfixNode) -> str:
         head = self.visit(node.head)
         arguments = ','.join(self.visit(argument) for argument in node.arguments)
         match node.kind:
             case UnresolvedUnaryPostfixNode.Kind.Call:
                 return f"{head}({arguments})"
-            case UnresolvedUnaryPostfixNode.Kind.Subscript:
-                return f"{head}[{arguments}]"
 
-    def visit_group(self, node: UnresolvedGroupNode) -> str:
-        expr = f"({self.visit(node.inner)})"
-        if node.has_target:
-            expr = f"({expr}; target={self.visit(node.target)})"
-        return expr
-
-    def visit_member_access(self, node: UnresolvedMemberNode) -> str:
-        return f"[{self.visit(node.head)}.{node.member}]"
-
-    def visit_array(self, node: UnresolvedArrayNode) -> str:
-        return '[' + ','.join(self.visit(elem) for elem in node.values) + ']'
-
-    def visit_literal(self, node: UnresolvedLiteralNode) -> str:
+    def visit_expr_literal(self, node: UnresolvedLiteralNode) -> str:
         return str(node.value)
 
-    def visit_identifier(self, node: UnresolvedIdentifierNode) -> str:
-        return f"[Ident:{node.name}]"
+    def visit_expr_identifier(self, node: UnresolvedIdentifierNode) -> str:
+        return node.name
 
+    def visit_expr_empty(self, node: UnresolvedEmptyNode) -> str:
+        return ''
 
-## Body
-unresolved_printer = UnresolvedNodePrinter()
+    # -Instance Methods: Helpers
+    def _get_indent(self) -> str:
+        return ' ' * self.indent
+
+    def _get_type_chain(self, node: UnresolvedNode) -> tuple[str, list[str]]:
+        match node:
+            case UnresolvedModifierNode():
+                base_type, modifiers = self._get_type_chain(node.target)
+                modifiers.append(self.visit(node))
+                return (base_type, modifiers)
+            case _:
+                return (self.visit(node), [])
+
+    # -Static Methods
+    @staticmethod
+    def run(ast: UnresolvedNode) -> None:
+        printer = UnresolvedNodePrinter()
+        print(printer.visit(ast))
