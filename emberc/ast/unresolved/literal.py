@@ -8,56 +8,31 @@
 ## Imports
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 from enum import IntEnum, auto
 from .node import UnresolvedNode
 
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-
 ## Constants
-type LITERAL_VALUE = bool | int | str
+type AST_LITERAL_TYPES = bool | int | str
 
 
 ## Classes
 @dataclass
 class UnresolvedLiteralNode(UnresolvedNode):
     """
-    Ember Unresolved Node: Literal
+    Unresolved AST Node: Literal
 
-    A node for storing a literal value
+    A leaf container for holding a primitive constant value.
     """
+    # -Instance Methods
+    def value_as[T: AST_LITERAL_TYPES](self, _type: type[T]) -> T:
+        assert type(self.value) is _type, "TODO: Error handling"
+        return self.value
+
     # -Properties
-    value: LITERAL_VALUE
-    type: UnresolvedLiteralNode.Type
+    kind: UnresolvedLiteralNode.Kind
+    value: AST_LITERAL_TYPES
+
     # -Sub-Classes
-    class Type(IntEnum):
-        Integer = auto()
+    class Kind(IntEnum):
         Boolean = auto()
-        String = auto()
-
-
-@dataclass
-class UnresolvedArrayNode(UnresolvedNode):
-    """
-    Ember Unresolved Node: Array
-
-    A node for storing a array values
-    """
-    # -Properties
-    values: Sequence[UnresolvedNode]
-
-    @property
-    def count(self) -> int:
-        return len(self.values)
-
-
-@dataclass
-class UnresolvedExprEmptyNode(UnresolvedNode):
-    """
-    Ember Unresolved Node: Empty Expression
-
-    A placeholder node for storing an empty expression
-    Used for range and index postfix context
-    """
-    pass
+        Integer = auto()

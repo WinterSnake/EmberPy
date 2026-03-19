@@ -14,22 +14,19 @@ from .node import UnresolvedNode
 @dataclass
 class UnresolvedIdentifierNode(UnresolvedNode):
     """
-    Ember Unresolved Node: Identifier
+    Unresolved AST Node: Identifier
 
-    A node for storing an identifier's name
+    A leaf container for holding an identifier and it's id.
     """
     # -Properties
     name: str
-    id: int = field(init=False, repr=False)
+    _id: int | None = field(init=False, default=None)
 
+    @property
+    def has_id(self) -> bool:
+        return self._id is not None
 
-@dataclass
-class UnresolvedMemberNode(UnresolvedNode):
-    """
-    Ember Unresolved Node: Member
-
-    A node for storing a member access of head node
-    """
-    # -Properties
-    head: UnresolvedNode
-    member: str
+    @property
+    def id(self) -> int:
+        assert self._id is not None
+        return self._id

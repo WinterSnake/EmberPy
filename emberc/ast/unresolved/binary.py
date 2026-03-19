@@ -16,17 +16,18 @@ from .node import UnresolvedNode
 @dataclass
 class UnresolvedBinaryNode(UnresolvedNode):
     """
-    Ember Unresolved Node: Binary
+    Unresolved AST Node: Binary
 
-    A node for storing a binary operation with lhs, operator, and rhs
+    A container for holding a left and right hand operand
+    and the appropriate operator between the two expressions.
     """
     # -Properties
     operator: UnresolvedBinaryNode.Operator
     lhs: UnresolvedNode
     rhs: UnresolvedNode
+
     # -Sub-Classes
     class Operator(IntEnum):
-        Range = auto()
         # -Math
         Add = auto()
         Sub = auto()
@@ -40,9 +41,8 @@ class UnresolvedBinaryNode(UnresolvedNode):
         ShiftL = auto()
         ShiftR = auto()
         # -Comparisons
-        LogAnd = auto()
         LogOr = auto()
-        # -Comparisons
+        LogAnd = auto()
         Eq = auto()
         NtEq = auto()
         Lt = auto()

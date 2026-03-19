@@ -6,6 +6,7 @@
 ##-------------------------------##
 
 ## Imports
+from __future__ import annotations
 from dataclasses import dataclass
 from .node import UnresolvedNode
 
@@ -14,10 +15,10 @@ from .node import UnresolvedNode
 @dataclass
 class UnresolvedGroupNode(UnresolvedNode):
     """
-    Ember Unresolved Node: Group
+    Unresolved AST Node: Group
 
-    A node for storing a grouped expression and optional target
-    where target could be a potential greedy cast or binary operation
+    A container for a grouped expression and optional target.
+    Target is applied when an ambiguity arises between operators and grouping.
     """
     # -Properties
     inner: UnresolvedNode
@@ -29,5 +30,6 @@ class UnresolvedGroupNode(UnresolvedNode):
 
     @property
     def target(self) -> UnresolvedNode:
-        assert self._target is not None
+        assert self._target is not None, "TODO: Error handling"
         return self._target
+

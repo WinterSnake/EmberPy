@@ -2,7 +2,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Unresolved Node: Binary       ##
+## Unresolved Node: Assignment   ##
 ##-------------------------------##
 
 ## Imports
@@ -14,16 +14,18 @@ from .node import UnresolvedNode
 
 ## Classes
 @dataclass
-class UnresolvedAssignNode(UnresolvedNode):
+class UnresolvedAssignmentNode(UnresolvedNode):
     """
-    Ember Unresolved Node: Assignment
+    Unresolved AST Node: Assign
 
-    A node for storing an assignment with l_value, operator, and r_value
+    A container for holding a left and right value operand
+    and the appropriate assignment operator between the two values.
     """
     # -Properties
-    operator: UnresolvedAssignNode.Operator
+    operator: UnresolvedAssignmentNode.Operator
     l_value: UnresolvedNode
     r_value: UnresolvedNode
+
     # -Sub-Classes
     class Operator(IntEnum):
         Eq = auto()
@@ -32,7 +34,6 @@ class UnresolvedAssignNode(UnresolvedNode):
         MulEq = auto()
         DivEq = auto()
         ModEq = auto()
-        BitNegEq = auto()
         BitXorEq = auto()
         BitAndEq = auto()
         BitOrEq = auto()

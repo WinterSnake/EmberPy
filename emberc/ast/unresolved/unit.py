@@ -2,26 +2,26 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Unresolved Node               ##
+## Unresolved Node: Unit         ##
 ##-------------------------------##
 
 ## Imports
-from abc import ABC
 from dataclasses import dataclass
-from enum import IntEnum, auto
 from typing import TYPE_CHECKING
+from .node import UnresolvedNode
 
 if TYPE_CHECKING:
-    from ...core import Location
+    from typing import MutableSequence
 
 
 ## Classes
 @dataclass
-class UnresolvedNode(ABC):
+class UnresolvedUnitNode(UnresolvedNode):
     """
-    Unresolved AST Node
+    Unresolved AST Node: Unit
 
-    An abstract base for all structural AST nodes produced by the parser.
+    A top-level container for a unit for files or modules.
+    Holds a mutable sequence of root nodes.
     """
     # -Properties
-    location: Location
+    nodes: MutableSequence[UnresolvedNode]

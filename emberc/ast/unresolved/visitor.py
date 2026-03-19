@@ -7,148 +7,126 @@
 
 ## Imports
 from abc import ABC, abstractmethod
-from .assign import UnresolvedAssignNode
+from .assignment import UnresolvedAssignmentNode
 from .binary import UnresolvedBinaryNode
-from .declaration import (
-    UnresolvedDeclFunctionNode,
-    UnresolvedDeclEnumNode,
-    UnresolvedDeclVariableNode,
-)
+from .block import UnresolvedBlockNode
+from .conditional import UnresolvedConditionalNode
+from .expression import UnresolvedExprNode, UnresolvedEmptyNode
+from .function import UnresolvedFunctionNode, UnresolvedReturnNode
 from .group import UnresolvedGroupNode
-from .identifier import UnresolvedIdentifierNode, UnresolvedMemberNode
-from .literal import (
-    UnresolvedLiteralNode,
-    UnresolvedArrayNode,
-    UnresolvedExprEmptyNode
+from .identifier import UnresolvedIdentifierNode
+from .literal import UnresolvedLiteralNode
+from .loops import (
+    UnresolvedWhileNode,
+    UnresolvedDoNode,
+    UnresolvedForNode,
+    UnresolvedFlowNode,
 )
-from .node import (
-    UnresolvedNode,
-    UnresolvedTypeNode,
-    UnresolvedUnitNode
-)
-from .statement import (
-    UnresolvedStmtNode,
-    UnresolvedStmtBlockNode,
-    UnresolvedStmtExpressionNode,
-    UnresolvedStmtConditionalNode,
-    UnresolvedStmtLoopWhileNode,
-    UnresolvedStmtLoopDoNode,
-    UnresolvedStmtLoopForNode,
-    UnresolvedStmtReturnNode,
-    UnresolvedStmtEmptyNode,
-)
-from .unary import (
-    UnresolvedUnaryPrefixNode,
-    UnresolvedUnaryModifierNode,
-    UnresolvedUnaryPostfixNode
-)
+from .node import UnresolvedNode
+from .types import UnresolvedTypeNode, UnresolvedModifierNode
+from .unary import UnresolvedUnaryPrefixNode, UnresolvedUnaryPostfixNode
+from .unit import UnresolvedUnitNode
+from .variable import UnresolvedVariableNode
 
 
 ## Classes
 class UnresolvedNodeVisitor[TReturn](ABC):
     """
-    Ember AST Node: Unresolved Visitor
+    Unresolved AST Visitor
 
-    A visitor for traversing through unresolved nodes in a single dispatch
+    A traversal interface for walking an unresolved AST tree.
     """
-
     # -Instance Methods
-    @abstractmethod
-    def run(self, ast: UnresolvedUnitNode) -> TReturn: ...
     def visit(self, node: UnresolvedNode) -> TReturn:
         match node:
+            # -Types
             case UnresolvedTypeNode():
                 return self.visit_type(node)
-            case UnresolvedDeclFunctionNode():
+            case UnresolvedModifierNode():
+                return self.visit_modifier(node)
+            # -Declarations
+            case UnresolvedUnitNode():
+                return self.visit_decl_unit(node)
+            case UnresolvedFunctionNode():
                 return self.visit_decl_function(node)
-            case UnresolvedDeclEnumNode():
-                return self.visit_decl_enum(node)
-            case UnresolvedDeclVariableNode():
+            case UnresolvedVariableNode():
                 return self.visit_decl_variable(node)
-            case UnresolvedStmtEmptyNode():
-                return self.visit_stmt_empty(node)
-            case UnresolvedStmtBlockNode():
+            # -Statements
+            case UnresolvedBlockNode():
                 return self.visit_stmt_block(node)
-            case UnresolvedStmtConditionalNode():
-                return self.visit_stmt_condition(node)
-            case UnresolvedStmtLoopWhileNode():
-                return self.visit_stmt_loop_while(node)
-            case UnresolvedStmtLoopDoNode():
-                return self.visit_stmt_loop_do(node)
-            case UnresolvedStmtLoopForNode():
-                return self.visit_stmt_loop_for(node)
-            case UnresolvedStmtReturnNode():
+            case UnresolvedConditionalNode():
+                return self.visit_stmt_conditional(node)
+            case UnresolvedWhileNode():
+                return self.visit_stmt_while(node)
+            case UnresolvedDoNode():
+                return self.visit_stmt_do(node)
+            case UnresolvedForNode():
+                return self.visit_stmt_for(node)
+            case UnresolvedFlowNode():
+                return self.visit_stmt_flow(node)
+            case UnresolvedReturnNode():
                 return self.visit_stmt_return(node)
-            case UnresolvedStmtExpressionNode():
+            case UnresolvedExprNode():
                 return self.visit_stmt_expression(node)
-            case UnresolvedExprEmptyNode():
-                return self.visit_expr_empty(node)
-            case UnresolvedAssignNode():
-                return self.visit_assignment(node)
-            case UnresolvedBinaryNode():
-                return self.visit_binary(node)
-            case UnresolvedUnaryModifierNode():
-                return self.visit_unary_modifier(node)
-            case UnresolvedUnaryPrefixNode():
-                return self.visit_unary_prefix(node)
-            case UnresolvedUnaryPostfixNode():
-                return self.visit_unary_postfix(node)
+            # -Expressions
             case UnresolvedGroupNode():
-                return self.visit_group(node)
-            case UnresolvedArrayNode():
-                return self.visit_array(node)
+                return self.visit_expr_group(node)
+            case UnresolvedAssignmentNode():
+                return self.visit_expr_assignment(node)
+            case UnresolvedBinaryNode():
+                return self.visit_expr_binary(node)
+            case UnresolvedUnaryPrefixNode():
+                return self.visit_expr_unary_prefix(node)
+            case UnresolvedUnaryPostfixNode():
+                return self.visit_expr_unary_postfix(node)
             case UnresolvedLiteralNode():
-                return self.visit_literal(node)
+                return self.visit_expr_literal(node)
             case UnresolvedIdentifierNode():
-                return self.visit_identifier(node)
-            case UnresolvedMemberNode():
-                return self.visit_member_access(node)
+                return self.visit_expr_identifier(node)
+            case UnresolvedEmptyNode():
+                return self.visit_expr_empty(node)
             case _:
-                raise RuntimeError("Unhandled node type", node, "in NodeVisitor")
+                raise RuntimeError("Unhandled node type", node, "in UnresolvedNodeVisitor")
 
     @abstractmethod
     def visit_type(self, node: UnresolvedTypeNode) -> TReturn: ...
     @abstractmethod
-    def visit_decl_function(self, node: UnresolvedDeclFunctionNode) -> TReturn: ...
+    def visit_modifier(self, node: UnresolvedModifierNode) -> TReturn: ...
     @abstractmethod
-    def visit_decl_enum(self, node: UnresolvedDeclEnumNode) -> TReturn: ...
+    def visit_decl_unit(self, node: UnresolvedUnitNode) -> TReturn: ...
     @abstractmethod
-    def visit_decl_variable(self, node: UnresolvedDeclVariableNode) -> TReturn: ...
+    def visit_decl_function(self, node: UnresolvedFunctionNode) -> TReturn: ...
     @abstractmethod
-    def visit_stmt_empty(self, node: UnresolvedStmtEmptyNode) -> TReturn: ...
+    def visit_decl_variable(self, node: UnresolvedVariableNode) -> TReturn: ...
     @abstractmethod
-    def visit_stmt_block(self, node: UnresolvedStmtBlockNode) -> TReturn: ...
+    def visit_stmt_block(self, node: UnresolvedBlockNode) -> TReturn: ...
     @abstractmethod
-    def visit_stmt_condition(self, node: UnresolvedStmtConditionalNode) -> TReturn: ...
+    def visit_stmt_conditional(self, node: UnresolvedConditionalNode) -> TReturn: ...
     @abstractmethod
-    def visit_stmt_loop_while(self, node: UnresolvedStmtLoopWhileNode) -> TReturn: ...
+    def visit_stmt_while(self, node: UnresolvedWhileNode) -> TReturn: ...
     @abstractmethod
-    def visit_stmt_loop_do(self, node: UnresolvedStmtLoopDoNode) -> TReturn: ...
+    def visit_stmt_do(self, node: UnresolvedDoNode) -> TReturn: ...
     @abstractmethod
-    def visit_stmt_loop_for(self, node: UnresolvedStmtLoopForNode) -> TReturn: ...
+    def visit_stmt_for(self, node: UnresolvedForNode) -> TReturn: ...
     @abstractmethod
-    def visit_stmt_return(self, node: UnresolvedStmtReturnNode) -> TReturn: ...
+    def visit_stmt_flow(self, node: UnresolvedFlowNode) -> TReturn: ...
     @abstractmethod
-    def visit_stmt_expression(self, node: UnresolvedStmtExpressionNode) -> TReturn: ...
+    def visit_stmt_return(self, node: UnresolvedReturnNode) -> TReturn: ...
     @abstractmethod
-    def visit_expr_empty(self, node: UnresolvedExprEmptyNode) -> TReturn: ...
+    def visit_stmt_expression(self, node: UnresolvedExprNode) -> TReturn: ...
     @abstractmethod
-    def visit_assignment(self, node: UnresolvedAssignNode) -> TReturn: ...
+    def visit_expr_group(self, node: UnresolvedGroupNode) -> TReturn: ...
     @abstractmethod
-    def visit_binary(self, node: UnresolvedBinaryNode) -> TReturn: ...
+    def visit_expr_assignment(self, node: UnresolvedAssignmentNode) -> TReturn: ...
     @abstractmethod
-    def visit_unary_modifier(self, node: UnresolvedUnaryModifierNode) -> TReturn: ...
+    def visit_expr_binary(self, node: UnresolvedBinaryNode) -> TReturn: ...
     @abstractmethod
-    def visit_unary_prefix(self, node: UnresolvedUnaryPrefixNode) -> TReturn: ...
+    def visit_expr_unary_prefix(self, node: UnresolvedUnaryPrefixNode) -> TReturn: ...
     @abstractmethod
-    def visit_unary_postfix(self, node: UnresolvedUnaryPostfixNode) -> TReturn: ...
+    def visit_expr_unary_postfix(self, node: UnresolvedUnaryPostfixNode) -> TReturn: ...
     @abstractmethod
-    def visit_group(self, node: UnresolvedGroupNode) -> TReturn: ...
+    def visit_expr_literal(self, node: UnresolvedLiteralNode) -> TReturn: ...
     @abstractmethod
-    def visit_array(self, node: UnresolvedArrayNode) -> TReturn: ...
+    def visit_expr_identifier(self, node: UnresolvedIdentifierNode) -> TReturn: ...
     @abstractmethod
-    def visit_literal(self, node: UnresolvedLiteralNode) -> TReturn: ...
-    @abstractmethod
-    def visit_identifier(self, node: UnresolvedIdentifierNode) -> TReturn: ...
-    @abstractmethod
-    def visit_member_access(self, node: UnresolvedMemberNode) -> TReturn: ...
+    def visit_expr_empty(self, node: UnresolvedEmptyNode) -> TReturn: ...
