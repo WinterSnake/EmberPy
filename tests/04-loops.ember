@@ -10,7 +10,7 @@ do
 	c;
 } while(c > 0);
 
-for (int8 loopy = 0; loopy < 100; loopy = loopy + 1)
+for (int8 loopy = 0; loopy < 100; loopy += 1)
 {
 	loopy;
 }
