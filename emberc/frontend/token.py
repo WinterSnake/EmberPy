@@ -7,38 +7,40 @@
 
 ## Imports
 from __future__ import annotations
+from dataclasses import dataclass
 from enum import IntEnum, auto
 from typing import TYPE_CHECKING
-from ..location import Location
 
 if TYPE_CHECKING:
-    from ..ast import LITERAL_VALUE
-
+    from ..core import Location
+    from ..ast import AST_LITERAL_TYPES
 
 ## Classes
+@dataclass(frozen=True, slots=True)
 class Token:
-    """Ember Language Token"""
+    """
+    Ember Lexical Symbol
 
-    # -Constructor
-    def __init__(
-        self, location: Location, _type: Token.Type,
-        value: LITERAL_VALUE | None = None
-    ) -> None:
-        self.location: Location = location
-        self.type: Token.Type = _type
-        self._value: LITERAL_VALUE | None = value
-
-    # -Dunder Methods
-    def __str__(self) -> str:
-        _str = self.type.name
-        if self._value is not None:
-            _str += f"({self.value})"
-        return _str
+    An atomic representation of a language primitive,
+    pairing a type with its value and source location.
+    """
+    # -Instance Methods
+    def value_as[T: AST_LITERAL_TYPES](self, _type: type[T]) -> T:
+        assert type(self.value) is _type, "TODO: Error handling"
+        return self.value
 
     # -Properties
+    location: Location
+    type: Token.Type
+    _value: AST_LITERAL_TYPES | None = None
+
     @property
-    def value(self) -> LITERAL_VALUE:
-        assert self._value is not None
+    def has_value(self) -> bool:
+        return self._value is not None
+
+    @property
+    def value(self) -> AST_LITERAL_TYPES:
+        assert self._value is not None, "TODO: Error handling"
         return self._value
 
     # -Sub-Classes
@@ -47,17 +49,19 @@ class Token:
         Identifier = auto()
         Boolean = auto()
         Integer = auto()
-        String = auto()
         # -Keyword
+        KeywordOr = auto()
+        KeywordAnd = auto()
         KeywordIf = auto()
         KeywordElse = auto()
         KeywordWhile = auto()
         KeywordDo = auto()
         KeywordFor = auto()
         KeywordFn = auto()
+        KeywordContinue = auto()
+        KeywordBreak = auto()
         KeywordReturn = auto()
-        KeywordEnum = auto()
-        # -Keyword: Types
+        # -Keyword: Type
         KeywordVoid = auto()
         KeywordBoolean = auto()
         KeywordInt8 = auto()
@@ -68,10 +72,8 @@ class Token:
         KeywordUInt16 = auto()
         KeywordUInt32 = auto()
         KeywordUInt64 = auto()
-        # -Keyword: Type Modifiers
+        # -Keyword: Type Modifier
         KeywordConst = auto()
-        KeywordStatic = auto()
-        KeywordImmut = auto()
         # -Symbol: Math
         SymbolEq = auto()
         SymbolBang = auto()
@@ -87,7 +89,6 @@ class Token:
         SymbolPercentEq = auto()
         # -Symbol: Bitwise
         SymbolBitNeg = auto()
-        SymbolBitNegEq = auto()
         SymbolBitXor = auto()
         SymbolBitXorEq = auto()
         SymbolBitAnd = auto()
@@ -99,8 +100,6 @@ class Token:
         SymbolRShift = auto()
         SymbolRShiftEq = auto()
         # -Symbol: Comparison
-        SymbolLogOr = auto()
-        SymbolLogAnd = auto()
         SymbolEqEq = auto()
         SymbolNtEq = auto()
         SymbolLt = auto()
@@ -116,7 +115,5 @@ class Token:
         SymbolAt = auto()
         SymbolLParen = auto()
         SymbolRParen = auto()
-        SymbolLBracket = auto()
-        SymbolRBracket = auto()
         SymbolLBrace = auto()
         SymbolRBrace = auto()

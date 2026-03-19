@@ -7,43 +7,44 @@
 
 ## Imports
 from __future__ import annotations
-from collections.abc import Iterator
-from pathlib import Path
 from typing import TYPE_CHECKING
-from .lookahead_buffer import LookaheadBuffer
 from .token import Token
-from ..location import Location
+from ..core import Location, LookaheadBuffer
 
 if TYPE_CHECKING:
-    from ..ast import LITERAL_VALUE
+    from collections.abc import Iterator
+    from pathlib import Path
 
 ## Constants
+HEX_CHARACTERS = ('a', 'b', 'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F')
 SYMBOLS = (
-    # -Symbol: Math
-    '=', '!',
+    # -Math
     '+', '-', '*', '/', '%',
-    # -Symbol: Bitwise
+    # -Bitwise
     '~', '^', '&', '|',
-    # -Symbol: Comparison
-    '<', '>',
-    # -Symbol: Misc
+    # -Comparison
+    '=', '!', '<', '>',
+    # -Misc
     '.', ',', ':', ';', '@',
-    '(', ')', '[', ']', '{', '}',
+    '(', ')', '{', '}',
 )
 KEYWORDS = {
-    # -Literals
+    # -Literal
     'true': Token.Type.Boolean,
     'false': Token.Type.Boolean,
-    # -Keywords
+    # -Keyword
+    'or': Token.Type.KeywordOr,
+    'and': Token.Type.KeywordAnd,
     'if': Token.Type.KeywordIf,
     'else': Token.Type.KeywordElse,
     'while': Token.Type.KeywordWhile,
     'do': Token.Type.KeywordDo,
     'for': Token.Type.KeywordFor,
     'fn': Token.Type.KeywordFn,
+    'continue': Token.Type.KeywordContinue,
+    'break': Token.Type.KeywordBreak,
     'return': Token.Type.KeywordReturn,
-    'enum': Token.Type.KeywordEnum,
-    # -Types
+    # -Type
     'void': Token.Type.KeywordVoid,
     'bool': Token.Type.KeywordBoolean,
     'int8': Token.Type.KeywordInt8,
@@ -54,45 +55,18 @@ KEYWORDS = {
     'uint16': Token.Type.KeywordUInt16,
     'uint32': Token.Type.KeywordUInt32,
     'uint64': Token.Type.KeywordUInt64,
-    # -Type Modifiers
-    'static': Token.Type.KeywordStatic,
+    # -Type: Modifier
     'const': Token.Type.KeywordConst,
-    'immut': Token.Type.KeywordImmut,
 }
-HEX_LETTERS = (
-    'a', 'b', 'c', 'd', 'e', 'f',
-    'A', 'B', 'C', 'D', 'E', 'F',
-)
-
-
-## Functions
-def _get_unescaped_sequence(char: str) -> str:
-    """Returns the correct escape sequence string from a given char"""
-    match char:
-        case 'n':
-            return '\n'
-        case 'r':
-            return '\r'
-        case 't':
-            return '\t'
-        case '0':
-            return '\0'
-        case '\\':
-            return '\\'
-        case '\'':
-            return '\''
-        case '"':
-            return '"'
-    assert False, "TODO: Error handling"
 
 
 ## Classes
 class Lexer(LookaheadBuffer[str, str]):
     """
-    Ember Lexer: Lookahead(1)
+    Ember Lookahead(1) Lexer
 
-    Handles iterating over a string and churns out Ember related tokens.
-    Can be used with either an iter(str) or a Pathlib file
+    Transforms a raw character stream into a sequence of Ember tokens.
+    Can be used with either a source string or file
     """
 
     # -Constructor
@@ -100,24 +74,20 @@ class Lexer(LookaheadBuffer[str, str]):
         super().__init__(source)
         self.row: int = 1
         self.column: int = 0
-        self.offset: int = 0
+        self.offset: int = -1
         self.file: Path | None = file
 
     # -Instance Methods: Lookahead
     def advance(self) -> str | None:
-        value = super().advance()
+        if (value := super().advance()) is None:
+            return None
         if value == '\n':
             self.row += 1
             self.column = 0
-        elif value is not None:
+        else:
             self.column += 1
-        if value is not None:
-            self.offset += 1
+        self.offset += 1
         return value
-
-    def require(self, expected: str) -> None:
-        if not self.consume(expected):
-            assert False, "TODO: Error handling"
 
     # -Instance Methods: Lexing
     def lex(self) -> Iterator[Token]:
@@ -126,8 +96,11 @@ class Lexer(LookaheadBuffer[str, str]):
         '''
         while c := self.advance():
             token: Token | None = None
+            # Default -> Default
+            if c.isspace():
+                continue
             # Default -> Symbol
-            if c in SYMBOLS:
+            elif c in SYMBOLS:
                 token = self._lex_symbol(c)
             # Default -> Number
             elif c.isnumeric():
@@ -135,12 +108,6 @@ class Lexer(LookaheadBuffer[str, str]):
             # Default -> Word
             elif c.isalpha() or c == '_':
                 token = self._lex_word(c)
-            # Default -> Char
-            elif c == '\'':
-                token = self._lex_char()
-            # Default -> String
-            elif c == '"':
-                token = self._lex_string()
             if token:
                 yield token
 
@@ -150,17 +117,8 @@ class Lexer(LookaheadBuffer[str, str]):
         '''
         _type: Token.Type
         location = self.location
-        peeked = self.peek()
         match buffer:
-            # -Symbol: Math
-            case '=':
-                _type = Token.Type.SymbolEq
-                if self.consume('='):
-                    _type = Token.Type.SymbolEqEq
-            case '!':
-                _type = Token.Type.SymbolBang
-                if self.consume('='):
-                    _type = Token.Type.SymbolNtEq
+            # -Math
             case '+':
                 _type = Token.Type.SymbolPlus
                 if self.consume('='):
@@ -187,28 +145,30 @@ class Lexer(LookaheadBuffer[str, str]):
                 _type = Token.Type.SymbolPercent
                 if self.consume('='):
                     _type = Token.Type.SymbolPercentEq
-            # -Symbol: Bitwise
+            # -Bitwise
             case '~':
                 _type = Token.Type.SymbolBitNeg
-                if self.consume('='):
-                    _type = Token.Type.SymbolBitNegEq
             case '^':
                 _type = Token.Type.SymbolBitXor
                 if self.consume('='):
                     _type = Token.Type.SymbolBitXorEq
             case '&':
                 _type = Token.Type.SymbolBitAnd
-                if self.consume('&'):
-                    _type = Token.Type.SymbolLogAnd
-                elif self.consume('='):
+                if self.consume('='):
                     _type = Token.Type.SymbolBitAndEq
             case '|':
                 _type = Token.Type.SymbolBitOr
-                if self.consume('|'):
-                    _type = Token.Type.SymbolLogOr
-                elif self.consume('='):
+                if self.consume('='):
                     _type = Token.Type.SymbolBitOrEq
-            # -Symbol: Comparison
+            # -Comparison
+            case '=':
+                _type = Token.Type.SymbolEq
+                if self.consume('='):
+                    _type = Token.Type.SymbolEqEq
+            case '!':
+                _type = Token.Type.SymbolBang
+                if self.consume('='):
+                    _type = Token.Type.SymbolNtEq
             case '<':
                 _type = Token.Type.SymbolLt
                 if self.consume('='):
@@ -225,7 +185,7 @@ class Lexer(LookaheadBuffer[str, str]):
                     _type = Token.Type.SymbolRShift
                     if self.consume('='):
                         _type = Token.Type.SymbolRShiftEq
-            # -Symbol: Misc
+            # -Misc
             case '.':
                 _type = Token.Type.SymbolDot
                 if self.consume('.'):
@@ -242,10 +202,6 @@ class Lexer(LookaheadBuffer[str, str]):
                 _type = Token.Type.SymbolLParen
             case ')':
                 _type = Token.Type.SymbolRParen
-            case '[':
-                _type = Token.Type.SymbolLBracket
-            case ']':
-                _type = Token.Type.SymbolRBracket
             case '{':
                 _type = Token.Type.SymbolLBrace
             case '}':
@@ -266,39 +222,41 @@ class Lexer(LookaheadBuffer[str, str]):
         State: Comment - Multiline
         '''
         while c := self.advance():
-            if c == '/' and self.advance() == '*':
+            if c == '/' and self.consume('*'):
                 self._lex_comment_multiline()
-            elif c == '*' and self.advance() == '/':
+            elif c == '*' and self.consume('/'):
                 return
-        assert False, "TODO: Error handling"
+        assert False, "[TODO]Syntax error: end of stream without multi-line comment termination"
 
     def _lex_number(self, buffer: str) -> Token:
         '''
         State: Number
         '''
-        base: int = 10
+        base = 10
+        location = self.location
         if buffer == '0' and self.matches('b', 'o', 'x'):
-            if self.consume('x'):
-                base = 16
+            # -Binary
+            if self.consume('b'):
+                base = 2
+            # -Octal
             elif self.consume('o'):
                 base = 8
-            elif self.consume('b'):
-                base = 2
-            buffer = ""
-        location = self.location
+            # -Hex
+            elif self.consume('x'):
+                base = 16
+            buffer = ''
         while c := self.peek():
             # -Number: Digit
             if c.isnumeric():
                 buffer += self.next()
                 continue
             # -Number: Hex
-            elif base == 16 and c in HEX_LETTERS:
+            elif c in HEX_CHARACTERS and base == 16:
                 buffer += self.next()
                 continue
-            # -Number -> Default
+            # Number -> Default
             break
-        value = int(buffer, base)
-        return Token(location, Token.Type.Integer, value)
+        return Token(location, Token.Type.Integer, int(buffer, base))
 
     def _lex_word(self, buffer: str) -> Token:
         '''
@@ -306,64 +264,36 @@ class Lexer(LookaheadBuffer[str, str]):
         '''
         location = self.location
         while c := self.peek():
-            # -Word -> Word
+            # -Word: Alphanumber or '_'
             if c.isalnum() or c == '_':
-                c = self.next()
-                buffer += c
+                buffer += self.next()
                 continue
-            # -Word -> Default
+            # World -> Default
             break
         _type = KEYWORDS.get(buffer, Token.Type.Identifier)
-        value: LITERAL_VALUE | None = None
+        value: bool | str | None = None
         if _type == Token.Type.Boolean:
             value = buffer == "true"
         elif _type == Token.Type.Identifier:
             value = buffer
         return Token(location, _type, value)
 
-    def _lex_char(self) -> Token:
-        '''
-        State: Char
-        '''
-        location = self.location
-        value = self.next()
-        if value == '\\':
-            value = _get_unescaped_sequence(self.next())
-        self.require('\'')
-        return Token(location, Token.Type.Integer, ord(value))
+    # -Class Methods
+    @classmethod
+    def from_file(cls, file: Path, chunk_size: int = 4096) -> Lexer:
+        '''Create a Lexer instance from a given source file'''
+        # -Internal Functions
+        def _generate_chars() -> Iterator[str]:
+            with file.open('r', encoding='utf-8') as f:
+                while chunk := f.read(chunk_size):
+                    yield from chunk
+        # -Body
+        return cls(_generate_chars(), file)
 
-    def _lex_string(self) -> Token:
-        '''
-        State: String
-        '''
-        location = self.location
-        buffer = ""
-        is_terminated = False
-        while c := self.next():
-            # -String -> Default
-            if c == '"':
-                is_terminated = True
-                break
-            # -String -> Escaped
-            elif c == '\\':
-                c = _get_unescaped_sequence(self.next())
-            buffer += c
-        if not is_terminated:
-            assert False, "TODO: Error handling"
-        return Token(location, Token.Type.String, buffer)
-
-    # -Static Methods
-    @staticmethod
-    def from_file(file: Path) -> Lexer:
-        '''Create a lexer from a given file'''
-        def char_generator() -> Iterator[str]:
-            with file.open('r') as f:
-                while True:
-                    char = f.read(1)
-                    if not char:
-                        break
-                    yield char
-        return Lexer(char_generator(), file)
+    @classmethod
+    def from_str(cls, source: str) -> Lexer:
+        '''Create a Lexer instance from a given source string'''
+        return cls(iter(source))
 
     # -Properties
     @property
