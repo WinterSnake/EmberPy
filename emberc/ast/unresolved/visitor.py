@@ -15,7 +15,7 @@ from .expression import UnresolvedExprNode, UnresolvedEmptyNode
 from .function import UnresolvedFunctionNode, UnresolvedReturnNode
 from .group import UnresolvedGroupNode
 from .identifier import UnresolvedIdentifierNode
-from .literal import UnresolvedLiteralNode
+from .literal import UnresolvedArrayNode, UnresolvedLiteralNode
 from .loops import (
     UnresolvedWhileNode,
     UnresolvedDoNode,
@@ -79,6 +79,8 @@ class UnresolvedNodeVisitor[TReturn](ABC):
                 return self.visit_expr_unary_prefix(node)
             case UnresolvedUnaryPostfixNode():
                 return self.visit_expr_unary_postfix(node)
+            case UnresolvedArrayNode():
+                return self.visit_expr_array(node)
             case UnresolvedLiteralNode():
                 return self.visit_expr_literal(node)
             case UnresolvedIdentifierNode():
@@ -124,6 +126,8 @@ class UnresolvedNodeVisitor[TReturn](ABC):
     def visit_expr_unary_prefix(self, node: UnresolvedUnaryPrefixNode) -> TReturn: ...
     @abstractmethod
     def visit_expr_unary_postfix(self, node: UnresolvedUnaryPostfixNode) -> TReturn: ...
+    @abstractmethod
+    def visit_expr_array(self, node: UnresolvedArrayNode) -> TReturn: ...
     @abstractmethod
     def visit_expr_literal(self, node: UnresolvedLiteralNode) -> TReturn: ...
     @abstractmethod

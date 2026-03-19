@@ -36,6 +36,8 @@ class UnresolvedUnaryPrefixNode(UnresolvedNode):
         BitwiseNegate = auto()
         # -Memory
         Pointer = auto()
+        Slice = auto()
+        SlicePointer = auto()
         AddressOf = auto()
         Dereference = auto()
 
@@ -59,3 +61,4 @@ class UnresolvedUnaryPostfixNode(UnresolvedNode):
     # -Sub-Classes
     class Kind(IntEnum):
         Call = auto()
+        Subscript = auto()

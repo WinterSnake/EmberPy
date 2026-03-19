@@ -28,6 +28,7 @@ class UnresolvedBinaryNode(UnresolvedNode):
 
     # -Sub-Classes
     class Operator(IntEnum):
+        Range = auto()
         # -Math
         Add = auto()
         Sub = auto()

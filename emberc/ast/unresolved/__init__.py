@@ -14,7 +14,7 @@ from .expression import UnresolvedExprNode, UnresolvedEmptyNode
 from .function import UnresolvedFunctionNode, UnresolvedReturnNode
 from .group import UnresolvedGroupNode
 from .identifier import UnresolvedIdentifierNode
-from .literal import AST_LITERAL_TYPES, UnresolvedLiteralNode
+from .literal import AST_LITERAL_TYPES, UnresolvedArrayNode, UnresolvedLiteralNode
 from .loops import (
     UnresolvedWhileNode,
     UnresolvedDoNode,
@@ -56,6 +56,7 @@ __all__ = (
     "UnresolvedBinaryNode",
     "UnresolvedUnaryPrefixNode",
     "UnresolvedUnaryPostfixNode",
+    "UnresolvedArrayNode",
     "UnresolvedLiteralNode",
     "UnresolvedIdentifierNode",
     "UnresolvedEmptyNode",

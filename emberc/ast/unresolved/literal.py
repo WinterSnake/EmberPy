@@ -9,13 +9,38 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from enum import IntEnum, auto
+from typing import TYPE_CHECKING
 from .node import UnresolvedNode
+
+if TYPE_CHECKING:
+    from ...core import MutableCollection
 
 ## Constants
 type AST_LITERAL_TYPES = bool | int | str
 
 
 ## Classes
+@dataclass
+class UnresolvedArrayNode(UnresolvedNode):
+    """
+    Unresolved AST Node: Array
+
+    A leaf container for holding a collection of values.
+    """
+    # -Dunder Methods
+    def __len__(self) -> int:
+        return len(self.values)
+
+    def __getitem__(self, i: int) -> UnresolvedNode:
+        return self.values[i]
+
+    def __setitem__(self, i: int, value:  UnresolvedNode) -> None:
+        self.values[i] = value
+
+    # -Properties
+    values: MutableCollection[UnresolvedNode]
+
+
 @dataclass
 class UnresolvedLiteralNode(UnresolvedNode):
     """
