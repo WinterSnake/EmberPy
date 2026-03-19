@@ -34,6 +34,7 @@ if TYPE_CHECKING:
         UnresolvedReturnNode,
         UnresolvedExprNode,
         UnresolvedGroupNode,
+        UnresolvedArrayNode,
         UnresolvedIdentifierNode,
         UnresolvedEmptyNode,
     )
@@ -241,6 +242,8 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
         lhs = self.visit(node.lhs)
         rhs = self.visit(node.rhs)
         match node.operator:
+            case UnresolvedBinaryNode.Operator.Range:
+                return f"({lhs}..{rhs})"
             # -Math
             case UnresolvedBinaryNode.Operator.Add:
                 return f"({lhs} + {rhs})"
@@ -294,6 +297,10 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
             # -Typing
             case UnresolvedUnaryPrefixNode.Operator.Pointer:
                 return f"*{operand}"
+            case UnresolvedUnaryPrefixNode.Operator.Slice:
+                return f"[]{operand}"
+            case UnresolvedUnaryPrefixNode.Operator.SlicePointer:
+                return f"[*]{operand}"
             case UnresolvedUnaryPrefixNode.Operator.AddressOf:
                 return f"(@{operand})"
             case UnresolvedUnaryPrefixNode.Operator.Dereference:
@@ -304,7 +311,12 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
         arguments = ','.join(self.visit(argument) for argument in node.arguments)
         match node.kind:
             case UnresolvedUnaryPostfixNode.Kind.Call:
-                return f"{head}({arguments})"
+                return f"({head}({arguments}))"
+            case UnresolvedUnaryPostfixNode.Kind.Subscript:
+                return f"({head}[{arguments}])"
+
+    def visit_expr_array(self, node: UnresolvedArrayNode) -> str:
+        return '[' + ','.join(self.visit(value) for value in node.values) + ']'
 
     def visit_expr_literal(self, node: UnresolvedLiteralNode) -> str:
         return str(node.value)
@@ -325,6 +337,22 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
                 base_type, modifiers = self._get_type_chain(node.target)
                 modifiers.append(self.visit(node))
                 return (base_type, modifiers)
+            case UnresolvedUnaryPrefixNode():
+                base_type, modifiers = self._get_type_chain(node.operand)
+                match node.operator:
+                    case UnresolvedUnaryPrefixNode.Operator.Pointer:
+                        return (f"*{base_type}", modifiers)
+                    case UnresolvedUnaryPrefixNode.Operator.Slice:
+                        return (f"[]{base_type}", modifiers)
+                    case UnresolvedUnaryPrefixNode.Operator.SlicePointer:
+                        return (f"[*]{base_type}", modifiers)
+                    case _:
+                        assert False, "Invalid prefix operator"
+            case UnresolvedUnaryPostfixNode():
+                assert node.kind is UnresolvedUnaryPostfixNode.Kind.Subscript, "Invalid postfix operator"
+                base_type, modifiers = self._get_type_chain(node.head)
+                arguments = ','.join(self.visit(argument) for argument in node.arguments)
+                return (f"{base_type}[{arguments}]", modifiers)
             case _:
                 return (self.visit(node), [])
 

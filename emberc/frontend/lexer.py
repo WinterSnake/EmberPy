@@ -26,7 +26,7 @@ SYMBOLS = (
     '=', '!', '<', '>',
     # -Misc
     '.', ',', ':', ';', '@',
-    '(', ')', '{', '}',
+    '(', ')', '[', ']', '{', '}',
 )
 KEYWORDS = {
     # -Literal
@@ -202,6 +202,10 @@ class Lexer(LookaheadBuffer[str, str]):
                 _type = Token.Type.SymbolLParen
             case ')':
                 _type = Token.Type.SymbolRParen
+            case '[':
+                _type = Token.Type.SymbolLBracket
+            case ']':
+                _type = Token.Type.SymbolRBracket
             case '{':
                 _type = Token.Type.SymbolLBrace
             case '}':

@@ -30,6 +30,7 @@ from ..ast import (
     UnresolvedBinaryNode,
     UnresolvedUnaryPrefixNode,
     UnresolvedUnaryPostfixNode,
+    UnresolvedArrayNode,
     UnresolvedLiteralNode,
     UnresolvedIdentifierNode,
     UnresolvedEmptyNode,
@@ -70,6 +71,7 @@ UNARY_PREFIX_MODIFIERS = {
 UNARY_POSTFIX_OPERATORS = (
     Token.Type.SymbolDot,
     Token.Type.SymbolLParen,
+    Token.Type.SymbolLBracket,
 )
 BINARY_OPERATORS = {
     Token.Type.KeywordOr: (UnresolvedBinaryNode.Operator.LogOr, 1),
@@ -80,6 +82,7 @@ BINARY_OPERATORS = {
     Token.Type.SymbolGt: (UnresolvedBinaryNode.Operator.Gt, 4),
     Token.Type.SymbolLtEq: (UnresolvedBinaryNode.Operator.LtEq, 4),
     Token.Type.SymbolGtEq: (UnresolvedBinaryNode.Operator.GtEq, 4),
+    Token.Type.SymbolDotDot: (UnresolvedBinaryNode.Operator.Range, 5),
     Token.Type.SymbolPlus: (UnresolvedBinaryNode.Operator.Add, 6),
     Token.Type.SymbolMinus: (UnresolvedBinaryNode.Operator.Sub, 6),
     Token.Type.SymbolBitOr: (UnresolvedBinaryNode.Operator.BitOr, 6),
@@ -104,11 +107,7 @@ ASSIGNMENT_OPERATORS = {
     Token.Type.SymbolLShiftEq: UnresolvedAssignmentNode.Operator.ShiftLEq,
     Token.Type.SymbolRShiftEq: UnresolvedAssignmentNode.Operator.ShiftREq,
 }
-EXPRESSION_STARTERS = (
-    Token.Type.Identifier,
-    *LITERALS,
-    *UNARY_PREFIX_OPERATORS.keys(),
-)
+EXPRESSION_STARTERS = (Token.Type.Identifier, *LITERALS, *TYPES)
 STATEMENT_STARTERS = (
     Token.Type.SymbolSemicolon,
     Token.Type.SymbolLBrace,
@@ -185,7 +184,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         'fn' IDENTIFIER '(' ( parameter ( ',' parameter )* )? ')' ':' TYPE statement_block;
         '''
         # -Internal Functions
-        def _parse_paramater() -> UnresolvedFunctionNode.Parameter:
+        def _parse_parameter() -> UnresolvedFunctionNode.Parameter:
             '''TYPE IDENTIFIER ( '=' expression )?;'''
             _type = self._parse_expression_unary_prefix()
             ident = self.require(Token.Type.Identifier)
@@ -203,10 +202,10 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         # -Parameters: Zero
         if not self.consume(Token.Type.SymbolRParen):
             # -Parameters: One
-            parameters.append(_parse_paramater())
+            parameters.append(_parse_parameter())
             # -Parameters: Multi
             while self.consume(Token.Type.SymbolComma):
-                parameters.append(_parse_paramater())
+                parameters.append(_parse_parameter())
             _ = self.require(Token.Type.SymbolRParen)
         _ = self.require(Token.Type.SymbolColon)
         return_type = self._parse_expression_unary_prefix()
@@ -348,7 +347,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
                 initializer = self._parse_declaration_variable(node)
             else:
                 initializer = self._parse_expression(node)
-                self.require(Token.Type.SymbolSemicolon)
+                _ = self.require(Token.Type.SymbolSemicolon)
         # -<Condition>-
         condition: UnresolvedNode = UnresolvedLiteralNode(
             self._last_token.location,
@@ -357,13 +356,13 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         )
         if not self.consume(Token.Type.SymbolSemicolon):
             condition = self._parse_expression()
-            self.require(Token.Type.SymbolSemicolon)
+            _ = self.require(Token.Type.SymbolSemicolon)
         # -<Increment>-
         increment: UnresolvedNode | None = None
         if not self.matches(Token.Type.SymbolRParen):
             increment = self._parse_expression()
         # -<Body>-
-        self.require(Token.Type.SymbolRParen)
+        _ = self.require(Token.Type.SymbolRParen)
         body = self._parse_statement()
         return UnresolvedForNode(
             token.location, initializer, condition, increment, body
@@ -446,7 +445,11 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             if precedence <= current:
                 break
             token = self.next()
-            rhs = self._parse_expression_binary(precedence)
+            rhs: UnresolvedNode
+            if operator is UnresolvedBinaryNode.Operator.Range:
+                rhs = self._parse_expression_binary_range(precedence)
+            else:
+                rhs = self._parse_expression_binary(precedence)
             lhs = UnresolvedBinaryNode(token.location, operator, lhs, rhs)
         return lhs
 
@@ -467,6 +470,15 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             modifier = UNARY_PREFIX_MODIFIERS[token.type]
             target = self._parse_expression_unary_prefix()
             return UnresolvedModifierNode(token.location, modifier, target)
+        # -Slice
+        elif self.matches(Token.Type.SymbolLBracket) and (slice := self._try_parse_slice()):
+            return slice
+        # -Range
+        elif self.matches(Token.Type.SymbolDotDot):
+            _, precedence = BINARY_OPERATORS[Token.Type.SymbolDotDot]
+            return self._parse_expression_binary(
+                precedence, lhs=UnresolvedEmptyNode(self.current.location)
+            )
         return self._parse_expression_primary()
 
     def _parse_expression_unary_postfix(
@@ -474,12 +486,14 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     ) -> UnresolvedNode:
         '''
         Grammar[Expression::Unary::Postfix]
-        expression ( call | access )*;
+        expression ( call | subscript | access )*;
         '''
         while self.matches(*UNARY_POSTFIX_OPERATORS):
             match self.current.type:
                 case Token.Type.SymbolLParen:
                     head = self._parse_expression_call(head)
+                case Token.Type.SymbolLBracket:
+                    head = self._parse_expression_subscript(head)
                 case Token.Type.SymbolDot:
                     head = self._parse_expression_access(head)
         return head
@@ -505,6 +519,30 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             arguments
         )
 
+    def _parse_expression_subscript(self, head: UnresolvedNode) -> UnresolvedNode:
+        '''
+        Grammar[Expression::Subscript]
+        '[' ( expression? ( ',' expression? )* )? ']';
+        '''
+        # -Interal Functions
+        def _parse_argument() -> UnresolvedNode:
+            if self.matches(Token.Type.SymbolRBracket, Token.Type.SymbolComma):
+                return UnresolvedEmptyNode(self.current.location)
+            return self._parse_expression()
+        # -Body
+        token = self.require(Token.Type.SymbolLBracket)
+        # -Arguments: One
+        arguments: list[UnresolvedNode] = [_parse_argument()]
+        # -Arguments: Multi
+        while self.consume(Token.Type.SymbolComma):
+            arguments.append(_parse_argument())
+        _ = self.require(Token.Type.SymbolRBracket)
+        return UnresolvedUnaryPostfixNode(
+            token.location, head,
+            UnresolvedUnaryPostfixNode.Kind.Subscript,
+            arguments
+        )
+
     def _parse_expression_access(self, head: UnresolvedNode) -> UnresolvedNode:
         '''
         Grammar[Expression::Access]
@@ -523,11 +561,13 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _parse_expression_primary(self) -> UnresolvedNode:
         '''
         Grammar[Expression::Primary]
-        expression_group | expression_literal;
+        expression_group | expression_array | expression_literal;
         '''
         node: UnresolvedNode
         if self.matches(Token.Type.SymbolLParen):
             node = self._parse_expression_group()
+        elif self.matches(Token.Type.SymbolLBracket):
+            node = self._parse_expression_array()
         else:
             node = self._parse_expression_literal()
         return self._parse_expression_unary_postfix(node)
@@ -544,6 +584,20 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         if self.matches(*EXPRESSION_STARTERS):
             node._target = self._parse_expression_unary_prefix()
         return node
+
+    def _parse_expression_array(self) -> UnresolvedNode:
+        '''
+        Grammar[Expression::Array]
+        '[' expression ( ',' expression )* ']';
+        '''
+        token = self.require(Token.Type.SymbolLBracket)
+        # -Arguments: One
+        values: list[UnresolvedNode] = [self._parse_expression()]
+        # -Arguments: Multi
+        while self.consume(Token.Type.SymbolComma):
+            values.append(self._parse_expression())
+        _ = self.require(Token.Type.SymbolRBracket)
+        return UnresolvedArrayNode(token.location, values)
 
     def _parse_expression_literal(self) -> UnresolvedNode:
         '''
@@ -584,6 +638,41 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         if not is_decl:
             is_decl = self.matches(Token.Type.Identifier)
         return (is_decl, head)
+
+    def _try_parse_slice(self) -> UnresolvedNode | None:
+        '''Tries parsing a slice unary prefix or returns None'''
+        next = self.peek(1)
+        if next is None:
+            return None
+        # -Slice
+        elif next.type is Token.Type.SymbolRBracket:
+            token = self.next()  # '['
+            _ = self.next()  # ']'
+            return UnresolvedUnaryPrefixNode(
+                token.location,
+                UnresolvedUnaryPrefixNode.Operator.Slice,
+                self._parse_expression_unary_prefix()
+            )
+        # -Slice Pointer
+        elif next.type is not Token.Type.SymbolStar:
+            return None
+        next = self.peek(2)
+        if next is None or next.type is not Token.Type.SymbolRBracket:
+            return None
+        token = self.next()  # '['
+        _ = self.next()  # '*'
+        _ = self.next()  # ']'
+        return UnresolvedUnaryPrefixNode(
+            token.location,
+            UnresolvedUnaryPrefixNode.Operator.SlicePointer,
+            self._parse_expression_unary_prefix()
+        )
+
+    def _parse_expression_binary_range(self, precedence: int) -> UnresolvedNode:
+        '''Finishes parsing a range operator based on following token'''
+        if self.matches(Token.Type.SymbolComma, Token.Type.SymbolRBracket):
+            return UnresolvedEmptyNode(self.current.location)
+        return self._parse_expression_binary(precedence)
 
     # -Class Methods
     @classmethod

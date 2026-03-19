@@ -115,5 +115,7 @@ class Token:
         SymbolAt = auto()
         SymbolLParen = auto()
         SymbolRParen = auto()
+        SymbolLBracket = auto()
+        SymbolRBracket = auto()
         SymbolLBrace = auto()
         SymbolRBrace = auto()
