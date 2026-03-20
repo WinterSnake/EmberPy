@@ -2,7 +2,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Unresolved Node: Variable     ##
+## Unresolved Node: Enum         ##
 ##-------------------------------##
 
 ## Imports
