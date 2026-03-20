@@ -16,6 +16,7 @@ from ..ast import (
     UnresolvedModifierNode,
     UnresolvedUnitNode,
     UnresolvedFunctionNode,
+    UnresolvedEnumNode,
     UnresolvedVariableNode,
     UnresolvedBlockNode,
     UnresolvedConditionalNode,
@@ -30,6 +31,7 @@ from ..ast import (
     UnresolvedBinaryNode,
     UnresolvedUnaryPrefixNode,
     UnresolvedUnaryPostfixNode,
+    UnresolvedAccessNode,
     UnresolvedArrayNode,
     UnresolvedLiteralNode,
     UnresolvedIdentifierNode,
@@ -170,7 +172,10 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         '''
         if self.matches(Token.Type.KeywordFn):
             return self._parse_declaration_function()
-        return self._parse_declaration_variable()
+        elif self.matches(Token.Type.KeywordEnum):
+            return self._parse_declaration_enum()
+        #return self._parse_declaration_variable()
+        return self._parse_declaration_statement()
 
     def _parse_declaration_function(self) -> UnresolvedNode:
         '''
@@ -206,6 +211,40 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         body = self._parse_statement_block()
         return UnresolvedFunctionNode(
             token.location, ident.value_as(str), parameters, return_type, body
+        )
+
+    def _parse_declaration_enum(self) -> UnresolvedNode:
+        '''
+        Grammar[Declaration::Enum]
+        'enum' IDENTIFIER ( ':' TYPE )? '{' entry ( ',' entry )* ','? '}';
+        '''
+        # -Internal Functions
+        def _parse_entry() -> UnresolvedEnumNode.Entry:
+            '''IDENTIFIER ( '=' expression )?;'''
+            token = self.requires(Token.Type.Identifier)
+            initializer: UnresolvedNode | None = None
+            if self.consume(Token.Type.SymbolEq):
+                initializer = self._parse_expression()
+            return UnresolvedEnumNode.Entry(
+                token.location, token.value_as(str), initializer
+            )
+        # -Body
+        token = self.requires(Token.Type.KeywordEnum)
+        ident = self.requires(Token.Type.Identifier)
+        _type: UnresolvedNode | None = None
+        if self.consume(Token.Type.SymbolColon):
+            _type = self._parse_type()
+        _ = self.requires(Token.Type.SymbolLBrace)
+        # -Entry: One
+        entries: list[UnresolvedEnumNode.Entry] = [_parse_entry()]
+        # -Entry: Multi
+        while self.consume(Token.Type.SymbolComma):
+            if self.matches(Token.Type.SymbolRBrace):
+                break
+            entries.append(_parse_entry())
+        _ = self.requires(Token.Type.SymbolRBrace)
+        return UnresolvedEnumNode(
+            token.location, ident.value_as(str), _type, entries
         )
 
     def _parse_declaration_variable(
@@ -550,7 +589,8 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
                 UnresolvedUnaryPrefixNode.Operator.Dereference,
                 head
             )
-        assert False, "TODO: Member access"
+        ident = self.requires(Token.Type.Identifier)
+        return UnresolvedAccessNode(token.location, head, ident.value_as(str))
 
     def _parse_expression_primary(self) -> UnresolvedNode:
         '''
