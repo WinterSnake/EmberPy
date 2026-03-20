@@ -34,6 +34,8 @@ KEYWORDS = {
     'false': Token.Type.Boolean,
     # -Keyword
     'fn': Token.Type.KeywordFn,
+    'struct': Token.Type.KeywordStruct,
+    'union': Token.Type.KeywordUnion,
     'enum': Token.Type.KeywordEnum,
     'if': Token.Type.KeywordIf,
     'else': Token.Type.KeywordElse,

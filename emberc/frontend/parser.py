@@ -15,6 +15,7 @@ from ..ast import (
     UnresolvedTypeNode,
     UnresolvedModifierNode,
     UnresolvedUnitNode,
+    UnresolvedStructNode,
     UnresolvedFunctionNode,
     UnresolvedEnumNode,
     UnresolvedVariableNode,
@@ -41,7 +42,7 @@ from ..ast import (
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from .lexer import Lexer
-    from ..ast import AST_LITERAL_TYPES, UnresolvedNode
+    from ..ast import AST_LITERAL_TYPES, STRUCT_FIELD_TYPES, UnresolvedNode
 
 ## Constants
 LITERALS = (
@@ -170,12 +171,66 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         Grammar[Declaration]
         declaration_function | declaration_variable;
         '''
-        if self.matches(Token.Type.KeywordFn):
+        if self.matches(Token.Type.KeywordStruct):
+            return self._parse_declaration_struct()
+        elif self.matches(Token.Type.KeywordFn):
             return self._parse_declaration_function()
         elif self.matches(Token.Type.KeywordEnum):
             return self._parse_declaration_enum()
         #return self._parse_declaration_variable()
         return self._parse_declaration_statement()
+
+    def _parse_declaration_struct(self) -> UnresolvedNode:
+        '''
+        Grammar[Declaration::Struct]
+        'struct' IDENTIFIER '{' member+ '}';
+        '''
+        # -Internal Functions
+        def _parse_members() -> list[STRUCT_FIELD_TYPES]:
+            # -Member: One
+            members: list[STRUCT_FIELD_TYPES] = [_parse_member()]
+            # -Member: Multi
+            while not self.matches(Token.Type.SymbolRBrace):
+                members.append(_parse_member())
+            return members
+
+        def _parse_member() -> STRUCT_FIELD_TYPES:
+            '''field | struct;'''
+            if self.matches(Token.Type.KeywordStruct):
+                return _parse_struct()
+            return _parse_field()
+
+        def _parse_field() -> UnresolvedStructNode.Field:
+            '''TYPE IDENTIFIER ( '=' expression )? ';';'''
+            _type = self._parse_type()
+            ident = self.requires(Token.Type.Identifier)
+            initializer: UnresolvedNode | None = None
+            if self.consume(Token.Type.SymbolEq):
+                initializer = self._parse_expression()
+            _ = self.requires(Token.Type.SymbolSemicolon)
+            return UnresolvedStructNode.Field(_type, ident.value_as(str), initializer)
+
+        def _parse_struct() -> UnresolvedStructNode:
+            ''''struct' 'union'? '{' member+ '}' IDENTIFIER ';';'''
+            token = self.requires(Token.Type.KeywordStruct)
+            is_union = self.consume(Token.Type.KeywordUnion)
+            _ = self.requires(Token.Type.SymbolLBrace)
+            members = _parse_members()
+            _ = self.requires(Token.Type.SymbolRBrace)
+            ident = self.requires(Token.Type.Identifier)
+            _ = self.requires(Token.Type.SymbolSemicolon)
+            return UnresolvedStructNode(
+                token.location, ident.value_as(str), members, is_union
+            )
+        # -Body
+        token = self.requires(Token.Type.KeywordStruct)
+        ident = self.requires(Token.Type.Identifier)
+        _ = self.requires(Token.Type.SymbolLBrace)
+        members = _parse_members()
+        _ = self.requires(Token.Type.SymbolRBrace)
+        return UnresolvedStructNode(
+            token.location, ident.value_as(str), members
+        )
 
     def _parse_declaration_function(self) -> UnresolvedNode:
         '''

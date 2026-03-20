@@ -52,6 +52,8 @@ class Token:
         String = auto()
         # -Keyword
         KeywordFn = auto()
+        KeywordStruct = auto()
+        KeywordUnion = auto()
         KeywordEnum = auto()
         KeywordIf = auto()
         KeywordElse = auto()

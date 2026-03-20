@@ -27,6 +27,7 @@ from .loops import (
     UnresolvedFlowNode,
 )
 from .node import UnresolvedNode, UnresolvedUnitNode
+from .struct import STRUCT_FIELD_TYPES, UnresolvedStructNode
 from .types import UnresolvedTypeNode, UnresolvedModifierNode
 from .unary import (
     UnresolvedUnaryPrefixNode,
@@ -40,6 +41,7 @@ from .visitor import UnresolvedNodeVisitor
 __all__ = (
     # -Core
     "AST_LITERAL_TYPES",
+    "STRUCT_FIELD_TYPES",
     "UnresolvedNode",
     "UnresolvedNodeVisitor",
     "UnresolvedUnitNode",
@@ -47,6 +49,7 @@ __all__ = (
     "UnresolvedTypeNode",
     "UnresolvedModifierNode",
     # -Declarations
+    "UnresolvedStructNode",
     "UnresolvedFunctionNode",
     "UnresolvedEnumNode",
     "UnresolvedVariableNode",

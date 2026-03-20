@@ -9,11 +9,13 @@
 from .printer import UnresolvedNodePrinter
 from .unresolved import (
     AST_LITERAL_TYPES,
+    STRUCT_FIELD_TYPES,
     UnresolvedNode,
     UnresolvedNodeVisitor,
     UnresolvedUnitNode,
     UnresolvedTypeNode,
     UnresolvedModifierNode,
+    UnresolvedStructNode,
     UnresolvedFunctionNode,
     UnresolvedEnumNode,
     UnresolvedVariableNode,
@@ -41,6 +43,7 @@ from .unresolved import (
 __all__ = (
     # -Unresolved: Core
     "AST_LITERAL_TYPES",
+    "STRUCT_FIELD_TYPES",
     "UnresolvedNode",
     "UnresolvedNodeVisitor",
     "UnresolvedUnitNode",
@@ -48,6 +51,7 @@ __all__ = (
     "UnresolvedTypeNode",
     "UnresolvedModifierNode",
     # -Unresolved: Declarations
+    "UnresolvedStructNode",
     "UnresolvedFunctionNode",
     "UnresolvedEnumNode",
     "UnresolvedVariableNode",

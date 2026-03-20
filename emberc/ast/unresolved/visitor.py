@@ -27,6 +27,7 @@ from .loops import (
     UnresolvedFlowNode,
 )
 from .node import UnresolvedNode, UnresolvedUnitNode
+from .struct import UnresolvedStructNode
 from .types import UnresolvedTypeNode, UnresolvedModifierNode
 from .unary import (
     UnresolvedUnaryPrefixNode,
@@ -54,6 +55,8 @@ class UnresolvedNodeVisitor[TReturn](ABC):
             # -Declarations
             case UnresolvedUnitNode():
                 return self.visit_decl_unit(node)
+            case UnresolvedStructNode():
+                return self.visit_decl_struct(node)
             case UnresolvedFunctionNode():
                 return self.visit_decl_function(node)
             case UnresolvedEnumNode():
@@ -107,6 +110,8 @@ class UnresolvedNodeVisitor[TReturn](ABC):
     def visit_modifier(self, node: UnresolvedModifierNode) -> TReturn: ...
     @abstractmethod
     def visit_decl_unit(self, node: UnresolvedUnitNode) -> TReturn: ...
+    @abstractmethod
+    def visit_decl_struct(self, node: UnresolvedStructNode) -> TReturn: ...
     @abstractmethod
     def visit_decl_function(self, node: UnresolvedFunctionNode) -> TReturn: ...
     @abstractmethod

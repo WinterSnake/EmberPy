@@ -12,6 +12,7 @@ from .unresolved import (
     UnresolvedNodeVisitor,
     UnresolvedTypeNode,
     UnresolvedModifierNode,
+    UnresolvedStructNode,
     UnresolvedFlowNode,
     UnresolvedAssignmentNode,
     UnresolvedBinaryNode,
@@ -21,7 +22,9 @@ from .unresolved import (
 )
 
 if TYPE_CHECKING:
+    from typing import Collection
     from .unresolved import (
+        STRUCT_FIELD_TYPES,
         UnresolvedNode,
         UnresolvedUnitNode,
         UnresolvedFunctionNode,
@@ -96,6 +99,41 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
         if not nodes:
             return EMPTY
         return '\n'.join((f"[Unit: {node.location.file}]", *nodes))
+
+    def visit_decl_struct(self, node: UnresolvedStructNode) -> str:
+        # -Internal Functions
+        def _visit_members(members: Collection[STRUCT_FIELD_TYPES]) -> str:
+            _members: list[str] = []
+            for member in members:
+                _members.append(f"{self._get_indent()}Member: {_visit_member(member)}")
+            return '\n'.join(_members)
+
+        def _visit_member(member: STRUCT_FIELD_TYPES) -> str:
+            match member:
+                case UnresolvedStructNode.Field():
+                    return _visit_field(member)
+                case UnresolvedStructNode():
+                    return _visit_struct(member)
+
+        def _visit_field(field: UnresolvedStructNode.Field) -> str:
+            field_str = f"[{self._get_type(field.type)}] {field.name}"
+            if field.has_initializer:
+                field_str += f" = {self.visit(field.initializer)}"
+            return field_str
+
+        def _visit_struct(struct: UnresolvedStructNode) -> str:
+            header = "union" if struct.is_union else "struct"
+            header += f" {struct.name}"
+            self.indent += 1
+            members = _visit_members(struct.members)
+            self.indent -= 1
+            return '\n'.join((header, members))
+        # -Body
+        header = f"{self._get_indent()}Struct Decl[Name={node.name}]"
+        self.indent += 1
+        members = _visit_members(node.members)
+        self.indent -= 1
+        return '\n'.join((header, members))
 
     def visit_decl_function(self, node: UnresolvedFunctionNode) -> str:
         header = f"{self._get_indent()}Function Decl[Name={node.name} ; Return="
