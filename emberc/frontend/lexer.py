@@ -61,6 +61,27 @@ KEYWORDS = {
 }
 
 
+## Functions
+def _get_unescaped_sequence(char: str) -> str:
+    """Returns the correct escape sequence string from a given char"""
+    match char:
+        case 'n':
+            return '\n'
+        case 'r':
+            return '\r'
+        case 't':
+            return '\t'
+        case '0':
+            return '\0'
+        case '\\':
+            return '\\'
+        case '\'':
+            return '\''
+        case '"':
+            return '"'
+    assert False, f"Unhandled escaped character '{char}'"
+
+
 ## Classes
 class Lexer(LookaheadBuffer[str, str]):
     """
@@ -90,6 +111,12 @@ class Lexer(LookaheadBuffer[str, str]):
         self.offset += 1
         return value
 
+    def requires(self, *expected: str) -> str:
+        '''Returns next char if in expected chars; raises error otherwise'''
+        if self.matches(*expected):
+            return self.next()
+        assert False, "TODO: Error handling"
+
     # -Instance Methods: Lexing
     def lex(self) -> Iterator[Token]:
         '''
@@ -109,6 +136,12 @@ class Lexer(LookaheadBuffer[str, str]):
             # Default -> Word
             elif c.isalpha() or c == '_':
                 token = self._lex_word(c)
+            # Default -> Char
+            elif c == '\'':
+                token = self._lex_char()
+            # Default -> String
+            elif c == '"':
+                token = self._lex_string()
             if token:
                 yield token
 
@@ -282,6 +315,33 @@ class Lexer(LookaheadBuffer[str, str]):
         elif _type == Token.Type.Identifier:
             value = buffer
         return Token(location, _type, value)
+
+    def _lex_char(self) -> Token:
+        '''
+        State: Char
+        '''
+        location = self.location
+        value = self.next()
+        if value == '\\':
+            value = _get_unescaped_sequence(self.next())
+        _ = self.requires('\'')
+        return Token(location, Token.Type.Integer, ord(value))
+
+    def _lex_string(self) -> Token:
+        '''
+        State: String
+        '''
+        location = self.location
+        buffer = ""
+        while c := self.next():
+            # String -> Default
+            if c == '"':
+                break
+            # String -> Escaped
+            elif c == '\\':
+                c = _get_unescaped_sequence(self.next())
+            buffer += c
+        return Token(location, Token.Type.String, buffer)
 
     # -Class Methods
     @classmethod

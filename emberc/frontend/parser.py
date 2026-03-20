@@ -47,6 +47,7 @@ if TYPE_CHECKING:
 LITERALS = (
     Token.Type.Boolean,
     Token.Type.Integer,
+    Token.Type.String,
 )
 TYPES = {
     Token.Type.KeywordVoid: UnresolvedTypeNode.Kind.Void,
@@ -150,7 +151,6 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         '''Returns next token if in expected types; raises error otherwise'''
         if self.matches(*expected):
             return self.next()
-        expected_str = ','.join(_type.name for _type in expected)
         assert False, "TODO: Error handling"
 
     # -Instance Methods: Parser
@@ -660,6 +660,9 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             case Token.Type.Boolean:
                 kind = UnresolvedLiteralNode.Kind.Boolean
                 value = token.value_as(bool)
+            case Token.Type.String:
+                kind = UnresolvedLiteralNode.Kind.String
+                value = token.value_as(str)
             case _:
                 assert False, "TODO: Error handling"
         return UnresolvedLiteralNode(token.location, kind, value)

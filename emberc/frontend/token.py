@@ -49,6 +49,7 @@ class Token:
         Identifier = auto()
         Boolean = auto()
         Integer = auto()
+        String = auto()
         # -Keyword
         KeywordFn = auto()
         KeywordEnum = auto()
