@@ -25,6 +25,7 @@ if TYPE_CHECKING:
         UnresolvedNode,
         UnresolvedUnitNode,
         UnresolvedFunctionNode,
+        UnresolvedEnumNode,
         UnresolvedVariableNode,
         UnresolvedBlockNode,
         UnresolvedConditionalNode,
@@ -34,6 +35,7 @@ if TYPE_CHECKING:
         UnresolvedReturnNode,
         UnresolvedExprNode,
         UnresolvedGroupNode,
+        UnresolvedAccessNode,
         UnresolvedArrayNode,
         UnresolvedIdentifierNode,
         UnresolvedEmptyNode,
@@ -97,9 +99,7 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
 
     def visit_decl_function(self, node: UnresolvedFunctionNode) -> str:
         header = f"{self._get_indent()}Function Decl[Name={node.name} ; Return="
-        ret_type, ret_modifiers = self._get_type_chain(node.return_type)
-        ret_modifier_str = ','.join(ret_modifiers) if ret_modifiers else "None"
-        header += f"{{Type={ret_type} ; Modifiers={ret_modifier_str}}}]"
+        header += f"{{{self._get_type(node.return_type)}}}]"
         self.indent += 1
         # -Parameters
         parameters_str: str
@@ -108,9 +108,7 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
         else:
             parameters: list[str] = []
             for parameter in node.parameters:
-                param_type, param_modifiers = self._get_type_chain(parameter.type)
-                param_modifiers_str = ','.join(param_modifiers) if param_modifiers else "None"
-                parameter_str = f"{self._get_indent()}Parameter={{Type={param_type} ; Modifier={param_modifiers_str}}} {parameter.name}"
+                parameter_str = f"{self._get_indent()}Parameter={{{self._get_type(parameter.type)}}} {parameter.name}"
                 if parameter.has_initializer:
                     parameter_str += f" = {self.visit(parameter.initializer)}"
                 parameters.append(parameter_str)
@@ -121,12 +119,24 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
         self.indent -= 2
         return '\n'.join((header, parameters_str, body))
 
-    def visit_decl_variable(self, node: UnresolvedVariableNode) -> str:
-        base_type, modifiers = self._get_type_chain(node.type)
-        modifier_str = ','.join(modifiers) if modifiers else "None"
-        header = f"{self._get_indent()}Variable Decl[Type={base_type} ; Modifiers={modifier_str}]"
-        entries = []
+    def visit_decl_enum(self, node: UnresolvedEnumNode) -> str:
+        header = f"{self._get_indent()}Enum Decl[Name={node.name} ; "
+        _type = self._get_type(node.type) if node.has_type else "Type=None"
+        header += _type + ']'
         self.indent += 1
+        entries = []
+        for entry in node.entries:
+            entry_str = f"{self._get_indent()}Entry: {entry.name}"
+            if entry.has_initializer:
+                entry_str += f" = {self.visit(entry.initializer)}"
+            entries.append(entry_str)
+        self.indent -= 1
+        return '\n'.join((header, *entries))
+
+    def visit_decl_variable(self, node: UnresolvedVariableNode) -> str:
+        header = f"{self._get_indent()}Variable Decl[{self._get_type(node.type)}]"
+        self.indent += 1
+        entries = []
         for entry in node.entries:
             entry_str = f"{self._get_indent()}Entry: {entry.name}"
             if entry.has_initializer:
@@ -315,6 +325,9 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
             case UnresolvedUnaryPostfixNode.Kind.Subscript:
                 return f"({head}[{arguments}])"
 
+    def visit_expr_access(self, node: UnresolvedAccessNode) -> str:
+        return f"({self.visit(node.head)}.{node.member})"
+
     def visit_expr_array(self, node: UnresolvedArrayNode) -> str:
         return '[' + ','.join(self.visit(value) for value in node.values) + ']'
 
@@ -330,6 +343,11 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
     # -Instance Methods: Helpers
     def _get_indent(self) -> str:
         return ' ' * self.indent
+
+    def _get_type(self, node: UnresolvedNode) -> str:
+        _type, modifiers = self._get_type_chain(node)
+        modifier_str = ','.join(modifiers) if modifiers else "None"
+        return f"Type={_type} ; Modifiers={modifier_str}"
 
     def _get_type_chain(self, node: UnresolvedNode) -> tuple[str, list[str]]:
         match node:

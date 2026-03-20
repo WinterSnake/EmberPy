@@ -11,21 +11,28 @@ from .assignment import UnresolvedAssignmentNode
 from .binary import UnresolvedBinaryNode
 from .block import UnresolvedBlockNode
 from .conditional import UnresolvedConditionalNode
+from .enum import UnresolvedEnumNode
 from .expression import UnresolvedExprNode, UnresolvedEmptyNode
 from .function import UnresolvedFunctionNode, UnresolvedReturnNode
 from .group import UnresolvedGroupNode
-from .identifier import UnresolvedIdentifierNode
-from .literal import UnresolvedArrayNode, UnresolvedLiteralNode
+from .literal import (
+    UnresolvedArrayNode,
+    UnresolvedLiteralNode,
+    UnresolvedIdentifierNode
+)
 from .loops import (
     UnresolvedWhileNode,
     UnresolvedDoNode,
     UnresolvedForNode,
     UnresolvedFlowNode,
 )
-from .node import UnresolvedNode
+from .node import UnresolvedNode, UnresolvedUnitNode
 from .types import UnresolvedTypeNode, UnresolvedModifierNode
-from .unary import UnresolvedUnaryPrefixNode, UnresolvedUnaryPostfixNode
-from .unit import UnresolvedUnitNode
+from .unary import (
+    UnresolvedUnaryPrefixNode,
+    UnresolvedUnaryPostfixNode,
+    UnresolvedAccessNode,
+)
 from .variable import UnresolvedVariableNode
 
 
@@ -49,6 +56,8 @@ class UnresolvedNodeVisitor[TReturn](ABC):
                 return self.visit_decl_unit(node)
             case UnresolvedFunctionNode():
                 return self.visit_decl_function(node)
+            case UnresolvedEnumNode():
+                return self.visit_decl_enum(node)
             case UnresolvedVariableNode():
                 return self.visit_decl_variable(node)
             # -Statements
@@ -79,6 +88,8 @@ class UnresolvedNodeVisitor[TReturn](ABC):
                 return self.visit_expr_unary_prefix(node)
             case UnresolvedUnaryPostfixNode():
                 return self.visit_expr_unary_postfix(node)
+            case UnresolvedAccessNode():
+                return self.visit_expr_access(node)
             case UnresolvedArrayNode():
                 return self.visit_expr_array(node)
             case UnresolvedLiteralNode():
@@ -98,6 +109,8 @@ class UnresolvedNodeVisitor[TReturn](ABC):
     def visit_decl_unit(self, node: UnresolvedUnitNode) -> TReturn: ...
     @abstractmethod
     def visit_decl_function(self, node: UnresolvedFunctionNode) -> TReturn: ...
+    @abstractmethod
+    def visit_decl_enum(self, node: UnresolvedEnumNode) -> TReturn: ...
     @abstractmethod
     def visit_decl_variable(self, node: UnresolvedVariableNode) -> TReturn: ...
     @abstractmethod
@@ -126,6 +139,8 @@ class UnresolvedNodeVisitor[TReturn](ABC):
     def visit_expr_unary_prefix(self, node: UnresolvedUnaryPrefixNode) -> TReturn: ...
     @abstractmethod
     def visit_expr_unary_postfix(self, node: UnresolvedUnaryPostfixNode) -> TReturn: ...
+    @abstractmethod
+    def visit_expr_access(self, node: UnresolvedAccessNode) -> TReturn: ...
     @abstractmethod
     def visit_expr_array(self, node: UnresolvedArrayNode) -> TReturn: ...
     @abstractmethod

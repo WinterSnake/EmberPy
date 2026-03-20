@@ -12,6 +12,7 @@ from enum import IntEnum, auto
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from typing import MutableSequence
     from ...core import Location
 
 
@@ -25,3 +26,15 @@ class UnresolvedNode(ABC):
     """
     # -Properties
     location: Location
+
+
+@dataclass
+class UnresolvedUnitNode(UnresolvedNode):
+    """
+    Unresolved AST Node: Unit
+
+    A top-level container for a unit for files or modules.
+    Holds a mutable sequence of root nodes.
+    """
+    # -Properties
+    nodes: MutableSequence[UnresolvedNode]

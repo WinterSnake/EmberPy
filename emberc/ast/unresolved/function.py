@@ -49,8 +49,8 @@ class UnresolvedFunctionNode(UnresolvedNode):
         # -Properties
         type: UnresolvedNode
         name: str
-        _initializer: UnresolvedNode | None
         _id: int | None = field(init=False, default=None)
+        _initializer: UnresolvedNode | None
 
         @property
         def has_id(self) -> bool:

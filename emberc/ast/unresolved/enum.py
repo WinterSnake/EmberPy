@@ -11,26 +11,45 @@ from typing import TYPE_CHECKING
 from .node import UnresolvedNode
 
 if TYPE_CHECKING:
-    from typing import MutableSequence
-    from ...core import Location
+    from ...core import Location, MutableCollection
 
 
 ## Classes
 @dataclass
-class UnresolvedVariableNode(UnresolvedNode):
+class UnresolvedEnumNode(UnresolvedNode):
     """
-    Unresolved AST Node: Variable
+    Unresolved AST Node: Enum
 
-    A declaration node representing one or more variables sharing a master type.
+    A declaration node representing an enum collection and it's optional type
     """
     # -Properties
-    type: UnresolvedNode
-    entries: MutableSequence[UnresolvedVariableNode.Entry]
+    name: str
+    _id: int | None = field(init=False, default=None)
+    _type: UnresolvedNode | None
+    entries: MutableCollection[UnresolvedEnumNode.Entry]
+
+    @property
+    def has_id(self) -> bool:
+        return self._id is not None
+
+    @property
+    def id(self) -> int:
+        assert self._id is not None
+        return self._id
+
+    @property
+    def has_type(self) -> bool:
+        return self._type is not None
+
+    @property
+    def type(self) -> UnresolvedNode:
+        assert self._type is not None
+        return self._type
 
     # -Sub-Classes
     @dataclass
     class Entry:
-        '''Meta-data for variable entries'''
+        '''Meta-data for enum entries'''
         # -Properties
         location: Location
         name: str

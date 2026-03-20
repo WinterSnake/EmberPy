@@ -62,3 +62,25 @@ class UnresolvedUnaryPostfixNode(UnresolvedNode):
     class Kind(IntEnum):
         Call = auto()
         Subscript = auto()
+
+
+@dataclass
+class UnresolvedAccessNode(UnresolvedNode):
+    """
+    Unresolved AST Node: Member Access
+
+    A container for holding a unary member access its head.
+    """
+    # -Properties
+    head: UnresolvedNode
+    member: str
+    _id: int | None = field(init=False, default=None)
+
+    @property
+    def has_id(self) -> bool:
+        return self._id is not None
+
+    @property
+    def id(self) -> int:
+        assert self._id is not None
+        return self._id

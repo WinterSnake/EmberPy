@@ -7,7 +7,7 @@
 
 ## Imports
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import IntEnum, auto
 from typing import TYPE_CHECKING
 from .node import UnresolvedNode
@@ -61,3 +61,24 @@ class UnresolvedLiteralNode(UnresolvedNode):
     class Kind(IntEnum):
         Boolean = auto()
         Integer = auto()
+
+
+@dataclass
+class UnresolvedIdentifierNode(UnresolvedNode):
+    """
+    Unresolved AST Node: Identifier
+
+    A leaf container for holding an identifier and it's id.
+    """
+    # -Properties
+    name: str
+    _id: int | None = field(init=False, default=None)
+
+    @property
+    def has_id(self) -> bool:
+        return self._id is not None
+
+    @property
+    def id(self) -> int:
+        assert self._id is not None
+        return self._id
