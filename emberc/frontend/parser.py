@@ -182,8 +182,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             return self._parse_declaration_function()
         elif self.matches(Token.Type.KeywordEnum):
             return self._parse_declaration_enum()
-        #return self._parse_declaration_variable()
-        return self._parse_declaration_statement()
+        return self._parse_declaration_variable()
 
     def _parse_declaration_struct(self) -> UnresolvedNode:
         '''
