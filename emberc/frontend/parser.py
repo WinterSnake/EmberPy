@@ -42,7 +42,12 @@ from ..ast import (
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from .lexer import Lexer
-    from ..ast import AST_LITERAL_TYPES, STRUCT_FIELD_TYPES, UnresolvedNode
+    from ..ast import (
+        AST_LITERAL_TYPES,
+        STRUCT_MEMBER_TYPES,
+        ENUM_ENTRY_TYPES,
+        UnresolvedNode
+    )
 
 ## Constants
 LITERALS = (
@@ -186,15 +191,15 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         'struct' IDENTIFIER '{' member+ '}';
         '''
         # -Internal Functions
-        def _parse_members() -> list[STRUCT_FIELD_TYPES]:
+        def _parse_members() -> list[STRUCT_MEMBER_TYPES]:
             # -Member: One
-            members: list[STRUCT_FIELD_TYPES] = [_parse_member()]
+            members: list[STRUCT_MEMBER_TYPES] = [_parse_member()]
             # -Member: Multi
             while not self.matches(Token.Type.SymbolRBrace):
                 members.append(_parse_member())
             return members
 
-        def _parse_member() -> STRUCT_FIELD_TYPES:
+        def _parse_member() -> STRUCT_MEMBER_TYPES:
             '''field | struct;'''
             if self.matches(Token.Type.KeywordStruct):
                 return _parse_struct()
@@ -271,35 +276,56 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _parse_declaration_enum(self) -> UnresolvedNode:
         '''
         Grammar[Declaration::Enum]
-        'enum' IDENTIFIER ( ':' TYPE )? '{' entry ( ',' entry )* ','? '}';
+        'enum' 'union'? IDENTIFIER ( ':' TYPE )? '{' entry ( ',' entry )* ','? '}';
         '''
         # -Internal Functions
-        def _parse_entry() -> UnresolvedEnumNode.Entry:
-            '''IDENTIFIER ( '=' expression )?;'''
+        def _parse_entry(is_union: bool) -> UnresolvedEnumNode.Entry:
+            '''IDENTIFIER ( expression | type );'''
             token = self.requires(Token.Type.Identifier)
-            initializer: UnresolvedNode | None = None
-            if self.consume(Token.Type.SymbolEq):
-                initializer = self._parse_expression()
+            value = _parse_tags() if is_union else _parse_initializer()
             return UnresolvedEnumNode.Entry(
-                token.location, token.value_as(str), initializer
+                token.location, token.value_as(str), value
             )
+
+        def _parse_initializer() -> UnresolvedNode | None:
+            '''( '=' expression )?;'''
+            if self.consume(Token.Type.SymbolEq):
+                return self._parse_expression()
+            return None
+
+        def _parse_tags() -> list[UnresolvedEnumNode.Tag] | None:
+            '''( '{' TYPE IDENTIFIER ( ',' TYPE IDENTIFIER )* '}' )?;'''
+            if not self.matches(Token.Type.SymbolLBrace):
+                return None
+            token = self.next()
+            tags: list[UnresolvedEnumNode.Tag] = [_parse_tag()]
+            while self.consume(Token.Type.SymbolComma):
+                tags.append(_parse_tag())
+            _ = self.requires(Token.Type.SymbolRBrace)
+            return tags
+
+        def _parse_tag() -> UnresolvedEnumNode.Tag:
+            _type = self._parse_type()
+            ident = self.requires(Token.Type.Identifier)
+            return UnresolvedEnumNode.Tag(_type, ident.value_as(str))
         # -Body
         token = self.requires(Token.Type.KeywordEnum)
+        is_union = self.consume(Token.Type.KeywordUnion)
         ident = self.requires(Token.Type.Identifier)
         _type: UnresolvedNode | None = None
         if self.consume(Token.Type.SymbolColon):
             _type = self._parse_type()
         _ = self.requires(Token.Type.SymbolLBrace)
         # -Entry: One
-        entries: list[UnresolvedEnumNode.Entry] = [_parse_entry()]
+        entries: list[UnresolvedEnumNode.Entry] = [_parse_entry(is_union)]
         # -Entry: Multi
         while self.consume(Token.Type.SymbolComma):
             if self.matches(Token.Type.SymbolRBrace):
                 break
-            entries.append(_parse_entry())
+            entries.append(_parse_entry(is_union))
         _ = self.requires(Token.Type.SymbolRBrace)
         return UnresolvedEnumNode(
-            token.location, ident.value_as(str), _type, entries
+            token.location, ident.value_as(str), is_union, _type, entries
         )
 
     def _parse_declaration_variable(

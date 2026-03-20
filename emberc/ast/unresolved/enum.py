@@ -13,6 +13,9 @@ from .node import UnresolvedNode
 if TYPE_CHECKING:
     from ...core import Location, MutableCollection
 
+## Constants
+type ENUM_ENTRY_TYPES = UnresolvedNode | MutableCollection[UnresolvedEnumNode.Tag]
+
 
 ## Classes
 @dataclass
@@ -25,6 +28,7 @@ class UnresolvedEnumNode(UnresolvedNode):
     # -Properties
     name: str
     _id: int | None = field(init=False, default=None)
+    is_union: bool
     _type: UnresolvedNode | None
     entries: MutableCollection[UnresolvedEnumNode.Entry]
 
@@ -50,11 +54,16 @@ class UnresolvedEnumNode(UnresolvedNode):
     @dataclass
     class Entry:
         '''Meta-data for enum entries'''
+        # -Instance Methods
+        def value_as[T: ENUM_ENTRY_TYPES](self, _type: type[T]) -> T:
+            assert type(self.value) is _type, "TODO: Error handling"
+            return self.value
+
         # -Properties
         location: Location
         name: str
         _id: int | None = field(init=False, default=None)
-        _initializer: UnresolvedNode | None
+        _value: ENUM_ENTRY_TYPES | None
 
         @property
         def has_id(self) -> bool:
@@ -66,10 +75,27 @@ class UnresolvedEnumNode(UnresolvedNode):
             return self._id
 
         @property
-        def has_initializer(self) -> bool:
-            return self._initializer is not None
+        def has_value(self) -> bool:
+            return self._value is not None
 
         @property
-        def initializer(self) -> UnresolvedNode:
-            assert self._initializer is not None
-            return self._initializer
+        def value(self) -> ENUM_ENTRY_TYPES:
+            assert self._value is not None
+            return self._value
+
+    @dataclass
+    class Tag:
+        '''Meta-data for enum tagged union'''
+        # -Properties
+        type: UnresolvedNode
+        name: str
+        _id: int | None = field(init=False, default=None)
+
+        @property
+        def has_id(self) -> bool:
+            return self._id is not None
+
+        @property
+        def id(self) -> int:
+            assert self._id is not None
+            return self._id

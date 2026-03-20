@@ -6,13 +6,14 @@
 ##-------------------------------##
 
 ## Imports
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Collection
 from .unresolved import (
-    AST_LITERAL_TYPES,
+    UnresolvedNode,
     UnresolvedNodeVisitor,
     UnresolvedTypeNode,
     UnresolvedModifierNode,
     UnresolvedStructNode,
+    UnresolvedEnumNode,
     UnresolvedFlowNode,
     UnresolvedAssignmentNode,
     UnresolvedBinaryNode,
@@ -24,11 +25,10 @@ from .unresolved import (
 if TYPE_CHECKING:
     from typing import Collection
     from .unresolved import (
-        STRUCT_FIELD_TYPES,
-        UnresolvedNode,
+        STRUCT_MEMBER_TYPES,
+        ENUM_ENTRY_TYPES,
         UnresolvedUnitNode,
         UnresolvedFunctionNode,
-        UnresolvedEnumNode,
         UnresolvedVariableNode,
         UnresolvedBlockNode,
         UnresolvedConditionalNode,
@@ -102,13 +102,13 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
 
     def visit_decl_struct(self, node: UnresolvedStructNode) -> str:
         # -Internal Functions
-        def _visit_members(members: Collection[STRUCT_FIELD_TYPES]) -> str:
+        def _visit_members(members: Collection[STRUCT_MEMBER_TYPES]) -> str:
             _members: list[str] = []
             for member in members:
                 _members.append(f"{self._get_indent()}Member: {_visit_member(member)}")
             return '\n'.join(_members)
 
-        def _visit_member(member: STRUCT_FIELD_TYPES) -> str:
+        def _visit_member(member: STRUCT_MEMBER_TYPES) -> str:
             match member:
                 case UnresolvedStructNode.Field():
                     return _visit_field(member)
@@ -158,15 +158,28 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
         return '\n'.join((header, parameters_str, body))
 
     def visit_decl_enum(self, node: UnresolvedEnumNode) -> str:
-        header = f"{self._get_indent()}Enum Decl[Name={node.name} ; "
+        # -Internal Functions
+        def _visit_value(value: ENUM_ENTRY_TYPES, is_union: bool) -> str:
+            if is_union:
+                assert isinstance(value, Collection)
+                assert isinstance(value[0], UnresolvedEnumNode.Tag)
+                tags: list[str] = []
+                for tag in value:
+                    tags.append(f"[{self._get_type(tag.type)}] {tag.name}")
+                return '{' + ','.join(tags) + '}'
+            assert isinstance(value, UnresolvedNode)
+            return f" = {self.visit(value)}"
+        # -Body
+        header = f"{self._get_indent()}Enum Decl[Name={node.name} ; Union={node.is_union} ; "
         _type = self._get_type(node.type) if node.has_type else "Type=None"
         header += _type + ']'
         self.indent += 1
         entries = []
         for entry in node.entries:
             entry_str = f"{self._get_indent()}Entry: {entry.name}"
-            if entry.has_initializer:
-                entry_str += f" = {self.visit(entry.initializer)}"
+            if entry.has_value:
+                entry_str += _visit_value(entry.value, node.is_union)
+                #entry_str += f" = {self.visit(entry.value)}"
             entries.append(entry_str)
         self.indent -= 1
         return '\n'.join((header, *entries))

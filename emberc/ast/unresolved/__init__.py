@@ -10,7 +10,7 @@ from .assignment import UnresolvedAssignmentNode
 from .binary import UnresolvedBinaryNode
 from .block import UnresolvedBlockNode
 from .conditional import UnresolvedConditionalNode
-from .enum import UnresolvedEnumNode
+from .enum import ENUM_ENTRY_TYPES, UnresolvedEnumNode
 from .expression import UnresolvedExprNode, UnresolvedEmptyNode
 from .function import UnresolvedFunctionNode, UnresolvedReturnNode
 from .group import UnresolvedGroupNode
@@ -27,7 +27,7 @@ from .loops import (
     UnresolvedFlowNode,
 )
 from .node import UnresolvedNode, UnresolvedUnitNode
-from .struct import STRUCT_FIELD_TYPES, UnresolvedStructNode
+from .struct import STRUCT_MEMBER_TYPES, UnresolvedStructNode
 from .types import UnresolvedTypeNode, UnresolvedModifierNode
 from .unary import (
     UnresolvedUnaryPrefixNode,
@@ -41,7 +41,8 @@ from .visitor import UnresolvedNodeVisitor
 __all__ = (
     # -Core
     "AST_LITERAL_TYPES",
-    "STRUCT_FIELD_TYPES",
+    "STRUCT_MEMBER_TYPES",
+    "ENUM_ENTRY_TYPES",
     "UnresolvedNode",
     "UnresolvedNodeVisitor",
     "UnresolvedUnitNode",

@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from ...core import Location, MutableCollection
 
 ## Constants
-type STRUCT_FIELD_TYPES = UnresolvedStructNode | UnresolvedStructNode.Field
+type STRUCT_MEMBER_TYPES = UnresolvedStructNode | UnresolvedStructNode.Field
 
 
 ## Classes
@@ -28,7 +28,7 @@ class UnresolvedStructNode(UnresolvedNode):
     # -Properties
     name: str
     _id: int | None = field(init=False, default=None)
-    members: MutableCollection[STRUCT_FIELD_TYPES]
+    members: MutableCollection[STRUCT_MEMBER_TYPES]
     is_union: bool = False
 
     @property
