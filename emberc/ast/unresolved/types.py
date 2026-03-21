@@ -37,6 +37,7 @@ class UnresolvedTypeNode(UnresolvedNode):
         UInt64 = auto()
         SSize = auto()
         USize = auto()
+        Function = auto()
 
 
 @dataclass

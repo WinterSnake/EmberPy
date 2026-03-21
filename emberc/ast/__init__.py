@@ -6,7 +6,6 @@
 ##-------------------------------##
 
 ## Imports
-from .printer import UnresolvedNodePrinter
 from .unresolved import (
     AST_LITERAL_TYPES,
     STRUCT_MEMBER_TYPES,
@@ -83,6 +82,4 @@ __all__ = (
     "UnresolvedLiteralNode",
     "UnresolvedIdentifierNode",
     "UnresolvedEmptyNode",
-    # -Printers
-    "UnresolvedNodePrinter",
 )

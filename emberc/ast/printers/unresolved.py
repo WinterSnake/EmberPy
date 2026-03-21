@@ -2,12 +2,12 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## AST: Printers                 ##
+## Printer: Unresolved AST       ##
 ##-------------------------------##
 
 ## Imports
 from typing import TYPE_CHECKING, Collection
-from .unresolved import (
+from ..unresolved import (
     UnresolvedNode,
     UnresolvedNodeVisitor,
     UnresolvedTypeNode,
@@ -24,7 +24,7 @@ from .unresolved import (
 
 if TYPE_CHECKING:
     from typing import Collection
-    from .unresolved import (
+    from ..unresolved import (
         STRUCT_MEMBER_TYPES,
         ENUM_ENTRY_TYPES,
         UnresolvedUnitNode,
@@ -101,6 +101,8 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
                 return "ssize"
             case UnresolvedTypeNode.Kind.USize:
                 return "usize"
+            case UnresolvedTypeNode.Kind.Function:
+                return "fn"
 
     def visit_modifier(self, node: UnresolvedModifierNode) -> str:
         match node.kind:

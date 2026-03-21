@@ -71,6 +71,7 @@ TYPES = {
     Token.Type.KeywordUInt64: UnresolvedTypeNode.Kind.UInt64,
     Token.Type.KeywordSSize: UnresolvedTypeNode.Kind.SSize,
     Token.Type.KeywordUSize: UnresolvedTypeNode.Kind.USize,
+    Token.Type.KeywordFn: UnresolvedTypeNode.Kind.Function,
 }
 UNARY_PREFIX_OPERATORS = {
     Token.Type.SymbolMinus: UnresolvedUnaryPrefixNode.Operator.NumericalNegate,
