@@ -37,6 +37,7 @@ if TYPE_CHECKING:
         UnresolvedDoNode,
         UnresolvedForNode,
         UnresolvedReturnNode,
+        UnresolvedDeferNode,
         UnresolvedExprNode,
         UnresolvedGroupNode,
         UnresolvedAccessNode,
@@ -292,6 +293,9 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
         if not node.has_expression:
             return output
         return f"{output} {self.visit(node.expression)}"
+
+    def visit_stmt_defer(self, node: UnresolvedDeferNode) -> str:
+        return f"{self._get_indent()}defer {self.visit(node.node)}"
 
     def visit_stmt_expression(self, node: UnresolvedExprNode) -> str:
         if not node.has_expression:

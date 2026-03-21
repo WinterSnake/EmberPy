@@ -27,6 +27,7 @@ from ..ast import (
     UnresolvedForNode,
     UnresolvedFlowNode,
     UnresolvedReturnNode,
+    UnresolvedDeferNode,
     UnresolvedExprNode,
     UnresolvedGroupNode,
     UnresolvedAssignmentNode,
@@ -132,6 +133,7 @@ STATEMENT_STARTERS = (
     Token.Type.KeywordBreak,
     Token.Type.KeywordContinue,
     Token.Type.KeywordReturn,
+    Token.Type.KeywordDefer,
 )
 
 
@@ -378,7 +380,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         statement_block | statement_conditional | statement_switch |
         statement_while | statement_do | statement_for |
         statement_break | statement_continue |
-        statement_return | statement_expression;
+        statement_return | statement_defer | statement_expression;
         '''
         if self.matches(Token.Type.SymbolLBrace):
             if (next := self.peek(1)) and next.type == Token.Type.SymbolDot:
@@ -400,6 +402,8 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             return self._parse_statement_continue()
         elif self.matches(Token.Type.KeywordReturn):
             return self._parse_statement_return()
+        elif self.matches(Token.Type.KeywordDefer):
+            return self._parse_statement_defer()
         return self._parse_statement_expression()
 
     def _parse_statement_block(self) -> UnresolvedNode:
@@ -571,6 +575,20 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             expression = self._parse_expression()
             _ = self.requires(Token.Type.SymbolSemicolon)
         return UnresolvedReturnNode(token.location, expression)
+
+    def _parse_statement_defer(self) -> UnresolvedNode:
+        '''
+        Grammar[Statement::Return]
+        'defer' (expression ';' | statement_block);
+        '''
+        token = self.requires(Token.Type.KeywordDefer)
+        node: UnresolvedNode
+        if self.matches(Token.Type.SymbolLBrace):
+            node = self._parse_statement_block()
+        else:
+            node = self._parse_expression()
+            _ = self.requires(Token.Type.SymbolSemicolon)
+        return UnresolvedDeferNode(token.location, node)
 
     def _parse_statement_expression(
         self, expr: UnresolvedNode | None = None

@@ -33,6 +33,18 @@ class UnresolvedExprNode(UnresolvedNode):
 
 
 @dataclass
+class UnresolvedDeferNode(UnresolvedNode):
+    """
+    Unresolved AST Node: Defer
+
+    A container for either a single expression or a block statement to be 
+    executed at the end of the current scope.
+    """
+    # -Properties
+    node: UnresolvedNode
+
+
+@dataclass
 class UnresolvedEmptyNode(UnresolvedNode):
     """
     Unresolved AST Node: Empty Expression

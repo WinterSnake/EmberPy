@@ -12,7 +12,11 @@ from .binary import UnresolvedBinaryNode
 from .block import UnresolvedBlockNode
 from .conditional import UnresolvedConditionalNode, UnresolvedSwitchNode
 from .enum import UnresolvedEnumNode
-from .expression import UnresolvedExprNode, UnresolvedEmptyNode
+from .expression import (
+    UnresolvedExprNode,
+    UnresolvedDeferNode,
+    UnresolvedEmptyNode
+)
 from .function import UnresolvedFunctionNode, UnresolvedReturnNode
 from .group import UnresolvedGroupNode
 from .literal import (
@@ -81,6 +85,8 @@ class UnresolvedNodeVisitor[TReturn](ABC):
                 return self.visit_stmt_flow(node)
             case UnresolvedReturnNode():
                 return self.visit_stmt_return(node)
+            case UnresolvedDeferNode():
+                return self.visit_stmt_defer(node)
             case UnresolvedExprNode():
                 return self.visit_stmt_expression(node)
             # -Expressions
@@ -139,6 +145,8 @@ class UnresolvedNodeVisitor[TReturn](ABC):
     def visit_stmt_flow(self, node: UnresolvedFlowNode) -> TReturn: ...
     @abstractmethod
     def visit_stmt_return(self, node: UnresolvedReturnNode) -> TReturn: ...
+    @abstractmethod
+    def visit_stmt_defer(self, node: UnresolvedDeferNode) -> TReturn: ...
     @abstractmethod
     def visit_stmt_expression(self, node: UnresolvedExprNode) -> TReturn: ...
     @abstractmethod

@@ -47,6 +47,7 @@ KEYWORDS = {
     'continue': Token.Type.KeywordContinue,
     'break': Token.Type.KeywordBreak,
     'return': Token.Type.KeywordReturn,
+    'defer': Token.Type.KeywordDefer,
     'or': Token.Type.KeywordOr,
     'and': Token.Type.KeywordAnd,
     # -Type

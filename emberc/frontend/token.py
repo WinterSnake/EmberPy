@@ -65,6 +65,7 @@ class Token:
         KeywordContinue = auto()
         KeywordBreak = auto()
         KeywordReturn = auto()
+        KeywordDefer = auto()
         KeywordOr = auto()
         KeywordAnd = auto()
         # -Keyword: Type

@@ -28,6 +28,7 @@ from .unresolved import (
     UnresolvedForNode,
     UnresolvedFlowNode,
     UnresolvedReturnNode,
+    UnresolvedDeferNode,
     UnresolvedExprNode,
     UnresolvedGroupNode,
     UnresolvedAssignmentNode,
@@ -68,6 +69,7 @@ __all__ = (
     "UnresolvedForNode",
     "UnresolvedFlowNode",
     "UnresolvedReturnNode",
+    "UnresolvedDeferNode",
     "UnresolvedExprNode",
     # -Unresolved: Expressions
     "UnresolvedGroupNode",

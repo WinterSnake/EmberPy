@@ -11,7 +11,11 @@ from .binary import UnresolvedBinaryNode
 from .block import UnresolvedBlockNode
 from .conditional import UnresolvedConditionalNode, UnresolvedSwitchNode
 from .enum import ENUM_ENTRY_TYPES, UnresolvedEnumNode
-from .expression import UnresolvedExprNode, UnresolvedEmptyNode
+from .expression import (
+    UnresolvedExprNode,
+    UnresolvedDeferNode,
+    UnresolvedEmptyNode
+)
 from .function import UnresolvedFunctionNode, UnresolvedReturnNode
 from .group import UnresolvedGroupNode
 from .literal import (
@@ -64,6 +68,7 @@ __all__ = (
     "UnresolvedForNode",
     "UnresolvedFlowNode",
     "UnresolvedReturnNode",
+    "UnresolvedDeferNode",
     "UnresolvedExprNode",
     # -Expressions
     "UnresolvedGroupNode",
