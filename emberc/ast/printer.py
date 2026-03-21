@@ -61,6 +61,18 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
         self.indent: int = 0
 
     # -Instance Methods: Visitor
+    def visit_unit(self, node: UnresolvedUnitNode) -> str:
+        EMPTY = f"[Unit: {node.location.file} -- Empty]"
+        if not node.nodes:
+            return EMPTY
+        nodes: list[str] = []
+        for _node in node.nodes:
+            if (_str := self.visit(_node)) != '':
+                nodes.append(_str)
+        if not nodes:
+            return EMPTY
+        return '\n'.join((f"[Unit: {node.location.file}]", *nodes))
+
     def visit_type(self, node: UnresolvedTypeNode) -> str:
         match node.kind:
             case UnresolvedTypeNode.Kind.Void:
@@ -83,23 +95,15 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
                 return "uint32"
             case UnresolvedTypeNode.Kind.UInt64:
                 return "uint64"
+            case UnresolvedTypeNode.Kind.SSize:
+                return "ssize"
+            case UnresolvedTypeNode.Kind.USize:
+                return "usize"
 
     def visit_modifier(self, node: UnresolvedModifierNode) -> str:
         match node.kind:
             case UnresolvedModifierNode.Kind.Const:
                 return f"const"
-
-    def visit_decl_unit(self, node: UnresolvedUnitNode) -> str:
-        EMPTY = f"[Unit: {node.location.file} -- Empty]"
-        if not node.nodes:
-            return EMPTY
-        nodes: list[str] = []
-        for _node in node.nodes:
-            if (_str := self.visit(_node)) != '':
-                nodes.append(_str)
-        if not nodes:
-            return EMPTY
-        return '\n'.join((f"[Unit: {node.location.file}]", *nodes))
 
     def visit_decl_struct(self, node: UnresolvedStructNode) -> str:
         # -Internal Functions

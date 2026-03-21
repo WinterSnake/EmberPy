@@ -47,14 +47,14 @@ class UnresolvedNodeVisitor[TReturn](ABC):
     # -Instance Methods
     def visit(self, node: UnresolvedNode) -> TReturn:
         match node:
+            case UnresolvedUnitNode():
+                return self.visit_unit(node)
             # -Types
             case UnresolvedTypeNode():
                 return self.visit_type(node)
             case UnresolvedModifierNode():
                 return self.visit_modifier(node)
             # -Declarations
-            case UnresolvedUnitNode():
-                return self.visit_decl_unit(node)
             case UnresolvedStructNode():
                 return self.visit_decl_struct(node)
             case UnresolvedFunctionNode():
@@ -107,11 +107,11 @@ class UnresolvedNodeVisitor[TReturn](ABC):
                 raise RuntimeError("Unhandled node type", node, "in UnresolvedNodeVisitor")
 
     @abstractmethod
+    def visit_unit(self, node: UnresolvedUnitNode) -> TReturn: ...
+    @abstractmethod
     def visit_type(self, node: UnresolvedTypeNode) -> TReturn: ...
     @abstractmethod
     def visit_modifier(self, node: UnresolvedModifierNode) -> TReturn: ...
-    @abstractmethod
-    def visit_decl_unit(self, node: UnresolvedUnitNode) -> TReturn: ...
     @abstractmethod
     def visit_decl_struct(self, node: UnresolvedStructNode) -> TReturn: ...
     @abstractmethod

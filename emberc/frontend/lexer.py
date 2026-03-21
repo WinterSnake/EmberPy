@@ -60,6 +60,8 @@ KEYWORDS = {
     'uint16': Token.Type.KeywordUInt16,
     'uint32': Token.Type.KeywordUInt32,
     'uint64': Token.Type.KeywordUInt64,
+    'ssize': Token.Type.KeywordSSize,
+    'usize': Token.Type.KeywordUSize,
     # -Type: Modifier
     'const': Token.Type.KeywordConst,
 }

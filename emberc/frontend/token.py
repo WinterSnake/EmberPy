@@ -78,6 +78,8 @@ class Token:
         KeywordUInt16 = auto()
         KeywordUInt32 = auto()
         KeywordUInt64 = auto()
+        KeywordSSize = auto()
+        KeywordUSize = auto()
         # -Keyword: Type Modifier
         KeywordConst = auto()
         # -Symbol: Math
