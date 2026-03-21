@@ -14,7 +14,6 @@ from .unresolved import (
     UnresolvedModifierNode,
     UnresolvedStructNode,
     UnresolvedEnumNode,
-    UnresolvedSwitchNode,
     UnresolvedFlowNode,
     UnresolvedAssignmentNode,
     UnresolvedBinaryNode,
@@ -33,6 +32,7 @@ if TYPE_CHECKING:
         UnresolvedVariableNode,
         UnresolvedBlockNode,
         UnresolvedConditionalNode,
+        UnresolvedSwitchNode,
         UnresolvedWhileNode,
         UnresolvedDoNode,
         UnresolvedForNode,
@@ -40,6 +40,7 @@ if TYPE_CHECKING:
         UnresolvedExprNode,
         UnresolvedGroupNode,
         UnresolvedAccessNode,
+        UnresolvedObjectNode,
         UnresolvedArrayNode,
         UnresolvedIdentifierNode,
         UnresolvedEmptyNode,
@@ -409,6 +410,13 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
 
     def visit_expr_access(self, node: UnresolvedAccessNode) -> str:
         return f"({self.visit(node.head)}.{node.member})"
+
+    def visit_expr_object(self, node: UnresolvedObjectNode) -> str:
+        fields: list[str] = [
+            f"{field.name}={self.visit(field.value)}"
+            for field in node.fields
+        ]
+        return '{' + ','.join(fields) + '}'
 
     def visit_expr_array(self, node: UnresolvedArrayNode) -> str:
         return '[' + ','.join(self.visit(value) for value in node.values) + ']'

@@ -16,6 +16,7 @@ from .function import UnresolvedFunctionNode, UnresolvedReturnNode
 from .group import UnresolvedGroupNode
 from .literal import (
     AST_LITERAL_TYPES,
+    UnresolvedObjectNode,
     UnresolvedArrayNode,
     UnresolvedLiteralNode,
     UnresolvedIdentifierNode
@@ -71,6 +72,7 @@ __all__ = (
     "UnresolvedUnaryPrefixNode",
     "UnresolvedUnaryPostfixNode",
     "UnresolvedAccessNode",
+    "UnresolvedObjectNode",
     "UnresolvedArrayNode",
     "UnresolvedLiteralNode",
     "UnresolvedIdentifierNode",

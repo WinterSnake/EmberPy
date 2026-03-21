@@ -34,6 +34,7 @@ from ..ast import (
     UnresolvedUnaryPrefixNode,
     UnresolvedUnaryPostfixNode,
     UnresolvedAccessNode,
+    UnresolvedObjectNode,
     UnresolvedArrayNode,
     UnresolvedLiteralNode,
     UnresolvedIdentifierNode,
@@ -380,6 +381,8 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         statement_return | statement_expression;
         '''
         if self.matches(Token.Type.SymbolLBrace):
+            if (next := self.peek(1)) and next.type == Token.Type.SymbolDot:
+                return self._parse_statement_expression()
             return self._parse_statement_block()
         elif self.matches(Token.Type.KeywordIf):
             return self._parse_statement_conditional()
@@ -729,13 +732,15 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _parse_expression_primary(self) -> UnresolvedNode:
         '''
         Grammar[Expression::Primary]
-        expression_group | expression_array | expression_literal;
+        expression_object | expression_array | expression_group | expression_literal;
         '''
         node: UnresolvedNode
-        if self.matches(Token.Type.SymbolLParen):
-            node = self._parse_expression_group()
+        if self.matches(Token.Type.SymbolLBrace):
+            node = self._parse_expression_object()
         elif self.matches(Token.Type.SymbolLBracket):
             node = self._parse_expression_array()
+        elif self.matches(Token.Type.SymbolLParen):
+            node = self._parse_expression_group()
         else:
             node = self._parse_expression_literal()
         return self._parse_expression_unary_postfix(node)
@@ -753,16 +758,43 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             node._target = self._parse_expression_unary_prefix()
         return node
 
+    def _parse_expression_object(self) -> UnresolvedNode:
+        '''
+        Grammar[Expression::Object]
+        '{' field ( ',' field )* ','? '}';
+        '''
+        # -Internal Functions
+        def _parse_field() -> UnresolvedObjectNode.Field:
+            ''''.' IDENTIFIER '=' expression;'''
+            token = self.requires(Token.Type.SymbolDot)
+            ident = self.requires(Token.Type.Identifier)
+            _ = self.requires(Token.Type.SymbolEq)
+            value = self._parse_expression()
+            return UnresolvedObjectNode.Field(
+                token.location, ident.value_as(str), value
+            )
+        # -Body
+        token = self.requires(Token.Type.SymbolLBrace)
+        fields: list[UnresolvedObjectNode.Field] = [_parse_field()]
+        while self.consume(Token.Type.SymbolComma):
+            if self.matches(Token.Type.SymbolRBrace):
+                break
+            fields.append(_parse_field())
+        _ = self.requires(Token.Type.SymbolRBrace)
+        return UnresolvedObjectNode(token.location, fields)
+
     def _parse_expression_array(self) -> UnresolvedNode:
         '''
         Grammar[Expression::Array]
-        '[' expression ( ',' expression )* ']';
+        '[' expression ( ',' expression )* ','? ']';
         '''
         token = self.requires(Token.Type.SymbolLBracket)
         # -Arguments: One
         values: list[UnresolvedNode] = [self._parse_expression()]
         # -Arguments: Multi
         while self.consume(Token.Type.SymbolComma):
+            if self.matches(Token.Type.SymbolRBracket):
+                break
             values.append(self._parse_expression())
         _ = self.requires(Token.Type.SymbolRBracket)
         return UnresolvedArrayNode(token.location, values)

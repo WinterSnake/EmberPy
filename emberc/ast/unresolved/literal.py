@@ -13,13 +13,42 @@ from typing import TYPE_CHECKING
 from .node import UnresolvedNode
 
 if TYPE_CHECKING:
-    from ...core import MutableCollection
+    from ...core import Location, MutableCollection
 
 ## Constants
 type AST_LITERAL_TYPES = bool | int | str
 
 
 ## Classes
+@dataclass
+class UnresolvedObjectNode(UnresolvedNode):
+    """
+    Unresolved AST Node: Object
+
+    A leaf container for holding an object initialization collection.
+    """
+    # -Properties
+    fields: MutableCollection[UnresolvedObjectNode.Field]
+
+    # -Sub-Classes
+    @dataclass
+    class Field:
+        '''Meta-data for object fields'''
+        location: Location
+        name: str
+        _id: int | None = field(init=False, default=None)
+        value: UnresolvedNode
+
+        @property
+        def has_id(self) -> bool:
+            return self._id is not None
+
+        @property
+        def id(self) -> int:
+            assert self._id is not None
+            return self._id
+
+
 @dataclass
 class UnresolvedArrayNode(UnresolvedNode):
     """
