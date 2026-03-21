@@ -591,17 +591,17 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         return UnresolvedDeferNode(token.location, node)
 
     def _parse_statement_expression(
-        self, expr: UnresolvedNode | None = None
+        self, expression: UnresolvedNode | None = None
     ) -> UnresolvedNode:
         '''
         Grammar[Statement::Expression]
         expression? ';';
         '''
-        if expr is None and self.consume(Token.Type.SymbolSemicolon):
-            return UnresolvedExprNode(self._last_token.location, None)
-        node = self._parse_expression(expr)
+        if self.consume(Token.Type.SymbolSemicolon):
+            return UnresolvedExprNode(self._last_token.location, expression)
+        expression = self._parse_expression(expression)
         token = self.requires(Token.Type.SymbolSemicolon)
-        return UnresolvedExprNode(token.location, node)
+        return UnresolvedExprNode(token.location, expression)
 
     def _parse_expression(
         self, l_value: UnresolvedNode | None = None
