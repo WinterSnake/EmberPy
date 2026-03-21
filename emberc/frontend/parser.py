@@ -433,7 +433,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         '''
         # -Internal Functions
         def _parse_group() -> UnresolvedSwitchNode.Group:
-            '''case ( case )* statement;'''
+            '''case case* statement;'''
             # -Case: One
             cases: list[UnresolvedSwitchNode.Case] = [_parse_case()]
             # -Case: Multi
@@ -443,11 +443,14 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
             return UnresolvedSwitchNode.Group(cases, body)
 
         def _parse_case() -> UnresolvedSwitchNode.Case:
-            ''''case' expression ':';'''
+            ''''case' expression IDENTIFIER? ':';'''
             token = self.requires(Token.Type.KeywordCase)
             condition = self._parse_expression()
+            name: str | None = None
+            if self.consume(Token.Type.Identifier):
+                name = self._last_token.value_as(str)
             _ = self.requires(Token.Type.SymbolColon)
-            return UnresolvedSwitchNode.Case(token.location, condition)
+            return UnresolvedSwitchNode.Case(token.location, condition, name)
         # -Body
         token = self.requires(Token.Type.KeywordSwitch)
         _ = self.requires(Token.Type.SymbolLParen)

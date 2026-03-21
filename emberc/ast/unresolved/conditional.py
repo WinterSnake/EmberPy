@@ -6,7 +6,7 @@
 ##-------------------------------##
 
 ## Imports
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 from .node import UnresolvedNode
 
@@ -65,6 +65,26 @@ class UnresolvedSwitchNode(UnresolvedNode):
         # -Properties
         location: Location
         condition: UnresolvedNode
+        _name: str | None
+        _id: int | None = field(init=False, default=None)
+
+        @property
+        def has_name(self) -> bool:
+            return self._name is not None
+
+        @property
+        def name(self) -> str:
+            assert self._name is not None
+            return self._name
+
+        @property
+        def has_id(self) -> bool:
+            return self._id is not None
+
+        @property
+        def id(self) -> int:
+            assert self._id is not None
+            return self._id
 
     @dataclass
     class Group:

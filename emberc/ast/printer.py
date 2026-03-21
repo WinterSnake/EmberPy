@@ -229,7 +229,11 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
             groups.append(f"{self._get_indent()}Group[{i}]")
             self.indent += 1
             for case in group.cases:
-                groups.append(f"{self._get_indent()}Case {self.visit(case.condition)}:")
+                case_str = f"{self._get_indent()}Case"
+                if case.has_name:
+                    case_str += f"[{case.name}]"
+                case_str += f" {self.visit(case.condition)}:"
+                groups.append(case_str)
             self.indent += 1
             groups.append(self.visit(group.body))
             self.indent -= 2
