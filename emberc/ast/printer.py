@@ -14,6 +14,7 @@ from .unresolved import (
     UnresolvedModifierNode,
     UnresolvedStructNode,
     UnresolvedEnumNode,
+    UnresolvedSwitchNode,
     UnresolvedFlowNode,
     UnresolvedAssignmentNode,
     UnresolvedBinaryNode,
@@ -219,6 +220,28 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
             self.indent -= 1
         return '\n'.join(output)
 
+    def visit_stmt_switch(self, node: UnresolvedSwitchNode) -> str:
+        header = f"{self._get_indent()}switch({self.visit(node.condition)})"
+        self.indent += 1
+        groups: list[str] = []
+        # -Groups
+        for i, group in enumerate(node.groups):
+            groups.append(f"{self._get_indent()}Group[{i}]")
+            self.indent += 1
+            for case in group.cases:
+                groups.append(f"{self._get_indent()}Case {self.visit(case.condition)}:")
+            self.indent += 1
+            groups.append(self.visit(group.body))
+            self.indent -= 2
+        # -Default
+        if node.has_default:
+            groups.append(f"{self._get_indent()}Default")
+            self.indent += 1
+            groups.append(self.visit(node.default))
+            self.indent -= 1
+        self.indent -= 1
+        return '\n'.join((header, *groups))
+
     def visit_stmt_while(self, node: UnresolvedWhileNode) -> str:
         header = f"{self._get_indent()}while ({self.visit(node.condition)})"
         self.indent += 1
@@ -410,18 +433,18 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
                 base_type, modifiers = self._get_type_chain(node.operand)
                 match node.operator:
                     case UnresolvedUnaryPrefixNode.Operator.Pointer:
-                        return (f"*{base_type}", modifiers)
+                        return (f"(*{base_type})", modifiers)
                     case UnresolvedUnaryPrefixNode.Operator.Slice:
-                        return (f"[]{base_type}", modifiers)
+                        return (f"([]{base_type})", modifiers)
                     case UnresolvedUnaryPrefixNode.Operator.SlicePointer:
-                        return (f"[*]{base_type}", modifiers)
+                        return (f"([*]{base_type})", modifiers)
                     case _:
                         assert False, "Invalid prefix operator"
             case UnresolvedUnaryPostfixNode():
                 assert node.kind is UnresolvedUnaryPostfixNode.Kind.Subscript, "Invalid postfix operator"
                 base_type, modifiers = self._get_type_chain(node.head)
                 arguments = ','.join(self.visit(argument) for argument in node.arguments)
-                return (f"{base_type}[{arguments}]", modifiers)
+                return (f"({base_type}[{arguments}])", modifiers)
             case _:
                 return (self.visit(node), [])
 

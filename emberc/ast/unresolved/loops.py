@@ -9,11 +9,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from enum import IntEnum, auto
-from typing import TYPE_CHECKING
 from .node import UnresolvedNode
-
-if TYPE_CHECKING:
-    from typing import MutableSequence
 
 
 ## Classes

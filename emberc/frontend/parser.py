@@ -21,6 +21,7 @@ from ..ast import (
     UnresolvedVariableNode,
     UnresolvedBlockNode,
     UnresolvedConditionalNode,
+    UnresolvedSwitchNode,
     UnresolvedWhileNode,
     UnresolvedDoNode,
     UnresolvedForNode,
@@ -120,6 +121,7 @@ EXPRESSION_STARTERS = (Token.Type.Identifier, *LITERALS, *TYPES)
 STATEMENT_STARTERS = (
     Token.Type.SymbolSemicolon,
     Token.Type.SymbolLBrace,
+    Token.Type.KeywordSwitch,
     Token.Type.KeywordIf,
     Token.Type.KeywordWhile,
     Token.Type.KeywordDo,
@@ -370,12 +372,17 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _parse_statement(self) -> UnresolvedNode:
         '''
         Grammar[Statement]
-        statement_block | statement_conditional | statement_while | statement_do | statement_for | statement_expression;
+        statement_block | statement_conditional | statement_switch |
+        statement_while | statement_do | statement_for |
+        statement_break | statement_continue |
+        statement_return | statement_expression;
         '''
         if self.matches(Token.Type.SymbolLBrace):
             return self._parse_statement_block()
         elif self.matches(Token.Type.KeywordIf):
             return self._parse_statement_conditional()
+        elif self.matches(Token.Type.KeywordSwitch):
+            return self._parse_statement_switch()
         elif self.matches(Token.Type.KeywordWhile):
             return self._parse_statement_loop_while()
         elif self.matches(Token.Type.KeywordDo):
@@ -397,7 +404,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         '''
         token = self.requires(Token.Type.SymbolLBrace)
         nodes: list[UnresolvedNode] = []
-        while not self.is_at_end and not self.consume(Token.Type.SymbolRBrace):
+        while not self.consume(Token.Type.SymbolRBrace):
             node = self._parse_declaration_statement()
             nodes.append(node)
         return UnresolvedBlockNode(token.location, nodes)
@@ -418,6 +425,48 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         return UnresolvedConditionalNode(
             token.location, condition, if_branch, else_branch
         )
+
+    def _parse_statement_switch(self) -> UnresolvedNode:
+        '''
+        Grammar[Statement::Switch]
+        'switch' '(' expression ')' '{' group+ ( 'else' ':' statement )? ) '}';
+        '''
+        # -Internal Functions
+        def _parse_group() -> UnresolvedSwitchNode.Group:
+            '''case ( case )* statement;'''
+            # -Case: One
+            cases: list[UnresolvedSwitchNode.Case] = [_parse_case()]
+            # -Case: Multi
+            while self.matches(Token.Type.KeywordCase):
+                cases.append(_parse_case())
+            body = self._parse_statement()
+            return UnresolvedSwitchNode.Group(cases, body)
+
+        def _parse_case() -> UnresolvedSwitchNode.Case:
+            ''''case' expression ':';'''
+            token = self.requires(Token.Type.KeywordCase)
+            condition = self._parse_expression()
+            _ = self.requires(Token.Type.SymbolColon)
+            return UnresolvedSwitchNode.Case(token.location, condition)
+        # -Body
+        token = self.requires(Token.Type.KeywordSwitch)
+        _ = self.requires(Token.Type.SymbolLParen)
+        condition = self._parse_expression()
+        _ = self.requires(Token.Type.SymbolRParen)
+        _ = self.requires(Token.Type.SymbolLBrace)
+        default: UnresolvedNode | None = None
+        # -Group: One
+        groups: list[UnresolvedSwitchNode.Group] = [_parse_group()]
+        # -Group: Multi
+        while not self.consume(Token.Type.SymbolRBrace):
+            if not self.consume(Token.Type.KeywordElse):
+                groups.append(_parse_group())
+                continue
+            _ = self.consume(Token.Type.SymbolColon)
+            default = self._parse_statement()
+            _ = self.consume(Token.Type.SymbolRBrace)
+            break
+        return UnresolvedSwitchNode(token.location, condition, groups, default)
 
     def _parse_statement_loop_while(self) -> UnresolvedNode:
         '''

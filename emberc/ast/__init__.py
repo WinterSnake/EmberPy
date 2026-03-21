@@ -22,6 +22,7 @@ from .unresolved import (
     UnresolvedVariableNode,
     UnresolvedBlockNode,
     UnresolvedConditionalNode,
+    UnresolvedSwitchNode,
     UnresolvedWhileNode,
     UnresolvedDoNode,
     UnresolvedForNode,
@@ -60,6 +61,7 @@ __all__ = (
     # -Unresolved: Statements
     "UnresolvedBlockNode",
     "UnresolvedConditionalNode",
+    "UnresolvedSwitchNode",
     "UnresolvedWhileNode",
     "UnresolvedDoNode",
     "UnresolvedForNode",

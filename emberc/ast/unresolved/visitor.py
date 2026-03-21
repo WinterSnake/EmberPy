@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from .assignment import UnresolvedAssignmentNode
 from .binary import UnresolvedBinaryNode
 from .block import UnresolvedBlockNode
-from .conditional import UnresolvedConditionalNode
+from .conditional import UnresolvedConditionalNode, UnresolvedSwitchNode
 from .enum import UnresolvedEnumNode
 from .expression import UnresolvedExprNode, UnresolvedEmptyNode
 from .function import UnresolvedFunctionNode, UnresolvedReturnNode
@@ -68,6 +68,8 @@ class UnresolvedNodeVisitor[TReturn](ABC):
                 return self.visit_stmt_block(node)
             case UnresolvedConditionalNode():
                 return self.visit_stmt_conditional(node)
+            case UnresolvedSwitchNode():
+                return self.visit_stmt_switch(node)
             case UnresolvedWhileNode():
                 return self.visit_stmt_while(node)
             case UnresolvedDoNode():
@@ -122,6 +124,8 @@ class UnresolvedNodeVisitor[TReturn](ABC):
     def visit_stmt_block(self, node: UnresolvedBlockNode) -> TReturn: ...
     @abstractmethod
     def visit_stmt_conditional(self, node: UnresolvedConditionalNode) -> TReturn: ...
+    @abstractmethod
+    def visit_stmt_switch(self, node: UnresolvedSwitchNode) -> TReturn: ...
     @abstractmethod
     def visit_stmt_while(self, node: UnresolvedWhileNode) -> TReturn: ...
     @abstractmethod

@@ -37,6 +37,8 @@ KEYWORDS = {
     'struct': Token.Type.KeywordStruct,
     'union': Token.Type.KeywordUnion,
     'enum': Token.Type.KeywordEnum,
+    'switch': Token.Type.KeywordSwitch,
+    'case': Token.Type.KeywordCase,
     'if': Token.Type.KeywordIf,
     'else': Token.Type.KeywordElse,
     'while': Token.Type.KeywordWhile,

@@ -16,7 +16,7 @@ from .node import UnresolvedNode
 @dataclass
 class UnresolvedAssignmentNode(UnresolvedNode):
     """
-    Unresolved AST Node: Assign
+    Unresolved AST Node: Assignment
 
     A container for holding a left and right value operand
     and the appropriate assignment operator between the two values.

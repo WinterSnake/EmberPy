@@ -55,6 +55,8 @@ class Token:
         KeywordStruct = auto()
         KeywordUnion = auto()
         KeywordEnum = auto()
+        KeywordSwitch = auto()
+        KeywordCase = auto()
         KeywordIf = auto()
         KeywordElse = auto()
         KeywordWhile = auto()

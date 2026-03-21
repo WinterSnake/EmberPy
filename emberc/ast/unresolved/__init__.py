@@ -9,7 +9,7 @@
 from .assignment import UnresolvedAssignmentNode
 from .binary import UnresolvedBinaryNode
 from .block import UnresolvedBlockNode
-from .conditional import UnresolvedConditionalNode
+from .conditional import UnresolvedConditionalNode, UnresolvedSwitchNode
 from .enum import ENUM_ENTRY_TYPES, UnresolvedEnumNode
 from .expression import UnresolvedExprNode, UnresolvedEmptyNode
 from .function import UnresolvedFunctionNode, UnresolvedReturnNode
@@ -57,6 +57,7 @@ __all__ = (
     # -Statements
     "UnresolvedBlockNode",
     "UnresolvedConditionalNode",
+    "UnresolvedSwitchNode",
     "UnresolvedWhileNode",
     "UnresolvedDoNode",
     "UnresolvedForNode",
