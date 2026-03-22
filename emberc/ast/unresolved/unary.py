@@ -73,7 +73,7 @@ class UnresolvedAccessNode(UnresolvedNode):
     """
     # -Properties
     head: UnresolvedNode
-    member: str
+    name: str
     _id: int | None = field(init=False, default=None)
 
     @property

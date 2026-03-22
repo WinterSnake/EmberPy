@@ -6,9 +6,12 @@
 ##-------------------------------##
 
 ## Imports
-from .unresolved import UnresolvedNodePrinter
+from .unresolved.nodes import UnresolvedNodePrinter
+from .unresolved.types import UnresolvedTypePrinter
 
 ## Constants
 __all__ = (
+    # -Unresolved
     "UnresolvedNodePrinter",
+    "UnresolvedTypePrinter",
 )
