@@ -12,6 +12,7 @@ from .unresolved import (
     ENUM_ENTRY_TYPES,
     UnresolvedNode,
     UnresolvedNodeVisitor,
+    UnresolvedNullVisitorMixin,
     UnresolvedUnitNode,
     UnresolvedTypeNode,
     UnresolvedModifierNode,
