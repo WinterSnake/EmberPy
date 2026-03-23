@@ -42,6 +42,12 @@ from .unresolved import (
     UnresolvedIdentifierNode,
     UnresolvedEmptyNode,
 )
+from .resolved import (
+    ResolvedNode,
+    TypeNode,
+    FunctionTypeNode,
+    PrimitiveTypeNode,
+)
 
 ## Constants
 __all__ = (
@@ -51,6 +57,7 @@ __all__ = (
     "ENUM_ENTRY_TYPES",
     "UnresolvedNode",
     "UnresolvedNodeVisitor",
+    "UnresolvedNullVisitorMixin",
     "UnresolvedUnitNode",
     # -Unresolved: Types
     "UnresolvedTypeNode",
@@ -83,4 +90,10 @@ __all__ = (
     "UnresolvedLiteralNode",
     "UnresolvedIdentifierNode",
     "UnresolvedEmptyNode",
+    # -Resolved: Core
+    "ResolvedNode",
+    # -Resolved: Types
+    "TypeNode",
+    "FunctionTypeNode",
+    "PrimitiveTypeNode",
 )
