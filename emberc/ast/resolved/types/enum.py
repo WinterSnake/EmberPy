@@ -2,7 +2,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Type Node: Identifier         ##
+## Type Node: Enum               ##
 ##-------------------------------##
 
 ## Imports
@@ -15,7 +15,9 @@ from .core import TypeNode
 class EnumTypeNode(TypeNode):
     """
     Resolved Type Node: Enum
-
+ 
+    A reference to a user-defined enum; enum vs tagged enum are defined
+    within the symbol table and its member's symbols.
     """
     # -Properties
     underlying: TypeNode
