@@ -54,11 +54,6 @@ class UnresolvedEnumNode(UnresolvedNode):
     @dataclass
     class Entry:
         '''Meta-data for enum entries'''
-        # -Instance Methods
-        def value_as[T: ENUM_ENTRY_TYPES](self, _type: type[T]) -> T:
-            assert type(self.value) is _type, "TODO: Error handling"
-            return self.value
-
         # -Properties
         location: Location
         name: str
