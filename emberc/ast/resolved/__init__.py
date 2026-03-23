@@ -14,6 +14,7 @@ from .types.identifier import IdentifierTypeNode
 from .types.pointer import PointerTypeNode
 from .types.primitive import PrimitiveTypeNode
 from .types.slice import SliceTypeNode
+from .types.struct import StructTypeNode
 
 ## Constants
 __all__ = (
@@ -21,6 +22,7 @@ __all__ = (
     # -Types
     "TypeNode",
     "PendingTypeNode",
+    "StructTypeNode",
     "EnumTypeNode",
     "FunctionTypeNode",
     "SliceTypeNode",

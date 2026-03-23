@@ -12,7 +12,8 @@ from enum import IntEnum, auto
 from typing import TYPE_CHECKING
 from ..ast import (
     PendingTypeNode,
-    FunctionTypeNode
+    StructTypeNode,
+    FunctionTypeNode,
 )
 
 if TYPE_CHECKING:
@@ -36,6 +37,7 @@ class Symbol:
 
     # -Sub-Classes
     class Kind(IntEnum):
+        Struct = auto()
         Enum = auto()
         EnumMember = auto()
         TaggedEnum = auto()
@@ -101,6 +103,12 @@ class SymbolTable:
         return scope.get(name, None)
 
     # -Instance Methods: Helpers
+    def add_struct(self, name: str) -> int | None:
+        if (_id := self.add_symbol(name, Symbol.Kind.Struct, StructTypeNode())) is None:
+            return None
+        self._member_scopes[_id] = {}
+        return _id
+
     def add_enum(
         self, name: str, _type: TypeNode, is_tagged: bool
     ) -> int | None:

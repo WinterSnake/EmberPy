@@ -12,7 +12,7 @@ from ...ast import (
     # -Unresolved
     UnresolvedNodeVisitor,
     UnresolvedNullVisitorMixin,
-    UnresolvedEnumNode,
+    UnresolvedStructNode,
     # -Resolved
     TypeNode,
     PendingTypeNode,
@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from ..symbol_table import SymbolTable
     from ...ast import (
         UnresolvedUnitNode,
+        UnresolvedEnumNode,
     )
 
 
@@ -47,6 +48,10 @@ class TypeBindingWalker(
     def visit_unit(self, node: UnresolvedUnitNode) -> None:
         for _node in node.nodes:
             self.visit(_node)
+
+    def visit_decl_struct(self, node: UnresolvedStructNode) -> None:
+        node._id = self._symbol_table.add_struct(node.name)
+        assert node._id is not None, "TODO: Error handling"
 
     def visit_decl_enum(self, node: UnresolvedEnumNode) -> None:
         # -Node
