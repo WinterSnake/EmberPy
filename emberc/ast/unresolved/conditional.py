@@ -90,5 +90,5 @@ class UnresolvedSwitchNode(UnresolvedNode):
     class Group:
         '''Meta-data for switch case groups (a collection of cases)'''
         # -Properties
-        cases: list[UnresolvedSwitchNode.Case]
+        cases: MutableCollection[UnresolvedSwitchNode.Case]
         body: UnresolvedNode

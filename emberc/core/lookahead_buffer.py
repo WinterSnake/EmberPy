@@ -8,17 +8,17 @@
 ## Imports
 from abc import ABC, abstractmethod
 from collections import deque
-from collections.abc import Callable, Iterator
-from typing import TypeVar, cast
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
 
 ## Constants
-TItem = TypeVar('TItem')
-TMatch = TypeVar('TMatch')
 type TSelector[TItem, TMatch] = Callable[[TItem], TMatch] | None
 
 
 ## Functions
-def _get_match_from_item(item: TItem, selector: TSelector[TItem, TMatch]) -> TMatch:
+def _get_match_from_item[TItem, TMatch](item: TItem, selector: TSelector[TItem, TMatch]) -> TMatch:
     """
     Returns TMatch either by casting TItem to TMatch
     or by calling the selector to get TMatch from TItem

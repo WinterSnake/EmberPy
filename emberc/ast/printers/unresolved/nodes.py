@@ -181,7 +181,7 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
         # -Body
         output = f"{self.get_indent()}Enum Decl[Name={node.name}, Type="
         output += self.visit(node.type) if node.has_type else "None"
-        output += f", Union={node.is_union}]"
+        output += f", Tagged={node.is_tagged}]"
         self._indent += 1
         entries: list[str] = []
         for entry in node.entries:

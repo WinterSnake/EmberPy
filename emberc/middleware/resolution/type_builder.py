@@ -15,14 +15,18 @@ from ...ast import (
     UnresolvedUnaryPrefixNode,
     # -Resolved
     TypeNode,
-    PrimitiveTypeNode,
-    PointerTypeNode,
     SliceTypeNode,
+    PointerTypeNode,
+    PrimitiveTypeNode,
+    IdentifierTypeNode,
 )
 
 if TYPE_CHECKING:
     from ..symbol_table import SymbolTable
-    from ...ast import UnresolvedNode
+    from ...ast import (
+        UnresolvedNode,
+        UnresolvedIdentifierNode,
+    )
 
 
 ## Classes
@@ -81,8 +85,7 @@ class TypeBuilderFactory(
         self, node: UnresolvedUnaryPrefixNode
     ) -> TypeNode | None:
         target = self.visit(node.operand)
-        if target is None:
-            return target
+        assert target is not None, "TODO: Error handling"
         match node.operator:
             case UnresolvedUnaryPrefixNode.Operator.Pointer:
                 return PointerTypeNode(target)
@@ -90,5 +93,9 @@ class TypeBuilderFactory(
                 return SliceTypeNode(target, False)
             case UnresolvedUnaryPrefixNode.Operator.SlicePointer:
                 return SliceTypeNode(target, True)
-            case _:
-                return None
+        assert False, "TODO: Error handling"
+
+    def visit_expr_identifier(self, node: UnresolvedIdentifierNode) -> TypeNode:
+        type_id = self._symbol_table.find_id(node.name)
+        assert type_id is not None, "TODO: Error handling"
+        return IdentifierTypeNode.from_id(type_id)

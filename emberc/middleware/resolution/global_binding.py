@@ -30,7 +30,7 @@ class GlobalBindingWalker(
     """
     Global Binder
 
-    Discovers and registers global-scope symbols. This includes: unit level functions,
+    Discovers and registers global-scope symbols. This includes: unit level functions
     and unit level variables. It utilizes a type builder to resolve surface level types.
     """
 

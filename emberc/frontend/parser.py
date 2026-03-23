@@ -7,7 +7,6 @@
 
 ## Imports
 from __future__ import annotations
-from pathlib import Path
 from typing import TYPE_CHECKING
 from .token import Token
 from ..core import Location, LookaheadBuffer
@@ -44,6 +43,7 @@ from ..ast import (
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from pathlib import Path
     from typing import Self
     from .lexer import Lexer
     from ..ast import (

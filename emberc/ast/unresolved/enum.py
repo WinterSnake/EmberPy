@@ -28,7 +28,7 @@ class UnresolvedEnumNode(UnresolvedNode):
     # -Properties
     name: str
     _id: int | None = field(init=False, default=None)
-    is_union: bool
+    is_tagged: bool
     _type: UnresolvedNode | None
     entries: MutableCollection[UnresolvedEnumNode.Entry]
 
