@@ -2,7 +2,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Resolution Pass: Type Bind    ##
+## Resolution: Type Binding      ##
 ##-------------------------------##
 
 ## Imports

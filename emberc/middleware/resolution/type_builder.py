@@ -2,7 +2,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Resolution: Type Factory      ##
+## Resolution: Type Builder      ##
 ##-------------------------------##
 
 ## Imports
