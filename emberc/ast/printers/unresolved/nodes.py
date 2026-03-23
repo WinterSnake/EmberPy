@@ -430,6 +430,8 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
                 return f"{head}({arguments})"
             case UnresolvedUnaryPostfixNode.Kind.Subscript:
                 return f"{head}[{arguments}]"
+            case UnresolvedUnaryPostfixNode.Kind.Object:
+                return f"{head}{{{arguments}}}"
 
     def visit_expr_access(self, node: UnresolvedAccessNode) -> str:
         return f"({self.visit(node.head)}.{node.name})"

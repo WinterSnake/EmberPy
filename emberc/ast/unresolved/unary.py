@@ -62,6 +62,7 @@ class UnresolvedUnaryPostfixNode(UnresolvedNode):
     class Kind(IntEnum):
         Call = auto()
         Subscript = auto()
+        Object = auto()
 
 
 @dataclass

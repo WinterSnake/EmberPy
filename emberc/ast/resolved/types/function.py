@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 ## Classes
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class FunctionTypeNode(TypeNode):
     """
     Resolved Type Node: Function
