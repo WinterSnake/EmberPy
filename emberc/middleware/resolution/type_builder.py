@@ -16,6 +16,8 @@ from ...ast import (
     # -Resolved
     TypeNode,
     PrimitiveTypeNode,
+    PointerTypeNode,
+    SliceTypeNode,
 )
 
 if TYPE_CHECKING:
@@ -29,7 +31,7 @@ class TypeBuilderFactory(
     UnresolvedNodeVisitor[TypeNode | None]
 ):
     """
-    Type Builder 
+    Type Builder
 
     A specialized visitor that transforms an UnresolvedNode into
     a resolved (but possibly pending) TypeNode.
@@ -74,3 +76,19 @@ class TypeBuilderFactory(
                 return PrimitiveTypeNode.usize
             case UnresolvedTypeNode.Kind.Function:
                 return PrimitiveTypeNode.function
+
+    def visit_expr_unary_prefix(
+        self, node: UnresolvedUnaryPrefixNode
+    ) -> TypeNode | None:
+        target = self.visit(node.operand)
+        if target is None:
+            return target
+        match node.operator:
+            case UnresolvedUnaryPrefixNode.Operator.Pointer:
+                return PointerTypeNode(target)
+            case UnresolvedUnaryPrefixNode.Operator.Slice:
+                return SliceTypeNode(target, False)
+            case UnresolvedUnaryPrefixNode.Operator.SlicePointer:
+                return SliceTypeNode(target, True)
+            case _:
+                return None

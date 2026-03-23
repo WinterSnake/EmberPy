@@ -47,6 +47,8 @@ from .resolved import (
     TypeNode,
     FunctionTypeNode,
     PrimitiveTypeNode,
+    PointerTypeNode,
+    SliceTypeNode,
 )
 
 ## Constants
@@ -96,4 +98,6 @@ __all__ = (
     "TypeNode",
     "FunctionTypeNode",
     "PrimitiveTypeNode",
+    "PointerTypeNode",
+    "SliceTypeNode",
 )
