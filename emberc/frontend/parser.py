@@ -44,6 +44,7 @@ from ..ast import (
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from typing import Self
     from .lexer import Lexer
     from ..ast import (
         AST_LITERAL_TYPES,
@@ -902,7 +903,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
 
     # -Class Methods
     @classmethod
-    def from_lexer(cls, lexer: Lexer) -> Parser:
+    def from_lexer(cls, lexer: Lexer) -> Self:
         '''Create a Parser instance from a given Lexer stream'''
         parser = cls(lexer.lex())
         parser.file = lexer.file

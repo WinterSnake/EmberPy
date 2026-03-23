@@ -14,6 +14,7 @@ from ..core import Location, LookaheadBuffer
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from pathlib import Path
+    from typing import Self
 
 ## Constants
 HEX_CHARACTERS = ('a', 'b', 'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F')
@@ -352,7 +353,7 @@ class Lexer(LookaheadBuffer[str, str]):
 
     # -Class Methods
     @classmethod
-    def from_file(cls, file: Path, chunk_size: int = 4096) -> Lexer:
+    def from_file(cls, file: Path, chunk_size: int = 4096) -> Self:
         '''Create a Lexer instance from a given source file'''
         # -Internal Functions
         def _generate_chars() -> Iterator[str]:
@@ -363,7 +364,7 @@ class Lexer(LookaheadBuffer[str, str]):
         return cls(_generate_chars(), file)
 
     @classmethod
-    def from_str(cls, source: str) -> Lexer:
+    def from_str(cls, source: str) -> Self:
         '''Create a Lexer instance from a given source string'''
         return cls(iter(source))
 
