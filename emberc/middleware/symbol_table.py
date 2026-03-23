@@ -18,6 +18,7 @@ from ..ast import (
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from typing import Self
     from ..ast import TypeNode
     from ..core import MutableCollection
 
@@ -58,22 +59,43 @@ class SymbolTable:
     """
 
     # -Constructor
-    def __init__(self) -> None:
+    def __init__(self, parent : Self | None = None) -> None:
         self._symbols: list[Symbol] = []
         self._scopes: list[SCOPE] = [{}]
         self._member_scopes: dict[int, SCOPE] = {}
+        self._parent: Self | None = parent
 
-    # -Instance Methods
+    # -Instance Methods: Scope
+    def pop(self) -> SCOPE:
+        '''Pops and returns scope from list of scopes'''
+        if len(self._scopes) > 1:
+            return self._scopes.pop()
+        raise RuntimeError("Tried popping root scope")
+
+    def push(self) -> None:
+        '''Push a new stack onto the list of scopes'''
+        self._scopes.append({})
+
+    # -Instance Methods: Symbol
+    def _create_symbol(
+        self, name: str, _type: TypeNode, kind: Symbol.Kind
+    ) -> int:
+        '''Recursively calls to parent symbol table to create a new symbol'''
+        if self._parent:
+            return self._parent._create_symbol(name, _type, kind)
+        idx = len(self._symbols)
+        self._symbols.append(Symbol(idx, name, _type, kind))
+        return idx
+
     def add_symbol(
         self, name: str, kind: Symbol.Kind, _type: TypeNode
     ) -> int | None:
         '''Adds a symbol to the current scope and returns index into flat table'''
         if name in self.current_scope:
             return None
-        idx = len(self._symbols)
-        self.current_scope[name] = idx
-        self._symbols.append(Symbol(idx, name, _type, kind))
-        return idx
+        _id = self._create_symbol(name, _type, kind)
+        self.current_scope[name] = _id
+        return _id
 
     def add_member_symbol(
         self, parent: int, name: str, kind: Symbol.Kind, _type: TypeNode
@@ -83,16 +105,17 @@ class SymbolTable:
             return None
         if name in scope:
             return None
-        idx = len(self._symbols)
-        scope[name] = idx
-        self._symbols.append(Symbol(idx, name, _type, kind))
-        return idx
+        _id = self._create_symbol(name, _type, kind)
+        scope[name] = _id
+        return _id
 
     def find_id(self, name: str) -> int | None:
         '''Finds the given name by bubbling up through scopes'''
         for scope in reversed(self._scopes):
             if name in scope:
                 return scope[name]
+        if self._parent:
+            return self._parent.find_id(name)
         return None
 
     def find_local_id(self, name: str) -> int | None:
@@ -101,9 +124,17 @@ class SymbolTable:
 
     def find_member_id(self, parent: int, name: str) -> int | None:
         '''Find the given name within a parent's scope'''
-        if (scope := self._member_scopes.get(parent, None)) is None:
-            return None
-        return scope.get(name, None)
+        if (scope := self._member_scopes.get(parent, None)) is not None:
+            return scope.get(name, None)
+        elif self._parent:
+            return self._parent.find_member_id(parent, name)
+        return None
+
+    def get_by_id(self, _id: int) -> Symbol:
+        '''Returns symbol with given id'''
+        if self._parent:
+            return self._parent.get_by_id(_id)
+        return self._symbols[_id]
 
     # -Instance Methods: Helpers
     def add_struct(self, name: str) -> int | None:
@@ -168,6 +199,10 @@ class SymbolTable:
     @property
     def current_scope(self) -> dict[str, int]:
         return self._scopes[-1]
+
+    @property
+    def scope_depth(self) -> int:
+        return len(self._scopes) - 1
 
     @property
     def symbols(self) -> Sequence[Symbol]:

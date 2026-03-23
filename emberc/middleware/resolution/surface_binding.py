@@ -2,7 +2,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Resolution Pass: Global Bind  ##
+## Resolution Pass: Surface Bind ##
 ##-------------------------------##
 
 ## Imports
