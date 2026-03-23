@@ -45,10 +45,12 @@ from .unresolved import (
 from .resolved import (
     ResolvedNode,
     TypeNode,
+    PendingTypeNode,
     FunctionTypeNode,
-    PrimitiveTypeNode,
-    PointerTypeNode,
     SliceTypeNode,
+    PointerTypeNode,
+    PrimitiveTypeNode,
+    IdentifierTypeNode,
 )
 
 ## Constants
@@ -96,8 +98,10 @@ __all__ = (
     "ResolvedNode",
     # -Resolved: Types
     "TypeNode",
+    "PendingTypeNode",
     "FunctionTypeNode",
-    "PrimitiveTypeNode",
-    "PointerTypeNode",
     "SliceTypeNode",
+    "PointerTypeNode",
+    "PrimitiveTypeNode",
+    "IdentifierTypeNode",
 )

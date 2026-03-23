@@ -7,21 +7,22 @@
 
 ## Imports
 from .node import ResolvedNode
-from .types import (
-    TypeNode,
-    FunctionTypeNode,
-    PrimitiveTypeNode,
-    PointerTypeNode,
-    SliceTypeNode,
-)
+from .types.core import TypeNode, PendingTypeNode
+from .types.function import FunctionTypeNode
+from .types.identifier import IdentifierTypeNode
+from .types.pointer import PointerTypeNode
+from .types.primitive import PrimitiveTypeNode
+from .types.slice import SliceTypeNode
 
 ## Constants
 __all__ = (
     "ResolvedNode",
     # -Types
     "TypeNode",
+    "PendingTypeNode",
     "FunctionTypeNode",
-    "PrimitiveTypeNode",
-    "PointerTypeNode",
     "SliceTypeNode",
+    "PointerTypeNode",
+    "PrimitiveTypeNode",
+    "IdentifierTypeNode",
 )

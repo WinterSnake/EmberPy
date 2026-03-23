@@ -7,8 +7,11 @@
 
 ## Imports
 from dataclasses import dataclass
-from typing import ClassVar, Self
+from typing import TYPE_CHECKING, ClassVar
 from .core import TypeNode
+
+if TYPE_CHECKING:
+    from typing import Self
 
 
 ## Classes
