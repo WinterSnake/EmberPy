@@ -8,6 +8,7 @@
 ## Imports
 from typing import TYPE_CHECKING
 from ...unresolved import (
+    UnresolvedNodeVisitor,
     UnresolvedNullVisitorMixin,
     UnresolvedTypeNode,
     UnresolvedModifierNode,
@@ -30,7 +31,10 @@ if TYPE_CHECKING:
 
 
 ## Classes
-class UnresolvedTypePrinter(UnresolvedNullVisitorMixin[str]):
+class UnresolvedTypePrinter(
+    UnresolvedNullVisitorMixin[str],
+    UnresolvedNodeVisitor[str | None]
+):
     """
     A diagnostic visitor that transforms an Unresolved Type Node into a human-readable string.
     """

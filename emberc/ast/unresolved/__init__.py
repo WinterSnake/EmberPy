@@ -87,7 +87,7 @@ __all__ = (
 
 
 ## Classes
-class UnresolvedNullVisitorMixin[T](UnresolvedNodeVisitor[T | None]):
+class UnresolvedNullVisitorMixin[T]:
     # -Instance Methods: Visitor
     def visit_unit(self, node: UnresolvedUnitNode) -> T | None:
         return None

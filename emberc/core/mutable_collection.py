@@ -12,7 +12,7 @@ from typing import Protocol
 
 ## Classes
 class MutableCollection[T](Collection[T], Protocol):
-    """A mutable fixed-sized collection"""
+    """A mutable fixed-sized ordered collection"""
 
     # -Dunder Methods
     def __getitem__(self, index: int) -> T: ...
