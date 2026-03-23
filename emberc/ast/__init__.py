@@ -46,6 +46,7 @@ from .resolved import (
     ResolvedNode,
     TypeNode,
     PendingTypeNode,
+    EnumTypeNode,
     FunctionTypeNode,
     SliceTypeNode,
     PointerTypeNode,
@@ -99,6 +100,7 @@ __all__ = (
     # -Resolved: Types
     "TypeNode",
     "PendingTypeNode",
+    "EnumTypeNode",
     "FunctionTypeNode",
     "SliceTypeNode",
     "PointerTypeNode",

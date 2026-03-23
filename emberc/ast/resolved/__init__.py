@@ -8,6 +8,7 @@
 ## Imports
 from .node import ResolvedNode
 from .types.core import TypeNode, PendingTypeNode
+from .types.enum import EnumTypeNode
 from .types.function import FunctionTypeNode
 from .types.identifier import IdentifierTypeNode
 from .types.pointer import PointerTypeNode
@@ -20,6 +21,7 @@ __all__ = (
     # -Types
     "TypeNode",
     "PendingTypeNode",
+    "EnumTypeNode",
     "FunctionTypeNode",
     "SliceTypeNode",
     "PointerTypeNode",

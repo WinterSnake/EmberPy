@@ -26,6 +26,16 @@ class PendingTypeNode(TypeNode):
     Resolved Type Node: Pending
 
     Represents a type whose concrete identity or memory constraints
-    are currently unknown.
+    are currently unknown. Can also be used as an inferred parent linked type.
     """
-    pass
+    # -Properties
+    _parent_id: int | None = None
+
+    @property
+    def has_parent_id(self) -> bool:
+        return self._parent_id is not None
+
+    @property
+    def parent_id(self) -> int:
+        assert self._parent_id is not None
+        return self._parent_id
