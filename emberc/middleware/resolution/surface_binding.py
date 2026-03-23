@@ -13,12 +13,14 @@ from ...ast import (
     # -Unresolved
     UnresolvedNodeVisitor,
     UnresolvedNullVisitorMixin,
+    UnresolvedStructNode,
     UnresolvedEnumNode,
 )
 
 if TYPE_CHECKING:
     from ..symbol_table import SymbolTable
     from ...ast import (
+        STRUCT_MEMBER_TYPES,
         UnresolvedUnitNode,
         UnresolvedFunctionNode,
         UnresolvedVariableNode,
@@ -47,6 +49,35 @@ class SurfaceBindingWalker(
     def visit_unit(self, node: UnresolvedUnitNode) -> None:
         for _node in node.nodes:
             self.visit(_node)
+
+    def visit_decl_struct(self, node: UnresolvedStructNode) -> None:
+        # -Internal Functions
+        def _visit_member(parent: int, member: STRUCT_MEMBER_TYPES) -> None:
+            match member:
+                case UnresolvedStructNode.Field():
+                    _visit_field(parent, member)
+                case UnresolvedStructNode():
+                    _visit_struct(parent, member)
+
+        def _visit_field(
+            parent: int, field: UnresolvedStructNode.Field
+        ) -> None:
+            _type = self._type_builder.run(field.type)
+            field._id = self._symbol_table.add_struct_field(
+                parent, field.name, _type
+            )
+            assert field.has_id, "TODO: Error handling"
+
+        def _visit_struct(parent: int, struct: UnresolvedStructNode) -> None:
+            struct._id = self._symbol_table.add_struct_nested(
+                parent, struct.name, struct.is_union
+            )
+            assert struct.has_id, "TODO: Error handling"
+            for member in struct.members:
+                _visit_member(struct.id, member)
+        # -Body
+        for member in node.members:
+            _visit_member(node.id, member)
 
     def visit_decl_enum(self, node: UnresolvedEnumNode) -> None:
         if not node.is_tagged:

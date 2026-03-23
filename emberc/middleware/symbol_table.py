@@ -38,6 +38,8 @@ class Symbol:
     # -Sub-Classes
     class Kind(IntEnum):
         Struct = auto()
+        Union = auto()
+        Field = auto()
         Enum = auto()
         EnumMember = auto()
         TaggedEnum = auto()
@@ -105,29 +107,41 @@ class SymbolTable:
 
     # -Instance Methods: Helpers
     def add_struct(self, name: str) -> int | None:
-        if (_id := self.add_symbol(name, Symbol.Kind.Struct, StructTypeNode())) is None:
-            return None
-        self._member_scopes[_id] = {}
+        _id = self.add_symbol(name, Symbol.Kind.Struct, StructTypeNode())
+        if _id is not None:
+            self._member_scopes[_id] = {}
+        return _id
+
+    def add_struct_field(
+        self, parent: int, name: str, _type: TypeNode
+    ) -> int | None:
+        return self.add_member_symbol(parent, name, Symbol.Kind.Field, _type)
+
+    def add_struct_nested(
+        self, parent: int, name: str, is_union: bool
+    ) -> int | None:
+        kind = Symbol.Kind.Union if is_union else Symbol.Kind.Struct
+        _id = self.add_member_symbol(parent, name, kind, StructTypeNode())
+        if _id is not None:
+            self._member_scopes[_id] = {}
         return _id
 
     def add_enum(
         self, name: str, _type: TypeNode, is_tagged: bool
     ) -> int | None:
         kind = Symbol.Kind.TaggedEnum if is_tagged else Symbol.Kind.Enum
-        if (_id := self.add_symbol(name, kind, _type)) is None:
-            return None
-        self._member_scopes[_id] = {}
+        if (_id := self.add_symbol(name, kind, _type)) is not None:
+            self._member_scopes[_id] = {}
         return _id
 
     def add_enum_member(
         self, parent: int, name: str, is_tagged: bool
     ) -> int | None:
         kind = Symbol.Kind.EnumVariant if is_tagged else Symbol.Kind.EnumMember
-        if (_id := self.add_member_symbol(
+        _id = self.add_member_symbol(
             parent, name, kind, PendingTypeNode(parent)
-        )) is None:
-            return None
-        if is_tagged:
+        )
+        if _id is not None and is_tagged:
             self._member_scopes[_id] = {}
         return _id
 
