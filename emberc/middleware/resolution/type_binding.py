@@ -33,7 +33,7 @@ class TypeBindingWalker(
     UnresolvedNodeVisitor[None]
 ):
     """
-    Type Binder
+    Type Binder [Pass 1]
 
     Discovers and registers typed symbols. This includes: struct and enum declarations.
     It utilizes a type builder to resolve surface level types.
@@ -51,7 +51,7 @@ class TypeBindingWalker(
 
     def visit_decl_struct(self, node: UnresolvedStructNode) -> None:
         node._id = self._symbol_table.add_struct(node.name)
-        assert node._id is not None, "TODO: Error handling"
+        assert node.has_id, "TODO: Error handling"
 
     def visit_decl_enum(self, node: UnresolvedEnumNode) -> None:
         # -Node
@@ -62,10 +62,10 @@ class TypeBindingWalker(
         node._id = self._symbol_table.add_enum(
             node.name, _type, node.is_tagged
         )
-        assert node._id is not None, "TODO: Error handling"
+        assert node.has_id, "TODO: Error handling"
         # -Entries
         for entry in node.entries:
             entry._id = self._symbol_table.add_enum_member(
                 node.id, entry.name, node.is_tagged
             )
-            assert entry._id is not None, "TODO: Error handling"
+            assert entry.has_id, "TODO: Error handling"

@@ -42,6 +42,7 @@ class Symbol:
         EnumMember = auto()
         TaggedEnum = auto()
         EnumVariant = auto()
+        EnumTag = auto()
         Function = auto()
         Parameter = auto()
         Variable = auto()
@@ -122,8 +123,19 @@ class SymbolTable:
         self, parent: int, name: str, is_tagged: bool
     ) -> int | None:
         kind = Symbol.Kind.EnumVariant if is_tagged else Symbol.Kind.EnumMember
-        return self.add_member_symbol(
+        if (_id := self.add_member_symbol(
             parent, name, kind, PendingTypeNode(parent)
+        )) is None:
+            return None
+        if is_tagged:
+            self._member_scopes[_id] = {}
+        return _id
+
+    def add_enum_variant(
+        self, parent: int, name: str, _type: TypeNode
+    ) -> int | None:
+        return self.add_member_symbol(
+            parent, name, Symbol.Kind.EnumTag, _type
         )
 
     def add_function(

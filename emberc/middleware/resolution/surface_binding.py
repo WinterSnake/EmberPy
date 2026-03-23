@@ -6,11 +6,14 @@
 ##-------------------------------##
 
 ## Imports
-from typing import TYPE_CHECKING
+from collections.abc import Collection
+from typing import TYPE_CHECKING, cast
 from .type_builder import TypeBuilderFactory
 from ...ast import (
+    # -Unresolved
     UnresolvedNodeVisitor,
     UnresolvedNullVisitorMixin,
+    UnresolvedEnumNode,
 )
 
 if TYPE_CHECKING:
@@ -23,15 +26,16 @@ if TYPE_CHECKING:
 
 
 ## Classes
-class GlobalBindingWalker(
+class SurfaceBindingWalker(
     UnresolvedNullVisitorMixin[None],
     UnresolvedNodeVisitor[None]
 ):
     """
-    Global Binder
+    Surface Binder [Pass 2]
 
-    Discovers and registers global-scope symbols. This includes: unit level functions
-    and unit level variables. It utilizes a type builder to resolve surface level types.
+    Maps the 'public' interface of all discovered types and global entities.
+    Registers function signatures, global variables, struct fields, and 
+    tagged enum variants into the symbol table.
     """
 
     # -Constructor
@@ -44,6 +48,21 @@ class GlobalBindingWalker(
         for _node in node.nodes:
             self.visit(_node)
 
+    def visit_decl_enum(self, node: UnresolvedEnumNode) -> None:
+        if not node.is_tagged:
+            return
+        # -Entries
+        for entry in node.entries:
+            if not entry.has_value:
+                continue
+            # -Tags
+            for tag in cast(Collection[UnresolvedEnumNode.Tag], entry.value):
+                _type = self._type_builder.run(tag.type)
+                tag._id = self._symbol_table.add_enum_variant(
+                    entry.id, tag.name, _type
+                )
+                assert tag.has_id, "TODO: Error handling"
+
     def visit_decl_function(self, node: UnresolvedFunctionNode) -> None:
         return_type = self._type_builder.run(node.return_type)
         parameter_types = [
@@ -53,10 +72,10 @@ class GlobalBindingWalker(
         node._id = self._symbol_table.add_function(
             node.name, return_type, parameter_types
         )
-        assert node._id is not None, "TODO: Error handling"
+        assert node.has_id, "TODO: Error handling"
 
     def visit_decl_variable(self, node: UnresolvedVariableNode) -> None:
         _type = self._type_builder.run(node.type)
         for entry in node.entries:
             entry._id = self._symbol_table.add_variable(entry.name, _type)
-            assert entry._id is not None
+            assert entry.has_id, "TODO: Error handling"
