@@ -865,6 +865,8 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     # -Instance Methods: Helpers
     def _is_object_literal(self) -> bool:
         '''Returns whether the next token describes an object literal denoted by `.`'''
+        if self.current.type is not Token.Type.SymbolLBrace:
+            return False
         if (next := self.peek(1)):
             return next.type is Token.Type.SymbolDot
         return False
@@ -879,6 +881,8 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
 
     def _try_parse_slice(self) -> UnresolvedNode | None:
         '''Tries parsing a slice unary prefix or returns None'''
+        if self.current.type is not Token.Type.SymbolLBracket:
+            return None
         next = self.peek(1)
         if next is None:
             return None
