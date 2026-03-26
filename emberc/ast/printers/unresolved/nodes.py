@@ -133,7 +133,7 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
             return output
 
         def _visit_struct(struct: UnresolvedStructNode) -> str:
-            output = "union" if struct.is_union else "struct"
+            output = '(' + ("union" if struct.is_union else "struct") + ')'
             output += f" {struct.name}"
             self._indent += 1
             members = _visit_members(struct.members)
@@ -163,8 +163,8 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
                     _parameter += f" = {self.visit(parameter.initializer)}"
                 output.append(_parameter)
         # -Body
-        output.append(self._get_corrected_block(node.body))
         self._indent -= 1
+        output.append(self._get_corrected_block(node.body))
         return '\n'.join(output)
 
     def visit_decl_enum(self, node: UnresolvedEnumNode) -> str:

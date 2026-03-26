@@ -184,7 +184,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
     def _parse_declaration(self) -> UnresolvedNode:
         '''
         Grammar[Declaration]
-        declaration_function | declaration_variable;
+        declaration_struct | declaration_enum | declaration_function | declaration_variable;
         '''
         if self.matches(Token.Type.KeywordStruct):
             return self._parse_declaration_struct()
@@ -386,7 +386,7 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         statement_return | statement_defer | statement_expression;
         '''
         if self.matches(Token.Type.SymbolLBrace):
-            if (next := self.peek(1)) and next.type == Token.Type.SymbolDot:
+            if self._is_object_literal():
                 return self._parse_statement_expression()
             return self._parse_statement_block()
         elif self.matches(Token.Type.KeywordIf):
@@ -686,6 +686,8 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
                 case Token.Type.SymbolLParen:
                     head = self._parse_expression_call(head)
                 case Token.Type.SymbolLBrace:
+                    if not self._is_object_literal():
+                        return head
                     head = UnresolvedUnaryPostfixNode(
                         self.current.location, head,
                         UnresolvedUnaryPostfixNode.Kind.Object,
@@ -861,6 +863,12 @@ class Parser(LookaheadBuffer[Token, Token.Type]):
         return UnresolvedLiteralNode(token.location, kind, value)
 
     # -Instance Methods: Helpers
+    def _is_object_literal(self) -> bool:
+        '''Returns whether the next token describes an object literal denoted by `.`'''
+        if (next := self.peek(1)):
+            return next.type is Token.Type.SymbolDot
+        return False
+
     def _try_parse_type(self) -> tuple[bool, UnresolvedNode]:
         '''Tries parsing a type unary prefix and returns if variable declaration'''
         is_decl = self.matches(*UNARY_PREFIX_MODIFIERS.keys())
