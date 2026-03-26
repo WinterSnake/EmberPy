@@ -66,6 +66,7 @@ KEYWORDS = {
     'usize': Token.Type.KeywordUSize,
     # -Type: Modifier
     'const': Token.Type.KeywordConst,
+    'immut': Token.Type.KeywordImmut,
 }
 
 

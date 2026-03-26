@@ -7,7 +7,7 @@
 
 ## Imports
 from collections.abc import Collection
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, assert_never, cast
 from ...unresolved import (
     UnresolvedNode,
     UnresolvedNodeVisitor,
@@ -110,6 +110,10 @@ class UnresolvedNodePrinter(UnresolvedNodeVisitor[str]):
         match node.kind:
             case UnresolvedModifierNode.Kind.Const:
                 modifier = "const"
+            case UnresolvedModifierNode.Kind.Immut:
+                modifier = "immut"
+            case _:
+                assert_never(node.kind)
         return f"({modifier} {self.visit(node.target)})"
 
     def visit_decl_struct(self, node: UnresolvedStructNode) -> str:

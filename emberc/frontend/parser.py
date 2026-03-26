@@ -83,6 +83,7 @@ UNARY_PREFIX_OPERATORS = {
 }
 UNARY_PREFIX_MODIFIERS = {
     Token.Type.KeywordConst: UnresolvedModifierNode.Kind.Const,
+    Token.Type.KeywordImmut: UnresolvedModifierNode.Kind.Immut,
 }
 UNARY_POSTFIX_OPERATORS = (
     Token.Type.SymbolDot,

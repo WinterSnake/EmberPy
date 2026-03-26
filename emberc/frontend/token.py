@@ -83,6 +83,7 @@ class Token:
         KeywordUSize = auto()
         # -Keyword: Type Modifier
         KeywordConst = auto()
+        KeywordImmut = auto()
         # -Symbol: Math
         SymbolEq = auto()
         SymbolBang = auto()

@@ -54,3 +54,4 @@ class UnresolvedModifierNode(UnresolvedNode):
     # -Sub-Classes
     class Kind(IntEnum):
         Const = auto()
+        Immut = auto()

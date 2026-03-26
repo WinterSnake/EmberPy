@@ -79,6 +79,8 @@ class UnresolvedTypePrinter(
         match node.kind:
             case UnresolvedModifierNode.Kind.Const:
                 return f"const {target}"
+            case UnresolvedModifierNode.Kind.Immut:
+                return f"immut {target}"
 
     def visit_expr_group(self, node: UnresolvedGroupNode) -> str:
         inner = self.visit(node.inner)
