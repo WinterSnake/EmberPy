@@ -6,9 +6,13 @@
 ##-------------------------------##
 
 ## Imports
-from .location import Location
 from .lookahead_buffer import LookaheadBuffer
-from .mutable_collection import MutableCollection
+from .span import Span
 
 ## Constants
-__all__ = ("Location", "LookaheadBuffer", "MutableCollection")
+type LITERAL_VALUE_TYPE = bool | int | str
+__all__ = (
+    "LITERAL_VALUE_TYPE",
+    "LookaheadBuffer",
+    "Span",
+)
