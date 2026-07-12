@@ -2,113 +2,42 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Unresolved Node: Literal      ##
+## Unresolved AST: Literal       ##
 ##-------------------------------##
 
 ## Imports
-from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import IntEnum, auto
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 from .node import UnresolvedNode
 
 if TYPE_CHECKING:
-    from ...core import Location, MutableCollection
-
-## Constants
-type AST_LITERAL_TYPES = bool | int | str
+    from . import UnresolvedNodeVisitor
+    from ...core import LITERAL_VALUE_TYPE, Span
 
 
 ## Classes
-@dataclass
-class UnresolvedObjectNode(UnresolvedNode):
-    """
-    Unresolved AST Node: Object
-
-    A leaf container for holding an object initialization collection.
-    """
-    # -Properties
-    fields: MutableCollection[UnresolvedObjectNode.Field]
-
-    # -Sub-Classes
-    @dataclass
-    class Field:
-        '''Meta-data for object fields'''
-        location: Location
-        name: str
-        _id: int | None = field(init=False, default=None)
-        value: UnresolvedNode
-
-        @property
-        def has_id(self) -> bool:
-            return self._id is not None
-
-        @property
-        def id(self) -> int:
-            assert self._id is not None
-            return self._id
-
-
-@dataclass
-class UnresolvedArrayNode(UnresolvedNode):
-    """
-    Unresolved AST Node: Array
-
-    A leaf container for holding a collection of values.
-    """
-    # -Dunder Methods
-    def __len__(self) -> int:
-        return len(self.values)
-
-    def __getitem__(self, i: int) -> UnresolvedNode:
-        return self.values[i]
-
-    def __setitem__(self, i: int, value:  UnresolvedNode) -> None:
-        self.values[i] = value
-
-    # -Properties
-    values: MutableCollection[UnresolvedNode]
-
-
-@dataclass
+@dataclass(slots=True)
 class UnresolvedLiteralNode(UnresolvedNode):
     """
-    Unresolved AST Node: Literal
-
-    A leaf container for holding a primitive constant value.
+    An AST node representing a literal value terminal.
     """
     # -Instance Methods
-    def value_as[T: AST_LITERAL_TYPES](self, _type: type[T]) -> T:
-        assert type(self.value) is _type, "TODO: Error handling"
-        return self.value
+    def accept[T](self, visitor: UnresolvedNodeVisitor[T]) -> T:
+        return visitor.visit_literal(self)
+
+    def value_as[T: LITERAL_VALUE_TYPE](self, _type: type[T]) -> T:
+        return self.value  # type: ignore[return-value]
+
+    # -Class Methods
+    @classmethod
+    def integer(cls, location: Span, value: int) -> Self:
+        return cls(location, UnresolvedLiteralNode.Kind.Integer, value)
 
     # -Properties
     kind: UnresolvedLiteralNode.Kind
-    value: AST_LITERAL_TYPES
+    value: LITERAL_VALUE_TYPE
 
     # -Sub-Classes
     class Kind(IntEnum):
-        Boolean = auto()
         Integer = auto()
-        String = auto()
-
-
-@dataclass
-class UnresolvedIdentifierNode(UnresolvedNode):
-    """
-    Unresolved AST Node: Identifier
-
-    A leaf container for holding an identifier and it's id.
-    """
-    # -Properties
-    name: str
-    _id: int | None = field(init=False, default=None)
-
-    @property
-    def has_id(self) -> bool:
-        return self._id is not None
-
-    @property
-    def id(self) -> int:
-        assert self._id is not None
-        return self._id

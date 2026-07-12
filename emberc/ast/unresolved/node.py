@@ -2,39 +2,50 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Unresolved Node               ##
+## Unresolved AST: Node          ##
 ##-------------------------------##
 
 ## Imports
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from enum import IntEnum, auto
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from typing import MutableSequence
-    from ...core import Location
+    from . import UnresolvedNodeVisitor
+    from ...core import Span
 
 
 ## Classes
-@dataclass
+@dataclass(slots=True)
 class UnresolvedNode(ABC):
-    """
-    Unresolved AST Node
+    """The abstract base class for all unresolved AST nodes."""
+    # -Instance Methods
+    @abstractmethod
+    def accept[T](self, visitor: UnresolvedNodeVisitor[T]) -> T: ...
 
-    An abstract base for all structural AST nodes produced by the parser.
-    """
     # -Properties
-    location: Location
+    location: Span
+
+    @property
+    def wide_span(self) -> Span:
+        return self.location
 
 
-@dataclass
+@dataclass(slots=True)
 class UnresolvedUnitNode(UnresolvedNode):
     """
-    Unresolved AST Node: Unit
-
-    A top-level container for a unit for files or modules.
-    Holds a mutable sequence of root nodes.
+    An AST node representing a top-level compilation unit.
+    Acts as the root container holding a sequence of unresolved child nodes.
     """
+    # -Dunder Methods
+    def __iter__(self) -> Iterator[UnresolvedNode]:
+        yield from self.children
+
+    # -Instance Methods
+    def accept[T](self, visitor: UnresolvedNodeVisitor[T]) -> T:
+        return visitor.visit_unit(self)
+
     # -Properties
-    nodes: MutableSequence[UnresolvedNode]
+    children: MutableSequence[UnresolvedNode]

@@ -2,56 +2,33 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Unresolved Node: Type         ##
+## Unresolved AST: Types         ##
 ##-------------------------------##
 
 ## Imports
-from __future__ import annotations
 from dataclasses import dataclass
 from enum import IntEnum, auto
+from typing import TYPE_CHECKING
 from .node import UnresolvedNode
+
+if TYPE_CHECKING:
+    from . import UnresolvedNodeVisitor
 
 
 ## Classes
-@dataclass
+@dataclass(slots=True)
 class UnresolvedTypeNode(UnresolvedNode):
     """
-    Unresolved AST Node: Type
-
-    A representation for primitive types.
+    An AST node representing a type specification or primitive type expression.
+    Encapsulates the specific kind of built-in data type.
     """
+    # -Instance Methods
+    def accept[T](self, visitor: UnresolvedNodeVisitor[T]) -> T:
+        return visitor.visit_type(self)
+
     # -Properties
     kind: UnresolvedTypeNode.Kind
 
     # -Sub-Classes
     class Kind(IntEnum):
-        Void = auto()
-        Boolean = auto()
-        Int8 = auto()
-        Int16 = auto()
         Int32 = auto()
-        Int64 = auto()
-        UInt8 = auto()
-        UInt16 = auto()
-        UInt32 = auto()
-        UInt64 = auto()
-        SSize = auto()
-        USize = auto()
-        Function = auto()
-
-
-@dataclass
-class UnresolvedModifierNode(UnresolvedNode):
-    """
-    Unresolved AST Node: Type Modifier
-
-    A representation for a unary type modifiers.
-    """
-    # -Properties
-    kind: UnresolvedModifierNode.Kind
-    target: UnresolvedNode
-
-    # -Sub-Classes
-    class Kind(IntEnum):
-        Const = auto()
-        Immut = auto()

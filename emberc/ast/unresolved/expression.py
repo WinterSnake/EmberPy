@@ -2,23 +2,30 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Unresolved Node: Expression   ##
+## Unresolved AST: Expression    ##
 ##-------------------------------##
 
 ## Imports
-from __future__ import annotations
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 from .node import UnresolvedNode
+
+if TYPE_CHECKING:
+    from . import UnresolvedNodeVisitor
+    from ...core import Span
 
 
 ## Classes
-@dataclass
+@dataclass(slots=True)
 class UnresolvedExprNode(UnresolvedNode):
     """
-    Unresolved AST Node: Expression
-
-    A container for a statement with an optional expression.
+    An AST node representing an expression statement.
+    Wraps an optional inner expression terminated by a semicolon.
     """
+    # -Instance Methods
+    def accept[T](self, visitor: UnresolvedNodeVisitor[T]) -> T:
+        return visitor.visit_expression(self)
+
     # -Properties
     _expression: UnresolvedNode | None
 
@@ -28,27 +35,25 @@ class UnresolvedExprNode(UnresolvedNode):
 
     @property
     def expression(self) -> UnresolvedNode:
-        assert self._expression is not None, "TODO: Error handling"
+        assert self._expression is not None
         return self._expression
 
+    @property
+    def wide_span(self) -> Span:
+        if not self.has_expression:
+            return self.location
+        return self.location.extend_from(self.expression.wide_span)
 
-@dataclass
-class UnresolvedDeferNode(UnresolvedNode):
-    """
-    Unresolved AST Node: Defer
 
-    A container for either a single expression or a block statement to be 
-    executed at the end of the current scope.
+@dataclass(slots=True)
+class UnresolvedGroupNode(UnresolvedNode):
     """
+    An AST node representing a grouped expression.
+    Wraps an inner expression to explicitly define or alter evaluation precedence.
+    """
+    # -Instance Methods
+    def accept[T](self, visitor: UnresolvedNodeVisitor[T]) -> T:
+        return visitor.visit_group(self)
+
     # -Properties
-    node: UnresolvedNode
-
-
-@dataclass
-class UnresolvedEmptyNode(UnresolvedNode):
-    """
-    Unresolved AST Node: Empty Expression
-
-    A container for an empty/void expression.
-    """
-    pass
+    inner: UnresolvedNode
