@@ -23,6 +23,10 @@ class DiagnosticEngine:
     def __init__(self, source_map: SourceMap) -> None:
         self.source_map: SourceMap = source_map
 
+    # -Instance Methods
+    def error(self, msg: str) -> None:
+        print(f"Error: {msg}")
+
     # -Class Methods
     @classmethod
     def new(cls) -> Self:

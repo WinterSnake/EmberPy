@@ -27,15 +27,15 @@ class Span:
     def start_at(self, position: int) -> Span:
         return Span(self.id, position, self.end)
 
-    def start_from(self, other: Span) -> Span:
+    def end_at(self, position: int) -> Span:
+        return Span(self.id, self.start, position)
+
+    def extend_from(self, other: Span) -> Span:
         if self.id != other.id:
             raise ValueError("Cannot combine spans of different sources")
         return Span(self.id, other.start, self.end)
 
-    def end_at(self, position: int) -> Span:
-        return Span(self.id, self.start, position)
-
-    def end_with(self, other: Span) -> Span:
+    def extend_to(self, other: Span) -> Span:
         if self.id != other.id:
             raise ValueError("Cannot combine spans of different sources")
         return Span(self.id, self.start, other.end)
