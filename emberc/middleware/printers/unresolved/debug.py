@@ -44,6 +44,10 @@ class UnresolvedNodeDebugPrinter:
         return ''
 
     def visit_variable(self, node: UnresolvedVariableNode) -> str:
+        # -Internal Methods
+        def _visit_entry(entry: UnresolvedVariableNode.Entry) -> str:
+            return ''
+        # -Body
         return ''
 
     # --Statements--
@@ -64,10 +68,6 @@ class UnresolvedNodeDebugPrinter:
         return ''
 
     def visit_identifier(self, node: UnresolvedIdentifierNode) -> str:
-        return ''
-
-    # -Instance Methods: Helpers
-    def _visit_variable_entry(self, entry: UnresolvedVariableNode.Entry) -> str:
         return ''
 
     # -Static Methods

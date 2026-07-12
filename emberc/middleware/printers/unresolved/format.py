@@ -50,8 +50,16 @@ class UnresolvedNodeFormatPrinter:
         return '\n'.join(node for node in output if node)
 
     def visit_variable(self, node: UnresolvedVariableNode) -> str:
+        # -Internal Methods
+        def _visit_entry(entry: UnresolvedVariableNode.Entry) -> str:
+            output = entry.name
+            if entry.has_initializer:
+                initializer = entry.initializer.accept(self)
+                output += f"={initializer}"
+            return output
+        # -Body
         _type = node.type.accept(self)
-        entries = (self._visit_variable_entry(entry) for entry in node)
+        entries = (_visit_entry(entry) for entry in node)
         return _type + '[' + ','.join(entries) + ']'
 
     # --Statements--
@@ -101,14 +109,6 @@ class UnresolvedNodeFormatPrinter:
         output = node.name
         if node.has_id:
             output += f"<id:{node.id}>"
-        return output
-
-    # -Instance Methods: Helpers
-    def _visit_variable_entry(self, entry: UnresolvedVariableNode.Entry) -> str:
-        output = entry.name
-        if entry.has_initializer:
-            initializer = entry.initializer.accept(self)
-            output += f"={initializer}"
         return output
 
     # -Static Methods
