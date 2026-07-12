@@ -23,7 +23,7 @@ class DeclVariableNode(DeclNode):
     """
     # -Instance Methods
     def accept[T](self, visitor: DeclNodeVisitor[T]) -> T:
-        return visitor.visit_variable(self)
+        return visitor.visit_decl_variable(self)
 
     # -Properties
     id: int

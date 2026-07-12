@@ -24,7 +24,7 @@ class TypePrimitive(TypeNode):
     """
     # -Instance Methods
     def accept[T](self, visitor: TypeNodeVisitor[T]) -> T:
-        return visitor.visit_primitive(self)
+        return visitor.visit_type_primitive(self)
 
     # -Properties
     kind: TypePrimitive.Kind

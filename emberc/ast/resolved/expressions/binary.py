@@ -28,7 +28,7 @@ class ExprAssignNode(ExprNode):
     """
     # -Instance Methods
     def accept[T](self, visitor: ExprNodeVisitor[T]) -> T:
-        return visitor.visit_assignment(self)
+        return visitor.visit_expr_assignment(self)
 
     # -Properties
     operator: AssignOperator
@@ -44,7 +44,7 @@ class ExprBinaryNode(ExprNode):
     """
     # -Instance Methods
     def accept[T](self, visitor: ExprNodeVisitor[T]) -> T:
-        return visitor.visit_binary(self)
+        return visitor.visit_expr_binary(self)
 
     # -Properties
     operator: BinaryOperator

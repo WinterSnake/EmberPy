@@ -36,7 +36,7 @@ class DeclUnitNode(DeclNode):
 
     # -Instance Methods
     def accept[T](self, visitor: DeclNodeVisitor[T]) -> T:
-        return visitor.visit_unit(self)
+        return visitor.visit_decl_unit(self)
 
     # -Properties
     nodes: MutableSequence[DeclNode]

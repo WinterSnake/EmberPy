@@ -24,7 +24,7 @@ class StmtExpressionNode(StmtNode):
     """
     # -Instance Methods
     def accept[T](self, visitor: StmtNodeVisitor[T]) -> T:
-        return visitor.visit_expression(self)
+        return visitor.visit_stmt_expression(self)
 
     # -Properties
     expression: ExprNode

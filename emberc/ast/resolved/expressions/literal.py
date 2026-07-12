@@ -24,7 +24,7 @@ class ExprIntegerNode(ExprNode):
     """
     # -Instance Methods
     def accept[T](self, visitor: ExprNodeVisitor[T]) -> T:
-        return visitor.visit_integer(self)
+        return visitor.visit_expr_integer(self)
 
     # -Properties
     value: int
@@ -38,7 +38,7 @@ class ExprVariableNode(ExprNode):
     """
     # -Instance Methods
     def accept[T](self, visitor: ExprNodeVisitor[T]) -> T:
-        return visitor.visit_variable(self)
+        return visitor.visit_expr_variable(self)
 
     # -Class Methods
     @classmethod
