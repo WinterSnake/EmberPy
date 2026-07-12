@@ -6,198 +6,83 @@
 ##-------------------------------##
 
 ## Imports
-from __future__ import annotations
 from dataclasses import dataclass
 from enum import IntEnum, auto
 from typing import TYPE_CHECKING
-from ..ast import (
-    PendingTypeNode,
-    StructTypeNode,
-    FunctionTypeNode,
-)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from typing import Self
     from ..ast import TypeNode
-    from ..core import MutableCollection
 
 ## Constants
-type SCOPE = dict[str, int]
+type Scope = dict[str, int]
 
 
 ## Classes
 @dataclass(slots=True)
 class Symbol:
-    """A unique semantic record representing a named entity"""
+    """
+    Represents a uniquely identified entity resolved by the compiler.
+    
+    Tracks identity, lexical identifier name, definition variant (kind), 
+    and the concrete evaluation type of a compiler primitive.
+    """
     # -Properties
     id: int
     name: str
-    type: TypeNode
     kind: Symbol.Kind
+    type: TypeNode
 
     # -Sub-Classes
     class Kind(IntEnum):
-        Struct = auto()
-        Union = auto()
-        Field = auto()
-        Enum = auto()
-        EnumMember = auto()
-        TaggedEnum = auto()
-        EnumVariant = auto()
-        EnumTag = auto()
-        Function = auto()
-        Parameter = auto()
         Variable = auto()
 
 
 class SymbolTable:
     """
-    The central repository for name resolution and scope management.
-    It maps identifiers to Symbol records and maintains the lexical stack
-    to ensure correct visibility and prevent redefinitions.
+    Manages lexical scopes and unique symbol assignments during compilation.
+    
+    Provides a block-structured environment for looking up variable 
+    identities, managing stacked variable scopes, and enforcing symbol isolation.
     """
 
     # -Constructor
-    def __init__(self, parent : Self | None = None) -> None:
+    def __init__(self) -> None:
         self._symbols: list[Symbol] = []
-        self._scopes: list[SCOPE] = [{}]
-        self._member_scopes: dict[int, SCOPE] = {}
-        self._parent: Self | None = parent
+        self._scopes: list[Scope] = [{}]
 
-    # -Instance Methods: Scope
-    def pop(self) -> SCOPE:
-        '''Pops and returns scope from list of scopes'''
-        if len(self._scopes) > 1:
-            return self._scopes.pop()
-        raise RuntimeError("Tried popping root scope")
-
-    def push(self) -> None:
-        '''Push a new stack onto the list of scopes'''
-        self._scopes.append({})
-
-    # -Instance Methods: Symbol
-    def _create_symbol(
-        self, name: str, _type: TypeNode, kind: Symbol.Kind
-    ) -> int:
-        '''Recursively calls to parent symbol table to create a new symbol'''
-        if self._parent:
-            return self._parent._create_symbol(name, _type, kind)
-        idx = len(self._symbols)
-        self._symbols.append(Symbol(idx, name, _type, kind))
-        return idx
-
-    def add_symbol(
-        self, name: str, kind: Symbol.Kind, _type: TypeNode
-    ) -> int | None:
-        '''Adds a symbol to the current scope and returns index into flat table'''
+    # -Instance Methods
+    def add_symbol(self, name: str, kind: Symbol.Kind, _type: TypeNode) -> int | None:
+        '''
+        Creates a symbol and appends it to current scope.
+        Returns None when symbol already exists
+        '''
         if name in self.current_scope:
             return None
-        _id = self._create_symbol(name, _type, kind)
-        self.current_scope[name] = _id
-        return _id
-
-    def add_member_symbol(
-        self, parent: int, name: str, kind: Symbol.Kind, _type: TypeNode
-    ) -> int | None:
-        '''Adds a symbol to a parent's scope and returns index into flat table'''
-        if (scope := self._member_scopes.get(parent, None)) is None:
-            return None
-        if name in scope:
-            return None
-        _id = self._create_symbol(name, _type, kind)
-        scope[name] = _id
-        return _id
+        idx = len(self._symbols)
+        self._symbols.append(Symbol(idx, name, kind, _type))
+        self.current_scope[name] = idx
+        return idx
 
     def find_id(self, name: str) -> int | None:
-        '''Finds the given name by bubbling up through scopes'''
+        '''Finds and returns symbol id by bubbling up scopes from top down'''
         for scope in reversed(self._scopes):
             if name in scope:
                 return scope[name]
-        if self._parent:
-            return self._parent.find_id(name)
         return None
 
     def find_local_id(self, name: str) -> int | None:
-        '''Finds the given name within the local scope'''
+        '''Finds and returns symbol id for current scope or None if non-existent'''
         return self.current_scope.get(name, None)
 
-    def find_member_id(self, parent: int, name: str) -> int | None:
-        '''Find the given name within a parent's scope'''
-        if (scope := self._member_scopes.get(parent, None)) is not None:
-            return scope.get(name, None)
-        elif self._parent:
-            return self._parent.find_member_id(parent, name)
-        return None
-
-    def get_by_id(self, _id: int) -> Symbol:
-        '''Returns symbol with given id'''
-        if self._parent:
-            return self._parent.get_by_id(_id)
-        return self._symbols[_id]
-
     # -Instance Methods: Helpers
-    def add_struct(self, name: str) -> int | None:
-        _id = self.add_symbol(name, Symbol.Kind.Struct, StructTypeNode())
-        if _id is not None:
-            self._member_scopes[_id] = {}
-        return _id
-
-    def add_struct_field(
-        self, parent: int, name: str, _type: TypeNode
-    ) -> int | None:
-        return self.add_member_symbol(parent, name, Symbol.Kind.Field, _type)
-
-    def add_struct_nested(
-        self, parent: int, name: str, is_union: bool
-    ) -> int | None:
-        kind = Symbol.Kind.Union if is_union else Symbol.Kind.Struct
-        _id = self.add_member_symbol(parent, name, kind, StructTypeNode())
-        if _id is not None:
-            self._member_scopes[_id] = {}
-        return _id
-
-    def add_enum(
-        self, name: str, _type: TypeNode, is_tagged: bool
-    ) -> int | None:
-        kind = Symbol.Kind.TaggedEnum if is_tagged else Symbol.Kind.Enum
-        if (_id := self.add_symbol(name, kind, _type)) is not None:
-            self._member_scopes[_id] = {}
-        return _id
-
-    def add_enum_member(
-        self, parent: int, name: str, is_tagged: bool
-    ) -> int | None:
-        kind = Symbol.Kind.EnumVariant if is_tagged else Symbol.Kind.EnumMember
-        _id = self.add_member_symbol(
-            parent, name, kind, PendingTypeNode(parent)
-        )
-        if _id is not None and is_tagged:
-            self._member_scopes[_id] = {}
-        return _id
-
-    def add_enum_variant(
-        self, parent: int, name: str, _type: TypeNode
-    ) -> int | None:
-        return self.add_member_symbol(
-            parent, name, Symbol.Kind.EnumTag, _type
-        )
-
-    def add_function(
-        self, name: str, return_type: TypeNode,
-        parameter_types: MutableCollection[TypeNode]
-    ) -> int | None:
-        return self.add_symbol(
-            name, Symbol.Kind.Function,
-            FunctionTypeNode(return_type, parameter_types)
-        )
-
     def add_variable(self, name: str, _type: TypeNode) -> int | None:
+        '''Routes variable declaration into add_symbol'''
         return self.add_symbol(name, Symbol.Kind.Variable, _type)
 
     # -Properties
     @property
-    def current_scope(self) -> dict[str, int]:
+    def current_scope(self) -> Scope:
         return self._scopes[-1]
 
     @property
