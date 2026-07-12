@@ -19,8 +19,8 @@ if TYPE_CHECKING:
 @dataclass(frozen=True, slots=True)
 class TypePrimitive(TypeNode):
     """
-    A resolved type node representing a built-in primitive data type.
-    Encapsulates the specific kind of primitive type variant.
+    Resolved Primitive Type
+    Represents a built-in primitive type.
     """
     # -Instance Methods
     def accept[T](self, visitor: TypeNodeVisitor[T]) -> T:

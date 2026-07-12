@@ -9,17 +9,20 @@
 from typing import TYPE_CHECKING, assert_never
 from ....ast import (
     UnresolvedTypeNode,
-    UnresolvedAssignNode,
-    UnresolvedBinaryNode,
+    AssignOperator,
+    BinaryOperator,
 )
 
 if TYPE_CHECKING:
+    from ....diagnostics import SourceMap
     from ....ast import (
         UnresolvedNode,
         UnresolvedUnitNode,
         UnresolvedVariableNode,
         UnresolvedExprNode,
         UnresolvedGroupNode,
+        UnresolvedAssignNode,
+        UnresolvedBinaryNode,
         UnresolvedLiteralNode,
         UnresolvedIdentifierNode,
     )
@@ -70,14 +73,14 @@ class UnresolvedNodeFormatPrinter:
 
     # --Expressions--
     def visit_group(self, node: UnresolvedGroupNode) -> str:
-        return f"( {node.inner.accept(self)} )"
+        return node.inner.accept(self)
 
     def visit_assignment(self, node: UnresolvedAssignNode) -> str:
         operator: str
         l_value = node.l_value.accept(self)
         r_value = node.r_value.accept(self)
         match node.operator:
-            case UnresolvedAssignNode.Operator.Eq:
+            case AssignOperator.Eq:
                 operator = '='
             case _:
                 assert_never(node.operator)
@@ -88,15 +91,15 @@ class UnresolvedNodeFormatPrinter:
         lhs = node.lhs.accept(self)
         rhs = node.rhs.accept(self)
         match node.operator:
-            case UnresolvedBinaryNode.Operator.Add:
+            case BinaryOperator.Add:
                 operator = '+'
-            case UnresolvedBinaryNode.Operator.Sub:
+            case BinaryOperator.Sub:
                 operator = '-'
-            case UnresolvedBinaryNode.Operator.Mul:
+            case BinaryOperator.Mul:
                 operator = '*'
-            case UnresolvedBinaryNode.Operator.Div:
+            case BinaryOperator.Div:
                 operator = '/'
-            case UnresolvedBinaryNode.Operator.Mod:
+            case BinaryOperator.Mod:
                 operator = '%'
             case _:
                 assert_never(node.operator)

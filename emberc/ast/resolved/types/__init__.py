@@ -7,19 +7,18 @@
 
 ## Imports
 from typing import Protocol
-from .node import TypeNode
+from .node import (TypeNode, TypePending)
 from .primitive import TypePrimitive
 
 ## Constants
 __all__ = (
     "TypeNode",
+    "TypePending",
     "TypePrimitive",
 )
 
 ## Classes
 class TypeNodeVisitor[TReturn](Protocol):
-    """
-    A structural protocol implementing the visitor pattern for resolved semantic type nodes.
-    """
+    """A visitor pattern interface for traversing resolved type nodes."""
     # -Instance Methods
     def visit_primitive(self, node: TypePrimitive) -> TReturn: ...

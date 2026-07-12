@@ -9,9 +9,9 @@
 from typing import TYPE_CHECKING, assert_never
 from ....ast import (
     UnresolvedTypeNode,
-    UnresolvedAssignNode,
-    UnresolvedBinaryNode,
     UnresolvedLiteralNode,
+    AssignOperator,
+    BinaryOperator,
 )
 
 if TYPE_CHECKING:
@@ -22,6 +22,8 @@ if TYPE_CHECKING:
         UnresolvedVariableNode,
         UnresolvedExprNode,
         UnresolvedGroupNode,
+        UnresolvedAssignNode,
+        UnresolvedBinaryNode,
         UnresolvedIdentifierNode,
     )
 

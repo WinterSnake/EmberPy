@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 ## Classes
 @dataclass(slots=True)
 class UnresolvedNode(ABC):
-    """The abstract base class for all unresolved AST nodes."""
+    """The abstract base class for all unresolved nodes."""
     # -Instance Methods
     @abstractmethod
     def accept[T](self, visitor: UnresolvedNodeVisitor[T]) -> T: ...
@@ -36,16 +36,16 @@ class UnresolvedNode(ABC):
 @dataclass(slots=True)
 class UnresolvedUnitNode(UnresolvedNode):
     """
-    An AST node representing a top-level compilation unit.
-    Acts as the root container holding a sequence of unresolved child nodes.
+    Unresolved Unit Declaration
+    Root container node holding a sequence of top-level unresolved nodes.
     """
     # -Dunder Methods
     def __iter__(self) -> Iterator[UnresolvedNode]:
-        yield from self.children
+        yield from self.nodes
 
     # -Instance Methods
     def accept[T](self, visitor: UnresolvedNodeVisitor[T]) -> T:
         return visitor.visit_unit(self)
 
     # -Properties
-    children: MutableSequence[UnresolvedNode]
+    nodes: MutableSequence[UnresolvedNode]

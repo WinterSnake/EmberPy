@@ -20,7 +20,8 @@ if TYPE_CHECKING:
 @dataclass(slots=True)
 class UnresolvedLiteralNode(UnresolvedNode):
     """
-    An AST node representing a literal value terminal.
+    Unresolved Literal Expression
+    Represents a literal value terminal.
     """
     # -Instance Methods
     def accept[T](self, visitor: UnresolvedNodeVisitor[T]) -> T:

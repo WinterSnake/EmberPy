@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING, Self, cast
 from .token import Token
 from ..core import LookaheadBuffer, Span
 from ..ast import (
+    AssignOperator,
+    BinaryOperator,
     UnresolvedNode,
     UnresolvedTypeNode,
     UnresolvedUnitNode,
@@ -36,14 +38,14 @@ LITERALS = (
     Token.Kind.Integer,
 )
 BINARY_OPERATORS = {
-    Token.Kind.SymbolPlus: (UnresolvedBinaryNode.Operator.Add, 1),
-    Token.Kind.SymbolMinus: (UnresolvedBinaryNode.Operator.Sub, 1),
-    Token.Kind.SymbolStar: (UnresolvedBinaryNode.Operator.Mul, 2),
-    Token.Kind.SymbolFSlash: (UnresolvedBinaryNode.Operator.Div, 2),
-    Token.Kind.SymbolPercent: (UnresolvedBinaryNode.Operator.Mod, 2),
+    Token.Kind.SymbolPlus: (BinaryOperator.Add, 1),
+    Token.Kind.SymbolMinus: (BinaryOperator.Sub, 1),
+    Token.Kind.SymbolStar: (BinaryOperator.Mul, 2),
+    Token.Kind.SymbolFSlash: (BinaryOperator.Div, 2),
+    Token.Kind.SymbolPercent: (BinaryOperator.Mod, 2),
 }
 ASSIGNMENT_OPERATORS = {
-    Token.Kind.SymbolEq: UnresolvedAssignNode.Operator.Eq,
+    Token.Kind.SymbolEq: AssignOperator.Eq,
 }
 STATEMENT_STARTERS = (
     Token.Kind.SymbolSemicolon,
@@ -92,7 +94,7 @@ class Parser(LookaheadBuffer[Token, Token.Kind]):
         raise StopIteration
 
     # -Instance Methods: Parser
-    def parse(self) -> UnresolvedUnitNode:
+    def parse(self) -> UnresolvedNode:
         '''
         Grammar[Unit]
         declaration*;

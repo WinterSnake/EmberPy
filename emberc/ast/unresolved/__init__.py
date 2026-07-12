@@ -52,9 +52,7 @@ __all__ = (
 
 ## Classes
 class UnresolvedNodeVisitor[TReturn](Protocol):
-    """
-    A structural protocol implementing the visitor pattern for unresolved AST nodes.
-    """
+    """A visitor pattern interface for traversing unresolved nodes"""
     # -Instance Methods
     # --Types--
     def visit_type(self, node: UnresolvedTypeNode) -> TReturn: ...

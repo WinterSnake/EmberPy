@@ -20,8 +20,8 @@ if TYPE_CHECKING:
 @dataclass(slots=True)
 class UnresolvedIdentifierNode(UnresolvedNode):
     """
-    An AST node representing an unresolved identifier.
-    Encapsulates the name of the identifier along with an internal ID used for name resolution.
+    Unresolved Identifier
+    Represents an identifier token node without full context of being a name or expression.
     """
     # -Instance Methods
     def accept[T](self, visitor: UnresolvedNodeVisitor[T]) -> T:
@@ -44,7 +44,7 @@ class UnresolvedIdentifierNode(UnresolvedNode):
 @dataclass(slots=True)
 class UnresolvedVariableNode(UnresolvedNode):
     """
-    An AST node representing a variable declaration statement.
+    Unresolved Variable Declaration
     Encapsulates the underlying type and a sequence of declared variable entries.
     """
     # Dunder Methods
@@ -63,9 +63,8 @@ class UnresolvedVariableNode(UnresolvedNode):
     @dataclass(slots=True)
     class Entry:
         '''
-        An individual variable entry within a declaration statement.
-        Encapsulates the variable name, an optional initializer expression, 
-        and an internal ID used for name resolution.
+        Variable Declaration Entry
+        Encapsulates the variable name, an optional initializer expression.
         '''
         # -Properties
         location: Span

@@ -2,7 +2,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Unresolved Node: Expression  ##
+## Unresolved Node: Expression   ##
 ##-------------------------------##
 
 ## Imports
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 @dataclass(slots=True)
 class UnresolvedExprNode(UnresolvedNode):
     """
-    An AST node representing an expression statement.
+    Unresolved Expression Statement
     Wraps an optional inner expression terminated by a semicolon.
     """
     # -Instance Methods

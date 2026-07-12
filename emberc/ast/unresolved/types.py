@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 @dataclass(slots=True)
 class UnresolvedTypeNode(UnresolvedNode):
     """
-    An AST node representing a type specification or primitive type expression.
+    Unresolved Primitive Type
     Encapsulates the specific kind of built-in data type.
     """
     # -Instance Methods
