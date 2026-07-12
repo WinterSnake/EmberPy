@@ -2,16 +2,17 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## AST: Printers                 ##
+## Middleware: Printers          ##
 ##-------------------------------##
 
 ## Imports
-from .unresolved.nodes import UnresolvedNodePrinter
-from .unresolved.types import UnresolvedTypePrinter
+from .unresolved import (
+    UnresolvedNodeDebugPrinter,
+    UnresolvedNodeFormatPrinter,
+)
 
 ## Constants
 __all__ = (
-    # -Unresolved
-    "UnresolvedNodePrinter",
-    "UnresolvedTypePrinter",
+    "UnresolvedNodeDebugPrinter",
+    "UnresolvedNodeFormatPrinter",
 )
