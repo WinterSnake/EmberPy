@@ -10,7 +10,7 @@ from .lookahead_buffer import LookaheadBuffer
 from .span import Span
 
 ## Constants
-type LITERAL_VALUE_TYPE = bool | int | str
+type LITERAL_VALUE_TYPE = int | str
 __all__ = (
     "LITERAL_VALUE_TYPE",
     "LookaheadBuffer",

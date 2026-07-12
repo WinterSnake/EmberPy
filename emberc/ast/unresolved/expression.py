@@ -2,7 +2,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Unresolved AST: Expression    ##
+## Unresolved Node: Expression  ##
 ##-------------------------------##
 
 ## Imports

@@ -92,7 +92,7 @@ class Parser(LookaheadBuffer[Token, Token.Kind]):
         raise StopIteration
 
     # -Instance Methods: Parser
-    def parse(self) -> UnresolvedNode:
+    def parse(self) -> UnresolvedUnitNode:
         '''
         Grammar[Unit]
         declaration*;
