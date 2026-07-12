@@ -22,10 +22,12 @@ class DiagnosticEngine:
     # -Constructor
     def __init__(self, source_map: SourceMap) -> None:
         self.source_map: SourceMap = source_map
+        self.has_error: bool = False
 
     # -Instance Methods
     def error(self, msg: str) -> None:
         print(f"Error: {msg}")
+        self.has_error = True
 
     # -Class Methods
     @classmethod

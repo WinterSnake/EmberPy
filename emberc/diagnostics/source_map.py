@@ -67,7 +67,7 @@ class SourceMap:
         return self._sources[index]
 
     def __iter__(self) -> Iterator[Source]:
-        return iter(self._sources)
+        yield from self._sources
 
     def __len__(self) -> int:
         return len(self._sources)

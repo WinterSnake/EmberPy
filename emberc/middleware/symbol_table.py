@@ -51,6 +51,10 @@ class SymbolTable:
         self._symbols: list[Symbol] = []
         self._scopes: list[Scope] = [{}]
 
+    # -Dunder Methods
+    def __getitem__(self, index: int) -> Symbol:
+        return self._symbols[index]
+
     # -Instance Methods
     def add_symbol(self, name: str, kind: Symbol.Kind, _type: TypeNode) -> int | None:
         '''
