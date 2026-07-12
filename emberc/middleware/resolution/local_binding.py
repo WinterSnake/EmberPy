@@ -29,11 +29,10 @@ if TYPE_CHECKING:
 ## Classes
 class LocalBinderPass:
     """
-    Performs local scope name resolution across the unresolved AST.
-
-    Traverses local scopes to register variable definitions in the symbol table
-    and map identifier references to their unique symbol IDs, flagging
-    re-declarations and undeclared variables.
+    Resolution Pass [1]
+    
+    An AST visitor that binds variable declarations and identifier usages to their 
+    respective IDs in the symbol table, while flagging redeclarations and undeclared variables.
     """
 
     # -Constructor
@@ -57,11 +56,11 @@ class LocalBinderPass:
     def visit_variable(self, node: UnresolvedVariableNode) -> None:
         _type = node.type.accept(self._type_builder)
         for entry in node:
-            _id = self._symbol_table.add_variable(entry.name, _type)
-            if _id is not None:
-                entry._id = _id
-                continue
-            self._engine.error(f"Tried declaring already declared variable '{entry.name}'")
+            if entry.has_initializer:
+                entry.initializer.accept(self)
+            entry._id = self._symbol_table.add_variable(entry.name, _type)
+            if entry._id is None:
+                self._engine.error(f"Tried declaring already declared variable '{entry.name}'")
 
     # --Statements--
     def visit_expression(self, node: UnresolvedExprNode) -> None:
@@ -84,11 +83,9 @@ class LocalBinderPass:
         pass
 
     def visit_identifier(self, node: UnresolvedIdentifierNode) -> None:
-        _id = self._symbol_table.find_id(node.name)
-        if _id is not None:
-            node._id = _id
-            return
-        self._engine.error(f"Tried using undeclared variable '{node.name}'")
+        node._id = self._symbol_table.find_id(node.name)
+        if node._id is None:
+            self._engine.error(f"Tried using undeclared variable '{node.name}'")
 
     # -Static Methods
     @staticmethod
