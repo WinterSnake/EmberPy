@@ -7,55 +7,35 @@
 
 ## Imports
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, ClassVar
-from .core import TypeNode
+from enum import IntEnum, auto
+from typing import TYPE_CHECKING, ClassVar, Self
+from .node import TypeNode
 
 if TYPE_CHECKING:
-    from typing import Self
+    from . import TypeNodeVisitor
 
 
 ## Classes
 @dataclass(frozen=True, slots=True)
-class PrimitiveTypeNode(TypeNode):
+class TypePrimitive(TypeNode):
     """
-    Resolved Type Node: Primitive
-
-    Represents core types built into the language.
+    A resolved type node representing a built-in primitive data type.
+    Encapsulates the specific kind of primitive type variant.
     """
-    # -Dunder Methods
-    def __str__(self) -> str:
-        return self.name
+    # -Instance Methods
+    def accept[T](self, visitor: TypeNodeVisitor[T]) -> T:
+        return visitor.visit_primitive(self)
 
     # -Properties
-    name: str
+    kind: TypePrimitive.Kind
 
     # -Class Properties
-    void: ClassVar[Self]
-    boolean: ClassVar[Self]
-    int8: ClassVar[Self]
-    int16: ClassVar[Self]
     int32: ClassVar[Self]
-    int64: ClassVar[Self]
-    uint8: ClassVar[Self]
-    uint16: ClassVar[Self]
-    uint32: ClassVar[Self]
-    uint64: ClassVar[Self]
-    ssize: ClassVar[Self]
-    usize: ClassVar[Self]
-    function: ClassVar[Self]
+
+    # -Sub-Classes
+    class Kind(IntEnum):
+        Int32 = auto()
 
 
 ## Body
-PrimitiveTypeNode.void = PrimitiveTypeNode("void")
-PrimitiveTypeNode.boolean = PrimitiveTypeNode("boolean")
-PrimitiveTypeNode.int8 = PrimitiveTypeNode("int8")
-PrimitiveTypeNode.int16 = PrimitiveTypeNode("int16")
-PrimitiveTypeNode.int32 = PrimitiveTypeNode("int32")
-PrimitiveTypeNode.int64 = PrimitiveTypeNode("int64")
-PrimitiveTypeNode.uint8 = PrimitiveTypeNode("uint8")
-PrimitiveTypeNode.uint16 = PrimitiveTypeNode("uint16")
-PrimitiveTypeNode.uint32 = PrimitiveTypeNode("uint32")
-PrimitiveTypeNode.uint64 = PrimitiveTypeNode("uint64")
-PrimitiveTypeNode.ssize = PrimitiveTypeNode("ssize")
-PrimitiveTypeNode.usize = PrimitiveTypeNode("usize")
-PrimitiveTypeNode.function = PrimitiveTypeNode("fn")
+TypePrimitive.int32 = TypePrimitive(TypePrimitive.Kind.Int32)
