@@ -14,8 +14,8 @@ from dataclasses import dataclass
 class Span:
     """
     Represents a continuous region of text within a specific source file.
-    
-    Used by the lexer, parser, and AST nodes to track precise byte/character 
+
+    Used by the lexer, parser, and AST nodes to track precise byte/character
     offsets for error reporting, syntax highlighting, and source-to-token mapping.
     """
 

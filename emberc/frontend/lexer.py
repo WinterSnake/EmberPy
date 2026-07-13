@@ -12,7 +12,6 @@ from ..core import LookaheadBuffer, Span
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
-    from pathlib import Path
     from ..diagnostics import DiagnosticEngine
 
 ## Constants

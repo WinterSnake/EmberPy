@@ -7,7 +7,6 @@
 
 ## Imports
 from dataclasses import dataclass
-from enum import IntEnum, auto
 from typing import TYPE_CHECKING
 from .node import UnresolvedNode
 

@@ -36,7 +36,7 @@ class LookaheadBuffer[TItem, TKey](ABC):
     """
     Lookahead(n) Buffer
 
-    A generic wrapper for iterators that provides arbitrary 
+    A generic wrapper for iterators that provides arbitrary
     lookahead and item matching without premature consumption.
     """
 
