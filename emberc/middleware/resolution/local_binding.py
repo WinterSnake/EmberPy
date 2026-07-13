@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from .type_factory import TypeFactory
 
 if TYPE_CHECKING:
-    from ..symbol_table import Symbol, SymbolTable
+    from ..symbol_table import SymbolTable
     from ...ast import (
         UnresolvedNode,
         UnresolvedTypeNode,

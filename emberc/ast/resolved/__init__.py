@@ -43,21 +43,25 @@ __all__ = (
     "TypeNode",
     "TypePending",
     "TypePrimitive",
+    "TypeNodeVisitor",
     # -Declarations
     "DeclNode",
     "DeclUnitNode",
     "DeclSequenceNode",
     "DeclVariableNode",
+    "DeclNodeVisitor",
     # -Statements
     "StmtNode",
     "StmtEmptyNode",
     "StmtExpressionNode",
+    "StmtNodeVisitor",
     # -Expressions
     "ExprNode",
     "ExprAssignNode",
     "ExprBinaryNode",
     "ExprIntegerNode",
     "ExprVariableNode",
+    "ExprNodeVisitor",
 )
 type ResolvedNode = TypeNode | DeclNode | StmtNode | ExprNode
 
