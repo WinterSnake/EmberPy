@@ -31,11 +31,11 @@ if TYPE_CHECKING:
     from ...middleware import Symbol
 
 ## Constants
-__all__ = ("Interpreter",)
+__all__ = ("TreeWalkInterpreter",)
 
 
 ## Classes
-class Interpreter:
+class TreeWalkInterpreter:
     """
     An AST visitor that evaluates nodes to execute the program.
     
