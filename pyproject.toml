@@ -8,3 +8,9 @@ emberc = "emberc.__main__:_entry"
 
 [tool.mypy]
 strict = true
+
+[tool.pyright]
+pythonVersion = "3.14"
+
+[tool.ruff]
+target-version = "py314"
