@@ -111,7 +111,7 @@ class TreeWalkInterpreter:
     @staticmethod
     def run(ast: ResolvedNode, symbols: Sequence[Symbol]) -> None:
         env = Environment.default
-        ast.accept(Interpreter(symbols, env))
+        ast.accept(TreeWalkInterpreter(symbols, env))
 
     # -Class Properties
     __slots__ = ("symbols", "environment", "lvalue_resolver")

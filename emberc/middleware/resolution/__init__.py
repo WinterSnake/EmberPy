@@ -55,12 +55,12 @@ __all__ = (
 
 ## Functions
 def bind_unresolved_ast(
-    unit: UnresolvedNode, engine: DiagnosticEngine
+    ast: UnresolvedNode, engine: DiagnosticEngine
 ) -> Sequence[Symbol]:
     """[Group Pass]Binds ast into the symbol table."""
     # -TODO: symbol table parent root
     symbol_table = SymbolTable()
-    LocalBinderPass.run(unit, symbol_table, engine)
+    LocalBinderPass.run(ast, symbol_table, engine)
     return symbol_table.symbols
 
 

@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, NoReturn, Protocol
 
 if TYPE_CHECKING:
-    from . import Interpreter
+    from . import TreeWalkInterpreter
     from .environment import (
         INTERPRETER_VALUE,
         Environment
@@ -54,8 +54,8 @@ class LValueResolver:
     """
     
     # -Constructor
-    def __init__(self, host: Interpreter) -> None:
-        self._host: Interpreter = host
+    def __init__(self, host: TreeWalkInterpreter) -> None:
+        self._host: TreeWalkInterpreter = host
 
     # -Instance Methods
     def visit_expr_assignment(self, node: ExprAssignNode) -> NoReturn:

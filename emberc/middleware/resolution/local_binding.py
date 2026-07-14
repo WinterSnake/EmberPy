@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 ## Classes
 class LocalBinderPass:
     """
-    Resolution Pass [1]
+    Resolution Pass [0]
     
     An AST visitor that binds variable declarations and identifier usages to their 
     respective IDs in the symbol table, while flagging redeclarations and undeclared variables.
