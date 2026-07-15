@@ -110,7 +110,7 @@ class TACTreeTransformer:
             dest,
             TACInstructionBlock([
                 *TACInstructionBlock.filter(l_inst, r_inst),
-                TACBinary(dest, l_tac, node.operator, r_tac),
+                TACBinary(dest, node.operator, l_tac, r_tac),
             ])
         )
 
