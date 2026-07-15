@@ -2,21 +2,13 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Middleware: Printers          ##
+## Printer: Unresolved           ##
 ##-------------------------------##
 
 ## Imports
-from .tac import (
-    TACDebugPrinter,
-)
-from .unresolved import (
-    UnresolvedNodeDebugPrinter,
-    UnresolvedNodeFormatPrinter,
-)
+from .debug import TACDebugPrinter
 
 ## Constants
 __all__ = (
-    "UnresolvedNodeDebugPrinter",
-    "UnresolvedNodeFormatPrinter",
     "TACDebugPrinter",
 )

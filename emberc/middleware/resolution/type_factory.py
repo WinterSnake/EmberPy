@@ -18,7 +18,6 @@ if TYPE_CHECKING:
     from ..symbol_table import SymbolTable
     from ...ast import (
         # -Unresolved
-        UnresolvedNode,
         UnresolvedUnitNode,
         UnresolvedVariableNode,
         UnresolvedExprNode,
