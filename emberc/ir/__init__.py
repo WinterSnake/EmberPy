@@ -8,6 +8,7 @@
 ## Imports
 from .tac import (
     TACUnit,
+    TACVisitor,
     TACAddress,
     TACOperand,
     TACLiteral,
@@ -23,7 +24,9 @@ from .tac import (
 
 ## Constants
 __all__ = (
+    # -3AC
     "TACUnit",
+    "TACVisitor",
     # -3AC: Operand
     "TACAddress",
     "TACOperand",

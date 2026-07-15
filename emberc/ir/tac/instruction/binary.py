@@ -22,6 +22,6 @@ if TYPE_CHECKING:
 class TACBinary:
     """Represents a binary operation instruction."""
     dest: TACAddress
-    left: TACOperand
     operator: BinaryOperator
-    right: TACOperand
+    lhs: TACOperand
+    rhs: TACOperand
