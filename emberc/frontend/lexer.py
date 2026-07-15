@@ -120,6 +120,10 @@ class Lexer(LookaheadBuffer[str, str]):
                 kind = Token.Kind.SymbolStar
             case '/':
                 kind = Token.Kind.SymbolFSlash
+                if self.consume('/'):
+                    return self._lex_comment_inline()  # type: ignore[func-returns-value]
+                elif self.consume('*'):
+                    return self._lex_comment_multi()  # type: ignore[func-returns-value]
             case '%':
                 kind = Token.Kind.SymbolPercent
             # -Misc
@@ -134,6 +138,22 @@ class Lexer(LookaheadBuffer[str, str]):
             case _:
                 raise NotImplementedError(f"Symbol '{buffer}' not handled in lexer")
         return Token(self._create_span(start), kind, None)
+
+    def _lex_comment_inline(self) -> None:
+        ''''''
+        # -TODO: Build buffer + return comment
+        while not self.consume('\n'):
+            _ = self.advance()
+
+    def _lex_comment_multi(self) -> None:
+        ''''''
+        # -TODO: Build buffer + return comment
+        while c := self.advance():
+            if c == '/' and self.consume('*'):
+                self._lex_comment_multi()
+            elif c == '*' and self.consume('/'):
+                return
+        self._engine.error("Syntax error, end of stream without multi-line comment terminator")
 
     def _lex_number(self, buffer: str) -> Token:
         '''
