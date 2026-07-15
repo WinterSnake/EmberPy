@@ -2,7 +2,7 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Unresolved Printers           ##
+## Printer: Unresolved           ##
 ##-------------------------------##
 
 ## Imports
@@ -10,4 +10,7 @@ from .debug import UnresolvedNodeDebugPrinter
 from .format import UnresolvedNodeFormatPrinter
 
 ## Constants
-__all__ = ("UnresolvedNodeDebugPrinter", "UnresolvedNodeFormatPrinter")
+__all__ = (
+    "UnresolvedNodeDebugPrinter",
+    "UnresolvedNodeFormatPrinter"
+)

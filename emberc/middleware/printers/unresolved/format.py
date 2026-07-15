@@ -6,17 +6,12 @@
 ##-------------------------------##
 
 ## Imports
-from typing import TYPE_CHECKING, assert_never
-from ....ast import (
-    UnresolvedTypeNode,
-    AssignOperator,
-    BinaryOperator,
-)
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ....diagnostics import SourceMap
     from ....ast import (
         UnresolvedNode,
+        UnresolvedTypeNode,
         UnresolvedUnitNode,
         UnresolvedVariableNode,
         UnresolvedExprNode,
@@ -41,11 +36,7 @@ class UnresolvedNodeFormatPrinter:
     # -Instance Methods
     # --Types--
     def visit_type(self, node: UnresolvedTypeNode) -> str:
-        match node.kind:
-            case UnresolvedTypeNode.Kind.Int32:
-                return 'int32'
-            case _:
-                assert_never(node.kind)
+        return str(node)
 
     # --Declarations--
     def visit_unit(self, node: UnresolvedUnitNode) -> str:
@@ -76,34 +67,14 @@ class UnresolvedNodeFormatPrinter:
         return node.inner.accept(self)
 
     def visit_assignment(self, node: UnresolvedAssignNode) -> str:
-        operator: str
         l_value = node.l_value.accept(self)
         r_value = node.r_value.accept(self)
-        match node.operator:
-            case AssignOperator.Eq:
-                operator = '='
-            case _:
-                assert_never(node.operator)
-        return f"({l_value} {operator} {r_value})"
+        return f"({l_value} {str(node.operator)} {r_value})"
 
     def visit_binary(self, node: UnresolvedBinaryNode) -> str:
-        operator: str
         lhs = node.lhs.accept(self)
         rhs = node.rhs.accept(self)
-        match node.operator:
-            case BinaryOperator.Add:
-                operator = '+'
-            case BinaryOperator.Sub:
-                operator = '-'
-            case BinaryOperator.Mul:
-                operator = '*'
-            case BinaryOperator.Div:
-                operator = '/'
-            case BinaryOperator.Mod:
-                operator = '%'
-            case _:
-                assert_never(node.operator)
-        return f"({lhs} {operator} {rhs})"
+        return f"({lhs} {str(node.operator)} {rhs})"
 
     def visit_literal(self, node: UnresolvedLiteralNode) -> str:
         return str(node.value)

@@ -6,18 +6,15 @@
 ##-------------------------------##
 
 ## Imports
-from typing import TYPE_CHECKING, assert_never
+from typing import TYPE_CHECKING
 from ....ast import (
-    UnresolvedTypeNode,
     UnresolvedLiteralNode,
-    AssignOperator,
-    BinaryOperator,
 )
 
 if TYPE_CHECKING:
-    from ....diagnostics import SourceMap
     from ....ast import (
         UnresolvedNode,
+        UnresolvedTypeNode,
         UnresolvedUnitNode,
         UnresolvedVariableNode,
         UnresolvedExprNode,
@@ -36,10 +33,14 @@ class UnresolvedNodeDebugPrinter:
     Provides a static `run` method to output the debug info starting from a root node.
     """
 
+    # -Constructor
+    def __init__(self) -> None:
+        self.depth: int = 0
+
     # -Instance Methods
     # --Types--
     def visit_type(self, node: UnresolvedTypeNode) -> str:
-        return ''
+        return str(node)
 
     # --Declarations--
     def visit_unit(self, node: UnresolvedUnitNode) -> str:
@@ -54,6 +55,11 @@ class UnresolvedNodeDebugPrinter:
 
     # --Statements--
     def visit_expression(self, node: UnresolvedExprNode) -> str:
+        if node.has_expression:
+            self.depth += 1
+            expr = node.expression.accept(self)
+            print(expr)
+            self.depth -= 1
         return ''
 
     # --Expressions--
@@ -67,10 +73,14 @@ class UnresolvedNodeDebugPrinter:
         return ''
 
     def visit_literal(self, node: UnresolvedLiteralNode) -> str:
-        return ''
+        return str(node.value)
 
     def visit_identifier(self, node: UnresolvedIdentifierNode) -> str:
         return ''
+
+    # -Instance Methods: Helpers
+    def get_indent(self) -> str:
+        return ' ' * self.depth
 
     # -Static Methods
     @staticmethod
