@@ -31,7 +31,14 @@ if TYPE_CHECKING:
 
 ## Constants
 TYPES = {
+    Token.Kind.KeywordInt8: UnresolvedTypeNode.Kind.Int8,
+    Token.Kind.KeywordInt16: UnresolvedTypeNode.Kind.Int16,
     Token.Kind.KeywordInt32: UnresolvedTypeNode.Kind.Int32,
+    Token.Kind.KeywordInt64: UnresolvedTypeNode.Kind.Int64,
+    Token.Kind.KeywordUInt8: UnresolvedTypeNode.Kind.UInt8,
+    Token.Kind.KeywordUInt16: UnresolvedTypeNode.Kind.UInt16,
+    Token.Kind.KeywordUInt32: UnresolvedTypeNode.Kind.UInt32,
+    Token.Kind.KeywordUInt64: UnresolvedTypeNode.Kind.UInt64,
 }
 LITERALS = (
     Token.Kind.Identifier,

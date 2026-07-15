@@ -43,7 +43,14 @@ class Token:
         Integer = auto()
         # -Keywords
         # -Keyword: Types
+        KeywordInt8 = auto()
+        KeywordInt16 = auto()
         KeywordInt32 = auto()
+        KeywordInt64 = auto()
+        KeywordUInt8 = auto()
+        KeywordUInt16 = auto()
+        KeywordUInt32 = auto()
+        KeywordUInt64 = auto()
         # -Symbols: Math
         SymbolEq = auto()
         SymbolPlus = auto()

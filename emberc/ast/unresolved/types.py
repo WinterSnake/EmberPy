@@ -25,8 +25,22 @@ class UnresolvedTypeNode(UnresolvedNode):
     # -Dunder Methods
     def __str__(self) -> str:
         match self.kind:
+            case UnresolvedTypeNode.Kind.Int8:
+                return "int8"
+            case UnresolvedTypeNode.Kind.Int16:
+                return "int16"
             case UnresolvedTypeNode.Kind.Int32:
                 return "int32"
+            case UnresolvedTypeNode.Kind.Int64:
+                return "int64"
+            case UnresolvedTypeNode.Kind.UInt8:
+                return "uint8"
+            case UnresolvedTypeNode.Kind.UInt16:
+                return "uint16"
+            case UnresolvedTypeNode.Kind.UInt32:
+                return "uint32"
+            case UnresolvedTypeNode.Kind.UInt64:
+                return "uint64"
             case _:
                 assert_never(self.kind)
 
@@ -39,4 +53,11 @@ class UnresolvedTypeNode(UnresolvedNode):
 
     # -Sub-Classes
     class Kind(IntEnum):
+        Int8 = auto()
+        Int16 = auto()
         Int32 = auto()
+        Int64 = auto()
+        UInt8 = auto()
+        UInt16 = auto()
+        UInt32 = auto()
+        UInt64 = auto()

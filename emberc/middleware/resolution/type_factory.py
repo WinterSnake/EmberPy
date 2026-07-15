@@ -52,8 +52,22 @@ class TypeFactory:
     # --Types--
     def visit_type(self, node: UnresolvedTypeNode) -> TypeNode:
         match node.kind:
+            case UnresolvedTypeNode.Kind.Int8:
+                return TypePrimitive.int8
+            case UnresolvedTypeNode.Kind.Int16:
+                return TypePrimitive.int16
             case UnresolvedTypeNode.Kind.Int32:
                 return TypePrimitive.int32
+            case UnresolvedTypeNode.Kind.Int64:
+                return TypePrimitive.int64
+            case UnresolvedTypeNode.Kind.UInt8:
+                return TypePrimitive.uint8
+            case UnresolvedTypeNode.Kind.UInt16:
+                return TypePrimitive.uint16
+            case UnresolvedTypeNode.Kind.UInt32:
+                return TypePrimitive.uint32
+            case UnresolvedTypeNode.Kind.UInt64:
+                return TypePrimitive.uint64
             case _:
                 assert_never(node.kind)
 

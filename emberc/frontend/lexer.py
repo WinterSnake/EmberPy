@@ -24,7 +24,14 @@ SYMBOLS = (
 )
 KEYWORDS: dict[str, Token.Kind] = {
     # -Types
+    'int8': Token.Kind.KeywordInt8,
+    'int16': Token.Kind.KeywordInt16,
     'int32': Token.Kind.KeywordInt32,
+    'int64': Token.Kind.KeywordInt64,
+    'uint8': Token.Kind.KeywordUInt8,
+    'uint16': Token.Kind.KeywordUInt16,
+    'uint32': Token.Kind.KeywordUInt32,
+    'uint64': Token.Kind.KeywordUInt64,
 }
 
 
