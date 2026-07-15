@@ -141,13 +141,13 @@ class Lexer(LookaheadBuffer[str, str]):
 
     def _lex_comment_inline(self) -> None:
         ''''''
-        # -TODO: Build buffer + return comment
-        while not self.consume('\n'):
+        # -TODO: Build span buffer + return comment
+        while not self.consume('\n') and not self.is_at_end:
             _ = self.advance()
 
     def _lex_comment_multi(self) -> None:
         ''''''
-        # -TODO: Build buffer + return comment
+        # -TODO: Build span buffer + return comment
         while c := self.advance():
             if c == '/' and self.consume('*'):
                 self._lex_comment_multi()
