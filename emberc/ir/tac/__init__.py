@@ -81,3 +81,6 @@ class TACVisitor[TReturn](ABC):
 
     @abstractmethod
     def visit_declare(self, tac: TACDeclare) -> TReturn: ...
+
+    # -Class Properties
+    __slots__ = ()

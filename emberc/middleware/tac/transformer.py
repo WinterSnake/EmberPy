@@ -56,7 +56,7 @@ class TACTreeTransformer:
 
     # -Constructor
     def __init__(self) -> None:
-        self._temp: int = 0
+        self._temporary: int = 0
 
     # -Instance Methods
     # --Types--
@@ -105,7 +105,7 @@ class TACTreeTransformer:
     def visit_expr_binary(self, node: ExprBinaryNode) -> TACExprNode:
         l_tac, l_inst = node.lhs.accept(self)
         r_tac, r_inst = node.rhs.accept(self)
-        dest = TACTemporary(self.temp)
+        dest = TACTemporary(self.next_temporary)
         return (
             dest,
             TACInstructionBlock([
@@ -128,10 +128,10 @@ class TACTreeTransformer:
 
     # -Properties
     @property
-    def temp(self) -> int:
-        temp = self._temp
-        self._temp += 1
-        return temp
+    def next_temporary(self) -> int:
+        _temporary = self._temporary
+        self._temporary += 1
+        return _temporary
 
     # -Class Properties
-    __slots__ = ("_temp",)
+    __slots__ = ("_temporary",)

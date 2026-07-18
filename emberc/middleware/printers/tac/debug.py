@@ -41,26 +41,26 @@ class TACDebugPrinter(TACVisitor[str]):
 
     # -Instance Methods: Visitor
     def visit_assignment(self, tac: TACAssign) -> str:
-        l_value = self.get_operand(tac.dest)
-        r_value = self.get_operand(tac.src)
+        l_value = self.visit_operand(tac.dest)
+        r_value = self.visit_operand(tac.src)
         return f"{l_value} = {r_value};"
 
     def visit_binary(self, tac: TACBinary) -> str:
-        lhs = self.get_operand(tac.lhs)
-        rhs = self.get_operand(tac.rhs)
-        dest = self.get_operand(tac.dest)
+        lhs = self.visit_operand(tac.lhs)
+        rhs = self.visit_operand(tac.rhs)
+        dest = self.visit_operand(tac.dest)
         return f"{dest} = {lhs} {str(tac.operator)} {rhs};"
 
     def visit_declare(self, tac: TACDeclare) -> str:
         return f"declare {self.get_symbol(tac.id)};"
 
     # -Instance Methods: Helpers
-    def get_operand(self, operand: TACOperand) -> str:
+    def visit_operand(self, operand: TACOperand) -> str:
         match operand:
             case TACLiteral():
                 return str(operand.value)
             case TACTemporary():
-                return f"r{operand.index}"
+                return f"t{operand.index}"
             case TACVariable():
                 return self.get_symbol(operand.id)
 
