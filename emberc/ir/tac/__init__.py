@@ -12,7 +12,6 @@ from dataclasses import dataclass
 
 from .instruction import (
     TACInstruction,
-    TACInstructionBlock,
     TACAssign,
     TACBinary,
     TACDeclare,
@@ -40,7 +39,6 @@ __all__ = (
     "TACVariable",
     # -Instruction
     "TACInstruction",
-    "TACInstructionBlock",
     "TACAssign",
     "TACBinary",
     "TACDeclare",

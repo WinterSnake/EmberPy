@@ -15,7 +15,6 @@ from .tac import (
     TACTemporary,
     TACVariable,
     TACInstruction,
-    TACInstructionBlock,
     TACAssign,
     TACBinary,
     TACDeclare,
@@ -35,7 +34,6 @@ __all__ = (
     "TACVariable",
     # -3AC: Instruction
     "TACInstruction",
-    "TACInstructionBlock",
     "TACAssign",
     "TACBinary",
     "TACDeclare",

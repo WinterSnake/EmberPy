@@ -6,7 +6,6 @@
 ##-------------------------------##
 
 ## Imports
-from collections.abc import Iterator
 from typing import TYPE_CHECKING
 from .transformer import TACTreeTransformer
 from ...ir import (
@@ -16,8 +15,8 @@ from ...ir import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Collection, Iterator
     from ...ir import (
-        TACInstructionBlock,
         TACAssign,
         TACBinary,
         TACDeclare,
@@ -31,7 +30,7 @@ __all__ = (
 
 
 ## Functions
-def linearize_tac_tree(tac: TACInstructionBlock) -> TACUnit:
+def linearize_tac_tree(tac: Collection[TACInstruction]) -> TACUnit:
     """[Group Pass]Runs a pipeline of lowering passes to flatten tree-structured TAC into linear TAC."""
     return TACLinearTransformer.run(tac)
 
@@ -55,7 +54,7 @@ class TACLinearTransformer(TACVisitor[TACInstruction | None]):
         return tac
 
     # -Instance Methods: Helpers
-    def visit_block(self, tac: TACInstructionBlock) -> Iterator[TACInstruction]:
+    def visit_block(self, tac: Collection[TACInstruction]) -> Iterator[TACInstruction]:
         for instruction in tac:
             result = self.visit(instruction)
             if result:
@@ -63,7 +62,7 @@ class TACLinearTransformer(TACVisitor[TACInstruction | None]):
 
     # -Static Methods
     @staticmethod
-    def run(tac: TACInstructionBlock) -> TACUnit:
+    def run(tac: Collection[TACInstruction]) -> TACUnit:
         instructions: list[TACInstruction] = []
         transformer = TACLinearTransformer()
         for instruction in transformer.visit_block(tac):
