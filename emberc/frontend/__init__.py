@@ -6,9 +6,15 @@
 ##-------------------------------##
 
 ## Imports
+from .comment import Comment
 from .lexer import Lexer
 from .parser import Parser
 from .token import Token
 
 ## Constants
-__all__ = ("Lexer", "Parser", "Token")
+__all__ = (
+    "Lexer",
+    "Parser",
+    "Comment",
+    "Token",
+)
