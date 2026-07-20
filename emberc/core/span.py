@@ -6,45 +6,37 @@
 ##-------------------------------##
 
 ## Imports
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 
 
 ## Classes
 @dataclass(frozen=True, slots=True)
 class Span:
-    """
-    Represents a continuous region of text within a specific source file.
-
-    Used by the lexer, parser, and AST nodes to track precise byte/character
-    offsets for error reporting, syntax highlighting, and source-to-token mapping.
-    """
-
+    """Contiguous slice of source text bound by start and end offsets."""
     # -Dunder Methods
     def __len__(self) -> int:
         return self.end - self.start
 
     # -Instance Methods
     def start_at(self, position: int) -> Span:
-        return Span(self.id, position, self.end)
+        '''Create a new span with the given start position.'''
+        return replace(self, start=position)
 
     def end_at(self, position: int) -> Span:
-        return Span(self.id, self.start, position)
+        '''Create a new span with the given end position.'''
+        return replace(self, end=position)
 
-    def extend_from(self, other: Span) -> Span:
-        if self.id != other.id:
-            raise ValueError("Cannot combine spans of different sources")
-        return Span(self.id, other.start, self.end)
+    def extend_from(self, span: Span) -> Span:
+        '''Create a new span extended backward from the start of another span.'''
+        assert self.id == span.id, "Cannot extend different source spans."
+        return replace(self, start=span.start)
 
-    def extend_to(self, other: Span) -> Span:
-        if self.id != other.id:
-            raise ValueError("Cannot combine spans of different sources")
-        return Span(self.id, self.start, other.end)
+    def extend_to(self, span: Span) -> Span:
+        '''Create a new span extended forward to the end of another span.'''
+        assert self.id == span.id, "Cannot extend different source spans."
+        return replace(self, end=span.end)
 
     # -Properties
-    id: int
+    id: int = field(repr=False)
     start: int
     end: int
-
-    @property
-    def offsets(self) -> tuple[int, int]:
-        return (self.start, self.end)
