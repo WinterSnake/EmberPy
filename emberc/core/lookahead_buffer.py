@@ -15,21 +15,21 @@ if TYPE_CHECKING:
 
 ## Constants
 __all__ = ("LookaheadBuffer",)
-type Selector[Item, Key] = Callable[[Item], Key]
+type Selector[Item, Tag] = Callable[[Item], Tag]
 
 
 ## Functions
-def _get_key_from_item[Item, Key](
-    item: Item, selector: Selector[Item, Key] | None
-) -> Key:
-    """Extract key from item using selector; return item as key if no selector."""
+def _get_tag_from_item[Item, Tag](
+    item: Item, selector: Selector[Item, Tag] | None
+) -> Tag:
+    """Extract tag from item using selector; return item as tag if no selector."""
     if selector is not None:
         return selector(item)
     return item  # type: ignore[return-value]
 
 
 ## Classes
-class LookaheadBuffer[Item, Key](ABC):
+class LookaheadBuffer[Item, Tag](ABC):
     """
     Lookahead(n) Buffer
 
@@ -39,12 +39,12 @@ class LookaheadBuffer[Item, Key](ABC):
     # -Constructor
     def __init__(
         self, source: Iterator[Item],
-        selector: Selector[Item, Key] | None = None
+        selector: Selector[Item, Tag] | None = None
     ) -> None:
         self._source = source
         self._selector = selector
         self._buffer: deque[Item] = deque()
-        self._is_at_end: bool = False
+        self._is_at_end = False
 
     # -Instance Methods
     def advance(self) -> Item | None:
@@ -73,24 +73,24 @@ class LookaheadBuffer[Item, Key](ABC):
         assert item is not None
         return item
 
-    def consume(self, expected: Key) -> bool:
-        '''Advance the stream by one if key matches expected; return if consumed.'''
+    def consume(self, expected: Tag) -> bool:
+        '''Advance the stream by one if tag matches expected; return if consumed.'''
         item = self.peek()
         if item is None:
             return False
-        key = _get_key_from_item(item, self._selector)
-        if key != expected:
+        tag = _get_tag_from_item(item, self._selector)
+        if tag != expected:
             return False
         _ = self.advance()
         return True
 
-    def matches(self, *expected: Key) -> bool:
-        '''Check if next item's key matches expected keys; return if matching.'''
+    def matches(self, *expected: Tag) -> bool:
+        '''Check if next item's tag matches expected tags; return if matching.'''
         item = self.peek()
         if item is None:
             return False
-        key = _get_key_from_item(item, self._selector)
-        return key in expected
+        tag = _get_tag_from_item(item, self._selector)
+        return tag in expected
 
     # -Properties
     @property
@@ -103,7 +103,7 @@ class LookaheadBuffer[Item, Key](ABC):
     @property
     def is_at_end(self) -> bool:
         '''Peek next item; return True if stream is exhausted and buffer empty.'''
-        self.peek()
+        _ = self.peek()
         return self._is_at_end and not self._buffer
 
     # -Class Properties
