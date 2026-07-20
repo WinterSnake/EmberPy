@@ -68,7 +68,7 @@ class LookaheadBuffer[Item, Tag](ABC):
         return None
 
     def next(self) -> Item:
-        '''Advance the stream by one; assert item exists and return it.'''
+        '''Return next item and advance the stream; assert item exists.'''
         item = self.advance()
         assert item is not None
         return item
@@ -95,7 +95,7 @@ class LookaheadBuffer[Item, Tag](ABC):
     # -Properties
     @property
     def current(self) -> Item:
-        '''Peek next item; assert item exists and return it.'''
+        '''Return current item without advancing the stream; assert item exists.'''
         item = self.peek()
         assert item is not None
         return item
