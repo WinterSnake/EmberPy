@@ -2,12 +2,18 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Diagnostic                    ##
+## Diagnostics                   ##
 ##-------------------------------##
 
 ## Imports
+from .diagnostic import Diagnostic
 from .engine import DiagnosticEngine
-from .source_map import SourceMap
+from .source_map import Source, SourceMap
 
 ## Constants
-__all__ = ("DiagnosticEngine", "SourceMap")
+__all__ = (
+    "Diagnostic",
+    "DiagnosticEngine",
+    "Source",
+    "SourceMap",
+)
