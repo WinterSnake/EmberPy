@@ -6,116 +6,173 @@
 ##-------------------------------##
 
 ## Imports
-from typing import TYPE_CHECKING, Self, cast
+from typing import (
+    TYPE_CHECKING,
+    Literal, Self, TypeIs,
+    assert_never
+)
 from .token import Token
-from ..core import LookaheadBuffer, Span
 from ..ast import (
     AssignOperator,
     BinaryOperator,
-    UnresolvedNode,
+    UnaryOperator,
+    PrimitiveType,
+    # -Types
     UnresolvedTypeNode,
+    # -Declarations
     UnresolvedUnitNode,
     UnresolvedVariableNode,
-    UnresolvedExprNode,
+    # -Statements
+    UnresolvedBlockNode,
+    UnresolvedConditionalNode,
+    UnresolvedExpressionNode,
+    # -Expressions
     UnresolvedGroupNode,
     UnresolvedAssignNode,
     UnresolvedBinaryNode,
-    UnresolvedLiteralNode,
+    UnresolvedUnaryPrefixNode,
+    UnresolvedBooleanNode,
+    UnresolvedIntegerNode,
     UnresolvedIdentifierNode,
 )
+from ..core import LookaheadBuffer, Span
+from ..diagnostics import Diagnostic
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from .lexer import Lexer
+    from ..ast import UnresolvedNode
     from ..diagnostics import DiagnosticEngine
+
 
 ## Constants
 TYPES = {
-    Token.Kind.KeywordInt8: UnresolvedTypeNode.Kind.Int8,
-    Token.Kind.KeywordInt16: UnresolvedTypeNode.Kind.Int16,
-    Token.Kind.KeywordInt32: UnresolvedTypeNode.Kind.Int32,
-    Token.Kind.KeywordInt64: UnresolvedTypeNode.Kind.Int64,
-    Token.Kind.KeywordUInt8: UnresolvedTypeNode.Kind.UInt8,
-    Token.Kind.KeywordUInt16: UnresolvedTypeNode.Kind.UInt16,
-    Token.Kind.KeywordUInt32: UnresolvedTypeNode.Kind.UInt32,
-    Token.Kind.KeywordUInt64: UnresolvedTypeNode.Kind.UInt64,
+    Token.Kind.KeywordVoid: PrimitiveType.Void,
+    Token.Kind.KeywordBoolean: PrimitiveType.Boolean,
+    Token.Kind.KeywordInt8: PrimitiveType.Int8,
+    Token.Kind.KeywordInt16: PrimitiveType.Int16,
+    Token.Kind.KeywordInt32: PrimitiveType.Int32,
+    Token.Kind.KeywordInt64: PrimitiveType.Int64,
+    Token.Kind.KeywordUInt8: PrimitiveType.UInt8,
+    Token.Kind.KeywordUInt16: PrimitiveType.UInt16,
+    Token.Kind.KeywordUInt32: PrimitiveType.UInt32,
+    Token.Kind.KeywordUInt64: PrimitiveType.UInt64,
+    Token.Kind.KeywordISize: PrimitiveType.ISize,
+    Token.Kind.KeywordUSize: PrimitiveType.USize,
 }
 LITERALS = (
     Token.Kind.Identifier,
+    Token.Kind.Boolean,
     Token.Kind.Integer,
 )
+UNARY_OPERATORS = {
+    Token.Kind.SymbolMinus: UnaryOperator.NumNegate,
+    Token.Kind.SymbolBang: UnaryOperator.LogNegate,
+}
 BINARY_OPERATORS = {
     Token.Kind.SymbolPlus: (BinaryOperator.Add, 1),
-    Token.Kind.SymbolMinus: (BinaryOperator.Sub, 1),
-    Token.Kind.SymbolStar: (BinaryOperator.Mul, 2),
-    Token.Kind.SymbolFSlash: (BinaryOperator.Div, 2),
-    Token.Kind.SymbolPercent: (BinaryOperator.Mod, 2),
+    Token.Kind.SymbolMinus: (BinaryOperator.Add, 1),
+    Token.Kind.SymbolStar: (BinaryOperator.Add, 2),
+    Token.Kind.SymbolFSlash: (BinaryOperator.Add, 2),
+    Token.Kind.SymbolPercent: (BinaryOperator.Add, 2),
 }
 ASSIGNMENT_OPERATORS = {
     Token.Kind.SymbolEq: AssignOperator.Eq,
 }
 STATEMENT_STARTERS = (
-    Token.Kind.SymbolSemicolon,
+    Token.Kind.SymbolLBrace,
+    Token.Kind.KeywordIf,
 )
+type LITERAL_KIND = Literal[
+    Token.Kind.Identifier,
+    Token.Kind.Boolean,
+    Token.Kind.Integer,
+]
+
+
+## Functions
+def _is_literal_kind(kind: Token.Kind) -> TypeIs[LITERAL_KIND]:
+    return kind in LITERALS
 
 
 ## Classes
+class ParserSyncError(BaseException):
+    """Thrown to allow parser to sync at boundries; hold diagnostic context."""
+    # -Constructor
+    def __init__(self, diagnostic: Diagnostic) -> None:
+        self.diagnostic = diagnostic
+
+    # -Class Methods
+    @classmethod
+    def build(cls, code: Diagnostic.Code, span: Span) -> Self:
+        return cls(Diagnostic(Diagnostic.Level.Error, code, span))
+
+
 class Parser(LookaheadBuffer[Token, Token.Kind]):
     """
-    Ember Lookahead(n) Parser
+    Ember Recursive Descent Parser [LL(n)]
 
-    Consumes a stream of tokens from a lookahead buffer and applies a top-down,
-    recursive descent strategy to generate an unresolved AST.
-    Tracks source locations and integrates with a diagnostic engine for error reporting
+    Transform a token source stream into an unresolved AST.
+    Attach token spans to corresponding AST nodes and handle
+    diagnostic reporting through the engine.
     """
-
     # -Constructor
     def __init__(
         self, _id: int, source: Iterator[Token], engine: DiagnosticEngine
     ) -> None:
         super().__init__(source, lambda token: token.kind)
-        # -Location
-        self.id: int = _id
+        self.id = _id
+        self.engine = engine
         self._last_token: Token | None = None
-        # -Diagnostics
-        self._engine: DiagnosticEngine = engine
 
     # -Instance Methods: Lookahead
     def advance(self) -> Token | None:
-        token = super().advance()
-        if token is not None:
+        '''Advance the stream by one and update last token; return token or None if at end.'''
+        if (token := super().advance()) is not None:
             self._last_token = token
         return token
 
-    def requires(self, *expected: Token.Kind) -> Token:
+    def requires(
+        self, code: Diagnostic.Code,
+        *expected: Token.Kind,
+        is_delimiter: bool = False,
+    ) -> Token:
+        '''Return next token if tag matches expected; log error and raise parser sync if not.'''
         if self.matches(*expected):
             return self.next()
-        # -TODO: Error[syntax] codes
-        names = ','.join(kind.name for kind in expected)
-        error = f"Expected [{names}] but got"
-        if self.is_at_end:
-            self._engine.error(f"{error} end of stream")
+        span: Span
+        if is_delimiter or self.is_at_end:
+            span = Span.point(self.id, self.last_token.span.end)
         else:
-            self._engine.error(f"{error} {self.current.kind.name}")
-        # -TODO: parser sync error
-        raise StopIteration
+            span = self.current.span
+        raise ParserSyncError.build(code, span)
 
-    # -Instance Methods: Parser
-    def parse(self) -> UnresolvedNode:
+    # -Instance Methods: Parsing
+    def _sync(self, diagnostic: Diagnostic) -> None:
+        '''Skip tokens until state boundary is reached, then return control flow.'''
+        self.engine.report(diagnostic)
+        while token := self.advance():
+            if token.kind is Token.Kind.SymbolSemicolon:
+                break
+
+    def parse(self) -> UnresolvedUnitNode:
         '''
         Grammar[Unit]
         declaration*;
         '''
         nodes: list[UnresolvedNode] = []
-        first_token = self.peek()
+        _first_token = self.peek()
         while not self.is_at_end:
-            node = self._parse_declaration()
-            nodes.append(node)
-        if self._last_token is None:
+            try:
+                node = self._parse_declaration()
+                nodes.append(node)
+            except ParserSyncError as sync:
+                self._sync(sync.diagnostic)
+        span: Span
+        if _first_token is None:
             span = Span(self.id, 0, 0)
         else:
-            first_token = cast(Token, first_token)
-            span = self.last_token.span.extend_from(first_token.span)
+            span = _first_token.span.extend_to(self.last_token.span)
         return UnresolvedUnitNode(span, nodes)
 
     def _parse_declaration(self) -> UnresolvedNode:
@@ -129,36 +186,41 @@ class Parser(LookaheadBuffer[Token, Token.Kind]):
         self, _type: UnresolvedNode | None = None
     ) -> UnresolvedNode:
         '''
-        Grammar[Declaration:Variable]
-        TYPE entry+ ';';
+        Grammar[Declaration::Variable]
+        TYPE entry (',' entry)* ';';
         '''
-        # -Internal Methods
+        # -Internal Functions
         def _parse_entry() -> UnresolvedVariableNode.Entry:
             '''
-            Grammar[Entry]
+            Grammar[Declaration::Variable::Entry]
             IDENTIFIER ('=' expression)?;
             '''
-            identifier = self.requires(Token.Kind.Identifier)
-            name = identifier.value_as(str)
-            span = identifier.span
+            token = self.requires(Diagnostic.Code.E2004, Token.Kind.Identifier)
             initializer: UnresolvedNode | None = None
+            span = token.span
             if self.consume(Token.Kind.SymbolEq):
+                span = span.extend_to(self.last_token.span)
                 initializer = self._parse_expression()
-                span = span.extend_to(initializer.wide_span)
-            return UnresolvedVariableNode.Entry(span, name, initializer)
+            return UnresolvedVariableNode.Entry(
+                span, token.value_as(str), initializer
+            )
         # -Body
         if _type is None:
             _type = self._parse_type()
         entries = [_parse_entry()]
         while self.consume(Token.Kind.SymbolComma):
             entries.append(_parse_entry())
-        token = self.requires(Token.Kind.SymbolSemicolon)
-        span = _type.location.extend_to(token.span)
+        token = self.requires(
+            Diagnostic.Code.E2002,
+            Token.Kind.SymbolSemicolon,
+            is_delimiter=True
+        )
+        span = entries[0].location.extend_to(token.span)
         return UnresolvedVariableNode(span, _type, entries)
 
     def _parse_declaration_statement(self) -> UnresolvedNode:
         '''
-        Grammar[Declaration:Statement]
+        Grammar[Declaration::Statement]
         declaration_variable | statement;
         '''
         if self.matches(*STATEMENT_STARTERS):
@@ -171,22 +233,44 @@ class Parser(LookaheadBuffer[Token, Token.Kind]):
     def _parse_statement(self) -> UnresolvedNode:
         '''
         Grammar[Statement]
+        statement_block |
+        statment_condition |
         statement_expression;
         '''
         return self._parse_statement_expression()
+
+    def _parse_statement_block(self) -> None:
+        '''
+        Grammar[Statement::Block]
+        '{' declaration_statement* '}';
+        '''
+        pass
+
+    def _parse_statement_condition(self) -> None:
+        '''
+        Grammar[Statement::Condition]
+        'if' '(' expression ')' statement ('else' statement)?;
+        '''
+        pass
 
     def _parse_statement_expression(
         self, expr: UnresolvedNode | None = None
     ) -> UnresolvedNode:
         '''
-        Grammar[Statement:Expression]
-        expression? ';';
+        Grammar[Statement::Expression]
+        expression ';';
         '''
-        if self.consume(Token.Kind.SymbolSemicolon):
-            return UnresolvedExprNode(self.last_token.span, expr)
+        if expr is not None and self.consume(Token.Kind.SymbolSemicolon):
+                span = self.last_token.span.extend_from(expr.wide_span)
+                return UnresolvedExpressionNode(span, expr)
         expr = self._parse_expression(expr)
-        token = self.requires(Token.Kind.SymbolSemicolon)
-        return UnresolvedExprNode(token.span, expr)
+        token = self.requires(
+            Diagnostic.Code.E2002,
+            Token.Kind.SymbolSemicolon,
+            is_delimiter=True
+        )
+        span = token.span.extend_from(expr.wide_span)
+        return UnresolvedExpressionNode(span, expr)
 
     def _parse_expression(
         self, l_value: UnresolvedNode | None = None
@@ -200,20 +284,22 @@ class Parser(LookaheadBuffer[Token, Token.Kind]):
             token = self.next()
             operator = ASSIGNMENT_OPERATORS[token.kind]
             r_value = self._parse_expression()
-            l_value = UnresolvedAssignNode(token.span, operator, l_value, r_value)
+            l_value = UnresolvedAssignNode(
+                token.span, operator, l_value, r_value
+            )
         return l_value
 
     def _parse_expression_binary(
         self, current: int = 0, lhs: UnresolvedNode | None = None
     ) -> UnresolvedNode:
         '''
-        Grammar[Expression:Binary]
+        Grammar[Expression::Binary]
         expression_binary ('*' | '/' | '%') expression_binary |
         expression_binary ('+' | '-') expression_binary |
-        expression_primary;
+        expression_unary;
         '''
         if lhs is None:
-            lhs = self._parse_expression_primary()
+            lhs = self._parse_expression_unary_prefix()
         while self.matches(*BINARY_OPERATORS.keys()):
             token = self.current
             operator, precedence = BINARY_OPERATORS[token.kind] 
@@ -224,20 +310,35 @@ class Parser(LookaheadBuffer[Token, Token.Kind]):
             lhs = UnresolvedBinaryNode(token.span, operator, lhs, rhs)
         return lhs
 
+    def _parse_expression_unary_prefix(self) -> UnresolvedNode:
+        '''
+        Grammar[Expression::Unary]
+        ('-' | '!') expression_unary |
+        expression_primary;
+        '''
+        if self.matches(*UNARY_OPERATORS.keys()):
+            token = self.next()
+            operator = UNARY_OPERATORS[token.kind]
+            operand = self._parse_expression_unary_prefix()
+            return UnresolvedUnaryPrefixNode(token.span, operator, operand)
+        return self._parse_expression_primary()
+
     def _parse_expression_primary(self) -> UnresolvedNode:
         '''
-        Grammar[Expression:Primary]
+        Grammar[Expression::Primary]
         '(' expression ')' |
-        IDENTIFIER |
-        INTEGER;
+        IDENTIFIER | BOOLEAN | INTEGER;
         '''
         # -Group
         if self.consume(Token.Kind.SymbolLParen):
             start = self.last_token
             inner = self._parse_expression()
-            end = self.requires(Token.Kind.SymbolRParen)
-            span = start.span.extend_to(end.span)
-            return UnresolvedGroupNode(span, inner)
+            end = self.requires(
+                Diagnostic.Code.E2003,
+                Token.Kind.SymbolRParen,
+                is_delimiter=True
+            )
+            return UnresolvedGroupNode(start.span.extend_to(end.span), inner)
         # -Literal
         return self._parse_literal()
 
@@ -245,42 +346,31 @@ class Parser(LookaheadBuffer[Token, Token.Kind]):
     def _parse_literal(self) -> UnresolvedNode:
         '''
         Grammar[Literal]
-        TYPE | IDENTIFIER | INTEGER;
-
-        Used as a factory pattern to create concrete types, identifiers, or literals.
+        TYPE | IDENTIFIER | BOOLEAN | INTEGER;
         '''
         # -Type
         if self.matches(*TYPES.keys()):
             token = self.next()
             return UnresolvedTypeNode(token.span, TYPES[token.kind])
-        # -Literal
-        token = self.requires(*LITERALS)
+        # -Literals
+        token = self.requires(Diagnostic.Code.E2001, *LITERALS)
+        assert _is_literal_kind(token.kind)
         match token.kind:
             case Token.Kind.Identifier:
-                return UnresolvedIdentifierNode(
-                    token.span, token.value_as(str)
-                )
+                return UnresolvedIdentifierNode(token.span, token.value_as(str))
+            case Token.Kind.Boolean:
+                return UnresolvedBooleanNode(token.span, token.value_as(bool))
             case Token.Kind.Integer:
-                return UnresolvedLiteralNode.integer(
-                    token.span, token.value_as(int)
-                )
-        assert False, f"Invalid parser state; parse_literal fell through {token}"
+                return UnresolvedIntegerNode(token.span, token.value_as(int))
+            case _:
+                assert_never(token.kind)
 
     def _parse_type(self) -> UnresolvedNode:
-        '''
-        Parses a type signature.
-
-        Handles the base type identifier or primitive, along with any modifiers/qualifiers.
-        '''
-        return self._parse_expression_primary()
+        '''Parse a valid type signature; alias for unary expression.'''
+        return self._parse_expression_unary_prefix()
 
     def _try_parse_type(self) -> tuple[bool, UnresolvedNode]:
-        '''
-        Disambiguates variable declarations from expression statements.
-        
-        Parses the leading type node and checks for a trailing identifier 
-        to confirm a declaration, returning the 'head' node to prevent backtracking.
-        '''
+        '''Try to parse a type signature and return if the signature is followed by an identifier.'''
         head = self._parse_type()
         is_decl = self.matches(Token.Kind.Identifier)
         return (is_decl, head)
@@ -288,7 +378,8 @@ class Parser(LookaheadBuffer[Token, Token.Kind]):
     # -Class Methods
     @classmethod
     def from_lexer(cls, lexer: Lexer) -> Self:
-        return cls(lexer.id, lexer, lexer._engine)
+        '''Create parser from the given lexer by copying the id and engine.'''
+        return cls(lexer.id, lexer.get_token_iter(), lexer.engine)
 
     # -Properties
     @property
@@ -297,4 +388,8 @@ class Parser(LookaheadBuffer[Token, Token.Kind]):
         return self._last_token
 
     # -Class Properties
-    __slots__ = ('id', '_last_token', '_engine')
+    __slots__ = (
+        "id",
+        "engine",
+        "_last_token",
+    )

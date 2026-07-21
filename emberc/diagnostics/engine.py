@@ -52,7 +52,7 @@ class DiagnosticEngine:
         # -Location
         location = str(source.path) if source.is_path else "<raw source>"
         row, column = source.resolve_location(diagnostic.location.start)
-        location = f"{location}:{row}:{column}"
+        location = f"[{location}:{row}:{column}]"
         # -Level
         level: str
         match diagnostic.level:

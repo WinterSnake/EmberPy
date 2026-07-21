@@ -54,9 +54,12 @@ class Diagnostic:
     class Code(Enum):
         # -Lexer
         E1001 = ("Unknown character '{0}' found", True)
-        E1002 = ("Unterminated multi-line comment found; expected '*/'", False)
+        E1002 = ("Unterminated multi-line comment; expected '*/'", False)
         # -Parser
-        E2001 = ("';' expected", False)
+        E2001 = ("Expression expected", False)
+        E2002 = ("';' expected", False)
+        E2003 = ("')' expected", False)
+        E2004 = ("Identifier expected", False)
 
     class Level(IntEnum):
         Error = auto()
