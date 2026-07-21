@@ -6,6 +6,7 @@
 ##-------------------------------##
 
 ## Imports
+import bisect
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -30,8 +31,8 @@ class Source:
     def __init__(self, text: str | None, path: Path | None) -> None:
         self._text: str | None = text
         self._path: Path | None = path
-        self.comments: Sequence[Comment]
-        self.line_offsets: Sequence[int]
+        self._comments: MutableSequence[Comment] = []
+        self._line_offsets: MutableSequence[int] = [0]
 
     # -Instance Methods
     def get_text_iter(self) -> Iterator[str]:
@@ -40,6 +41,12 @@ class Source:
             with self.path.open('r') as f:
                 self._text = f.read()
         yield from self._text
+
+    def resolve_location(self, position: int) -> tuple[int, int]:
+        '''Return calculated (row, column) pair from given byte offset.'''
+        row = bisect.bisect_right(self.line_offsets, position)
+        column = (position - self.line_offsets[row - 1]) + 1
+        return (row, column)
 
     # -Properties
     @property
@@ -59,12 +66,20 @@ class Source:
         assert self._path is not None
         return self._path
 
+    @property
+    def comments(self) -> Sequence[Comment]:
+        return tuple(self._comments)
+
+    @property
+    def line_offsets(self) -> Sequence[int]:
+        return tuple(self._line_offsets)
+
     # -Class Properties
     __slots__ = (
-        "comments",
-        "line_offsets",
-        "_path",
         "_text",
+        "_path",
+        "_comments",
+        "_line_offsets",
     )
 
 
