@@ -7,6 +7,7 @@
 
 ## Imports
 from dataclasses import dataclass, field, replace
+from typing import Self
 
 
 ## Classes
@@ -35,6 +36,11 @@ class Span:
         '''Create a new span extended forward to the end of another span.'''
         assert self.id == span.id, "Cannot extend different source spans."
         return replace(self, end=span.end)
+
+    # -Class Methods
+    @classmethod
+    def point(cls, _id: int, position: int) -> Self:
+        return cls(_id, position, position + 1)
 
     # -Properties
     id: int = field(repr=False)

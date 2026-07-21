@@ -10,10 +10,11 @@ from typing import TYPE_CHECKING, Self
 from .comment import Comment
 from .token import Token
 from ..core import LookaheadBuffer, Span
+from ..diagnostics import Diagnostic
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, MutableSequence
-    from ..diagnostics import DiagnosticEngine
+    from collections.abc import Iterator
+    from ..diagnostics import DiagnosticEngine, Source
 
 ## Constants
 SYMBOLS = (
@@ -64,8 +65,6 @@ class Lexer(LookaheadBuffer[str, str]):
         self.id = _id
         self.engine = engine
         self.offset = 0
-        self._line_offsets: MutableSequence[int] = [0]
-        self._comments: MutableSequence[Comment] = []
 
     # -Instance Methods: Lookahead
     def advance(self) -> str | None:
@@ -74,18 +73,16 @@ class Lexer(LookaheadBuffer[str, str]):
             return None
         self.offset += 1
         if c == '\n':
-            self._line_offsets.append(self.offset)
+            self.source._line_offsets.append(self.offset)
         return c
 
     # -Instance Methods: Lexing
     def get_token_iter(self) -> Iterator[Token]:
-        '''Return a token iterator from source stream until exhausted; updates source metadata on completion.'''
+        '''Return a token iterator from source stream until exhausted.'''
         while not self.is_at_end:
             token = self._lex()
             if token:
                 yield token
-        self.engine.source_map[self.id].comments = tuple(self._comments)
-        self.engine.source_map[self.id].line_offsets = tuple(self._line_offsets)
 
     def _lex(self) -> Token | None:
         '''
@@ -104,7 +101,9 @@ class Lexer(LookaheadBuffer[str, str]):
             # Default -> Word
             elif c.isalpha() or c == '_':
                 return self._lex_word()
-            # [Unknown] TODO: Report error to engine
+            self.engine.error(
+                Diagnostic.Code.E1001, Span.point(self.id, self.byte_offset), c
+            )
         return None
 
     def _lex_symbol(self, symbol: str) -> Token | None:
@@ -124,11 +123,12 @@ class Lexer(LookaheadBuffer[str, str]):
                 kind = Token.Kind.SymbolFSlash
                 if self.consume('/'):
                     comment = self._lex_comment_inline(start)
-                    self._comments.append(comment)
+                    self.source._comments.append(comment)
                     return None
                 elif self.consume('*'):
                     comment = self._lex_comment_multi(start)
-                    self._comments.append(comment)
+                    if comment:
+                        self.source._comments.append(comment)
                     return None
             case '%':
                 kind = Token.Kind.SymbolPercent
@@ -172,18 +172,22 @@ class Lexer(LookaheadBuffer[str, str]):
             _ = self.next()
         return Comment(self._span_from(start, self.byte_offset), None)
 
-    def _lex_comment_multi(self, start: int) -> Comment:
+    def _lex_comment_multi(self, start: int) -> Comment | None:
         '''
         State: Comment[Multi]
         '''
         children: list[Comment] = []
         while c := self.advance():
             if c == '*' and self.consume('/'):
-                break
+                return Comment(self._span_from(start), tuple(children))
             elif c == '/' and self.consume('*'):
                 child = self._lex_comment_multi(self.offset - 2)
+                if not child:
+                    break
                 children.append(child)
-        return Comment(self._span_from(start), tuple(children))
+        self.engine.error(
+            Diagnostic.Code.E1002, Span.point(self.id, self.offset)
+        )
 
     def _lex_number(self) -> Token:
         '''
@@ -246,11 +250,13 @@ class Lexer(LookaheadBuffer[str, str]):
     def byte_offset(self) -> int:
         return self.offset - 1
 
+    @property
+    def source(self) -> Source:
+        return self.engine.source_map[self.id]
+
     # -Class Properties
     __slots__ = (
         "id",
         "engine",
         "offset",
-        "_comments",
-        "_line_offsets",
     )
