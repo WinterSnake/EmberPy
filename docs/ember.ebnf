@@ -3,21 +3,32 @@ unit: declaration*;
 
 # Declarations
 declaration: declaration_statement;
-declaration_variable: TYPE (IDENTIFIER ('=' expression)?)+ ';';
+declaration_variable: TYPE entry (',' entry)* ';';
+	entry: IDENTIFIER ('=' expression)?;
 declaration_statement: declaration_variable
 					 | statement
 					 ;
 
 # Statements
-statement: statement_expression;
-statement_expression: expression? ';';
+statement: statement_block
+		 | statement_condition
+		 | statement_expression
+		 ;
+statement_block: '{' declaration_statement* '}';
+statement_condition: 'if' '(' expression ')' statement ('else' statement)?;
+statement_expression: expression ';';
 
 # Expressions
 expression: expression_binary ('=' expression)?;
-expression_binary: expression_binary ('*' | '/' | '%') expression_binary
+expression_binary: expression_binary ("==" | "!=") expression_binary
+				 | expression_binary ('<' | "<=" | '>' | ">=") expression_binary
+				 | expression_binary ('*' | '/' | '%') expression_binary
 				 | expression_binary ('+' | '-') expression_binary
-				 | expression_primary
+				 | expression_unary
 				 ;
+expression_unary: ('-' | '!') expression_unary
+				| expression_primary
+				;
 expression_primary: '(' expression ')'
 				  | IDENTIFIER
 				  | INTEGER
@@ -25,4 +36,9 @@ expression_primary: '(' expression ')'
 
 # Terminals
 TYPE: BUILTIN_TYPE | IDENTIFIER;
-BUILTIN_TYPE: "int32";
+BUILTIN_TYPE: "void"
+            | "bool"
+			| "int8" | "int16" | "int32" | "int64"
+			| "uint8" | "uint16" | "uint32" | "uint64"
+			| "usize" | "isize"
+			;

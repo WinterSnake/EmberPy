@@ -347,6 +347,8 @@ class Parser(LookaheadBuffer[Token, Token.Kind]):
     ) -> UnresolvedNode:
         '''
         Grammar[Expression::Binary]
+        expression_binary ("==" | "!=") expression_binary |
+        expression_binary ('<' | "<=" | '>' | ">=") expression_binary |
         expression_binary ('*' | '/' | '%') expression_binary |
         expression_binary ('+' | '-') expression_binary |
         expression_unary;
