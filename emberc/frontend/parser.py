@@ -70,11 +70,19 @@ UNARY_OPERATORS = {
     Token.Kind.SymbolBang: UnaryOperator.LogNegate,
 }
 BINARY_OPERATORS = {
-    Token.Kind.SymbolPlus: (BinaryOperator.Add, 1),
-    Token.Kind.SymbolMinus: (BinaryOperator.Add, 1),
-    Token.Kind.SymbolStar: (BinaryOperator.Add, 2),
-    Token.Kind.SymbolFSlash: (BinaryOperator.Add, 2),
-    Token.Kind.SymbolPercent: (BinaryOperator.Add, 2),
+    # -Comparisons
+    Token.Kind.SymbolEqEq: (BinaryOperator.Eq, 1),
+    Token.Kind.SymbolBangEq: (BinaryOperator.NtEq, 1),
+    Token.Kind.SymbolLt: (BinaryOperator.Lt, 2),
+    Token.Kind.SymbolGt: (BinaryOperator.Gt, 2),
+    Token.Kind.SymbolLtEq: (BinaryOperator.LtEq, 2),
+    Token.Kind.SymbolGtEq: (BinaryOperator.GtEq, 2),
+    # -Math
+    Token.Kind.SymbolPlus: (BinaryOperator.Add, 3),
+    Token.Kind.SymbolMinus: (BinaryOperator.Sub, 3),
+    Token.Kind.SymbolStar: (BinaryOperator.Mod, 4),
+    Token.Kind.SymbolFSlash: (BinaryOperator.Div, 4),
+    Token.Kind.SymbolPercent: (BinaryOperator.Mod, 4),
 }
 ASSIGNMENT_OPERATORS = {
     Token.Kind.SymbolEq: AssignOperator.Eq,
@@ -148,12 +156,22 @@ class Parser(LookaheadBuffer[Token, Token.Kind]):
         raise ParserSyncError.build(code, span)
 
     # -Instance Methods: Parsing
-    def _sync(self, diagnostic: Diagnostic) -> None:
+    def _sync(self, diagnostic: Diagnostic, consume_block: bool) -> None:
         '''Skip tokens until state boundary is reached, then return control flow.'''
         self.engine.report(diagnostic)
-        while token := self.advance():
-            if token.kind is Token.Kind.SymbolSemicolon:
-                break
+        while token := self.peek():
+            match token.kind:
+                case Token.Kind.KeywordIf:
+                    break
+                case Token.Kind.SymbolRBrace:
+                    if consume_block:
+                        _ = self.advance()
+                    break
+                case Token.Kind.SymbolSemicolon:
+                    _ = self.advance()
+                    break
+                case _:
+                    self.advance()
 
     def parse(self) -> UnresolvedUnitNode:
         '''
@@ -166,8 +184,8 @@ class Parser(LookaheadBuffer[Token, Token.Kind]):
             try:
                 node = self._parse_declaration()
                 nodes.append(node)
-            except ParserSyncError as sync:
-                self._sync(sync.diagnostic)
+            except ParserSyncError as e:
+                self._sync(e.diagnostic, True)
         span: Span
         if _first_token is None:
             span = Span(self.id, 0, 0)
@@ -195,7 +213,7 @@ class Parser(LookaheadBuffer[Token, Token.Kind]):
             Grammar[Declaration::Variable::Entry]
             IDENTIFIER ('=' expression)?;
             '''
-            token = self.requires(Diagnostic.Code.E2004, Token.Kind.Identifier)
+            token = self.requires(Diagnostic.Code.E2001, Token.Kind.Identifier)
             initializer: UnresolvedNode | None = None
             span = token.span
             if self.consume(Token.Kind.SymbolEq):
@@ -211,7 +229,7 @@ class Parser(LookaheadBuffer[Token, Token.Kind]):
         while self.consume(Token.Kind.SymbolComma):
             entries.append(_parse_entry())
         token = self.requires(
-            Diagnostic.Code.E2002,
+            Diagnostic.Code.E2101,
             Token.Kind.SymbolSemicolon,
             is_delimiter=True
         )
@@ -237,21 +255,56 @@ class Parser(LookaheadBuffer[Token, Token.Kind]):
         statment_condition |
         statement_expression;
         '''
+        if self.matches(Token.Kind.SymbolLBrace):
+            return self._parse_statement_block()
+        elif self.matches(Token.Kind.KeywordIf):
+            return self._parse_statement_condition()
         return self._parse_statement_expression()
 
-    def _parse_statement_block(self) -> None:
+    def _parse_statement_block(self) -> UnresolvedNode:
         '''
         Grammar[Statement::Block]
         '{' declaration_statement* '}';
         '''
-        pass
+        assert self.consume(Token.Kind.SymbolLBrace)
+        start = self.last_token
+        nodes: list[UnresolvedNode] = []
+        while not self.matches(Token.Kind.SymbolRBrace) and not self.is_at_end:
+            try:
+                node = self._parse_declaration_statement()
+                nodes.append(node)
+            except ParserSyncError as e:
+                self._sync(e.diagnostic, False)
+        end = self.requires(
+            Diagnostic.Code.E2103,
+            Token.Kind.SymbolRBrace,
+            is_delimiter=True
+        )
+        span = start.span.extend_to(end.span)
+        return UnresolvedBlockNode(span, nodes)
 
-    def _parse_statement_condition(self) -> None:
+    def _parse_statement_condition(self) -> UnresolvedNode:
         '''
         Grammar[Statement::Condition]
         'if' '(' expression ')' statement ('else' statement)?;
         '''
-        pass
+        assert self.consume(Token.Kind.KeywordIf)
+        start = self.last_token
+        _ = self.requires(Diagnostic.Code.E2003, Token.Kind.SymbolLParen)
+        condition = self._parse_expression()
+        _ = self.requires(
+            Diagnostic.Code.E2102,
+            Token.Kind.SymbolRParen,
+            is_delimiter=True
+        )
+        then_branch = self._parse_statement()
+        else_branch: UnresolvedNode | None = None
+        if self.consume(Token.Kind.KeywordElse):
+            else_branch = self._parse_statement()
+        span = start.span.extend_to(self.last_token.span)
+        return UnresolvedConditionalNode(
+            span, condition, then_branch, else_branch
+        )
 
     def _parse_statement_expression(
         self, expr: UnresolvedNode | None = None
@@ -265,7 +318,7 @@ class Parser(LookaheadBuffer[Token, Token.Kind]):
                 return UnresolvedExpressionNode(span, expr)
         expr = self._parse_expression(expr)
         token = self.requires(
-            Diagnostic.Code.E2002,
+            Diagnostic.Code.E2101,
             Token.Kind.SymbolSemicolon,
             is_delimiter=True
         )
@@ -334,7 +387,7 @@ class Parser(LookaheadBuffer[Token, Token.Kind]):
             start = self.last_token
             inner = self._parse_expression()
             end = self.requires(
-                Diagnostic.Code.E2003,
+                Diagnostic.Code.E2102,
                 Token.Kind.SymbolRParen,
                 is_delimiter=True
             )
@@ -353,7 +406,7 @@ class Parser(LookaheadBuffer[Token, Token.Kind]):
             token = self.next()
             return UnresolvedTypeNode(token.span, TYPES[token.kind])
         # -Literals
-        token = self.requires(Diagnostic.Code.E2001, *LITERALS)
+        token = self.requires(Diagnostic.Code.E2002, *LITERALS)
         assert _is_literal_kind(token.kind)
         match token.kind:
             case Token.Kind.Identifier:

@@ -56,10 +56,12 @@ class Diagnostic:
         E1001 = ("Unknown character '{0}' found", True)
         E1002 = ("Unterminated multi-line comment; expected '*/'", False)
         # -Parser
-        E2001 = ("Expression expected", False)
-        E2002 = ("';' expected", False)
-        E2003 = ("')' expected", False)
-        E2004 = ("Identifier expected", False)
+        E2001 = ("Identifier expected", False)
+        E2002 = ("Expression expected", False)
+        E2003 = ("Condition expression must be enclosed in parentheses", False)
+        E2101 = ("';' expected", False)
+        E2102 = ("')' expected", False)
+        E2103 = ("'}' expected", False)
 
     class Level(IntEnum):
         Error = auto()
