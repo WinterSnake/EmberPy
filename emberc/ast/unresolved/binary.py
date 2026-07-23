@@ -12,22 +12,16 @@ from .node import UnresolvedNode
 
 if TYPE_CHECKING:
     from . import UnresolvedNodeVisitor
-    from ..operators import (
-        AssignOperator,
-        BinaryOperator,
-    )
+    from ..common import AssignOperator, BinaryOperator
     from ...core import Span
 
 
 ## Classes
 @dataclass(slots=True)
 class UnresolvedAssignNode(UnresolvedNode):
-    """
-    Unresolved Assignment Expression
-    Encapsulates an assignment operator along with its l-value and r-value expressions.
-    """
+    """Assignment AST node with l_value and r_value nodes and the assignment operator."""
     # -Instance Methods
-    def accept[T](self, visitor: UnresolvedNodeVisitor[T]) -> T:
+    def accept[R](self, visitor: UnresolvedNodeVisitor[R]) -> R:
         return visitor.visit_assignment(self)
 
     # -Properties
@@ -44,12 +38,9 @@ class UnresolvedAssignNode(UnresolvedNode):
 
 @dataclass(slots=True)
 class UnresolvedBinaryNode(UnresolvedNode):
-    """
-    Unresolved Binary Expression
-    Encapsulates an infix arithmetic operator along with its left-hand and right-hand expressions.
-    """
+    """Binary AST node with lhs and rhs nodes and the binary operator."""
     # -Instance Methods
-    def accept[T](self, visitor: UnresolvedNodeVisitor[T]) -> T:
+    def accept[R](self, visitor: UnresolvedNodeVisitor[R]) -> R:
         return visitor.visit_binary(self)
 
     # -Properties

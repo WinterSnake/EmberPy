@@ -7,38 +7,34 @@
 
 ## Imports
 from dataclasses import dataclass
-from enum import IntEnum, auto
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
 from .node import UnresolvedNode
 
 if TYPE_CHECKING:
     from . import UnresolvedNodeVisitor
-    from ...core import LITERAL_VALUE_TYPE, Span
+
+## Constants
+type UnresolvedLiteralNode = UnresolvedBooleanNode | UnresolvedIntegerNode
 
 
 ## Classes
 @dataclass(slots=True)
-class UnresolvedLiteralNode(UnresolvedNode):
-    """
-    Unresolved Literal Expression
-    Represents a literal value terminal.
-    """
+class UnresolvedBooleanNode(UnresolvedNode):
+    """Literal Boolean AST node with value."""
     # -Instance Methods
-    def accept[T](self, visitor: UnresolvedNodeVisitor[T]) -> T:
-        return visitor.visit_literal(self)
-
-    def value_as[T: LITERAL_VALUE_TYPE](self, _type: type[T]) -> T:
-        return self.value  # type: ignore[return-value]
-
-    # -Class Methods
-    @classmethod
-    def integer(cls, location: Span, value: int) -> Self:
-        return cls(location, UnresolvedLiteralNode.Kind.Integer, value)
+    def accept[R](self, visitor: UnresolvedNodeVisitor[R]) -> R:
+        return visitor.visit_boolean(self)
 
     # -Properties
-    kind: UnresolvedLiteralNode.Kind
-    value: LITERAL_VALUE_TYPE
+    value: bool
 
-    # -Sub-Classes
-    class Kind(IntEnum):
-        Integer = auto()
+
+@dataclass(slots=True)
+class UnresolvedIntegerNode(UnresolvedNode):
+    """Literal Integer AST node with value."""
+    # -Instance Methods
+    def accept[R](self, visitor: UnresolvedNodeVisitor[R]) -> R:
+        return visitor.visit_integer(self)
+
+    # -Properties
+    value: int

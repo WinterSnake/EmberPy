@@ -30,6 +30,7 @@ class BinaryOperator(IntEnum):
     # -Dunder Methods
     def __str__(self) -> str:
         match self:
+            # -Math
             case BinaryOperator.Add:
                 return '+'
             case BinaryOperator.Sub:
@@ -40,15 +41,36 @@ class BinaryOperator(IntEnum):
                 return '/'
             case BinaryOperator.Mod:
                 return '%'
+            # -Comparisons
+            case BinaryOperator.Eq:
+                return "=="
+            case BinaryOperator.NtEq:
+                return "=="
+            case BinaryOperator.Lt:
+                return '<'
+            case BinaryOperator.LtEq:
+                return "<="
+            case BinaryOperator.Gt:
+                return '>'
+            case BinaryOperator.GtEq:
+                return ">="
             case _:
                 assert_never(self)
 
     # -Class Properties
+    # --Math
     Add = auto()
     Sub = auto()
     Mul = auto()
     Div = auto()
     Mod = auto()
+    # --Comparisons
+    Eq = auto()
+    NtEq = auto()
+    Lt = auto()
+    LtEq = auto()
+    Gt = auto()
+    GtEq = auto()
 
 
 class PrimitiveType(IntEnum):
@@ -103,9 +125,9 @@ class UnaryOperator(IntEnum):
     # -Dunder Methods
     def __str__(self) -> str:
         match self:
-            case UnaryOperator.NumericalNegate:
+            case UnaryOperator.NumNegate:
                 return '-'
-            case UnaryOperator.LogicalNegate:
+            case UnaryOperator.LogNegate:
                 return '!'
             case _:
                 assert_never(self)
@@ -113,5 +135,5 @@ class UnaryOperator(IntEnum):
     # -Class Properties
     # --Type--
     # --Expression--
-    NumericalNegate = auto()
-    LogicalNegate = auto()
+    NumNegate = auto()
+    LogNegate = auto()

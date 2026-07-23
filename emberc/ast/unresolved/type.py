@@ -2,30 +2,26 @@
 ## Ember Compiler                ##
 ## Written By: Ryan Smith        ##
 ##-------------------------------##
-## Unresolved: Node              ##
+## Unresolved Node: Type         ##
 ##-------------------------------##
 
 ## Imports
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
+from .node import UnresolvedNode
 
 if TYPE_CHECKING:
     from . import UnresolvedNodeVisitor
-    from ...core import Span
+    from ..common import PrimitiveType
 
 
 ## Classes
 @dataclass(slots=True)
-class UnresolvedNode(ABC):
-    """Core Unresolved AST Node with associated meta-data."""
+class UnresolvedTypeNode(UnresolvedNode):
+    """Built-in type AST node."""
     # -Instance Methods
-    @abstractmethod
-    def accept[R](self, visitor: UnresolvedNodeVisitor[R]) -> R: ...
+    def accept[R](self, visitor: UnresolvedNodeVisitor[R]) -> R:
+        return visitor.visit_type(self)
 
     # -Properties
-    location: Span
-
-    @property
-    def wide_span(self) -> Span:
-        return self.location
+    kind: PrimitiveType

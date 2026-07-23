@@ -6,25 +6,29 @@
 ##-------------------------------##
 
 ## Imports
+from abc import ABC, abstractmethod
 from typing import Protocol
 from .binary import (
     UnresolvedAssignNode,
     UnresolvedBinaryNode,
 )
-from .literal import (
-    UnresolvedLiteralNode,
-)
+from .conditional import UnresolvedConditionalNode
 from .expression import (
-    UnresolvedExprNode,
+    UnresolvedExpressionNode,
     UnresolvedGroupNode,
 )
-from .node import (
-    UnresolvedNode,
+from .literal import (
+    UnresolvedLiteralNode,
+    UnresolvedBooleanNode,
+    UnresolvedIntegerNode,
+)
+from .node import UnresolvedNode
+from .sequence import (
     UnresolvedUnitNode,
+    UnresolvedBlockNode,
 )
-from .types import (
-    UnresolvedTypeNode,
-)
+from .type import UnresolvedTypeNode
+from .unary import UnresolvedUnaryPrefixNode
 from .variable import (
     UnresolvedIdentifierNode,
     UnresolvedVariableNode,
@@ -33,37 +37,61 @@ from .variable import (
 ## Constants
 __all__ = (
     "UnresolvedNode",
-    "UnresolvedNodeVisitor",
     # -Types
     "UnresolvedTypeNode",
     # -Declarations
     "UnresolvedUnitNode",
     "UnresolvedVariableNode",
     # -Statements
-    "UnresolvedExprNode",
+    "UnresolvedBlockNode",
+    "UnresolvedConditionalNode",
+    "UnresolvedExpressionNode",
     # -Expressions
     "UnresolvedGroupNode",
     "UnresolvedAssignNode",
     "UnresolvedBinaryNode",
+    "UnresolvedUnaryPrefixNode",
     "UnresolvedLiteralNode",
+    "UnresolvedBooleanNode",
+    "UnresolvedIntegerNode",
     "UnresolvedIdentifierNode",
+    # -Visitor
+    "UnresolvedNodeVisitor",
+    "UnresolvedLiteralRouterMixin",
 )
 
 
 ## Classes
-class UnresolvedNodeVisitor[TReturn](Protocol):
-    """A visitor pattern interface for traversing unresolved nodes"""
+class UnresolvedNodeVisitor[R](Protocol):
+    """Unresolved AST node visitor interface."""
     # -Instance Methods
     # --Types--
-    def visit_type(self, node: UnresolvedTypeNode) -> TReturn: ...
+    def visit_type(self, node: UnresolvedTypeNode) -> R: ...
     # --Declarations--
-    def visit_unit(self, node: UnresolvedUnitNode) -> TReturn: ...
-    def visit_variable(self, node: UnresolvedVariableNode) -> TReturn: ...
+    def visit_unit(self, node: UnresolvedUnitNode) -> R: ...
+    def visit_variable(self, node: UnresolvedVariableNode) -> R: ...
     # --Statements--
-    def visit_expression(self, node: UnresolvedExprNode) -> TReturn: ...
+    def visit_block(self, node: UnresolvedBlockNode) -> R: ...
+    def visit_conditional(self, node: UnresolvedConditionalNode) -> R: ...
+    def visit_expression(self, node: UnresolvedExpressionNode) -> R: ...
     # --Expressions--
-    def visit_group(self, node: UnresolvedGroupNode) -> TReturn: ...
-    def visit_assignment(self, node: UnresolvedAssignNode) -> TReturn: ...
-    def visit_binary(self, node: UnresolvedBinaryNode) -> TReturn: ...
-    def visit_literal(self, node: UnresolvedLiteralNode) -> TReturn: ...
-    def visit_identifier(self, node: UnresolvedIdentifierNode) -> TReturn: ...
+    def visit_group(self, node: UnresolvedGroupNode) -> R: ...
+    def visit_assignment(self, node: UnresolvedAssignNode) -> R: ...
+    def visit_binary(self, node: UnresolvedBinaryNode) -> R: ...
+    def visit_unary(self, node: UnresolvedUnaryPrefixNode) -> R: ...
+    def visit_boolean(self, node: UnresolvedBooleanNode) -> R: ...
+    def visit_integer(self, node: UnresolvedIntegerNode) -> R: ...
+    def visit_identifier(self, node: UnresolvedIdentifierNode) -> R: ...
+
+
+class UnresolvedLiteralRouterMixin[R](UnresolvedNodeVisitor[R], ABC):
+    """Unresolved visitor mixin for delegating all literal node calls to a single entry."""
+    # -Instance Methods
+    @abstractmethod
+    def visit_literal(self, node: UnresolvedLiteralNode) -> R: ...
+
+    def visit_boolean(self, node: UnresolvedBooleanNode) -> R:
+        return self.visit_literal(node)
+
+    def visit_integer(self, node: UnresolvedIntegerNode) -> R:
+        return self.visit_literal(node)
