@@ -108,7 +108,7 @@ class UnresolvedFormatPrinter(
     def visit_identifier(self, node: UnresolvedIdentifierNode) -> str:
         return node.name
 
-    # -Instance Methods: Helpers
+    # --Extensions--
     def visit_sequence(self, node: UnresolvedSequenceNode) -> str:
         output: list[str] = []
         for _node in node:

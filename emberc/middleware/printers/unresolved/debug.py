@@ -55,7 +55,7 @@ class UnresolvedDebugPrinter(
     # --Declarations--
     def visit_unit(self, node: UnresolvedUnitNode) -> str:
         output = ["Unit"]
-        if _output := self.visit_sequence(node):
+        if _output := super().visit_unit(node):
             output.append(_output)
         return '\n'.join(output)
 
@@ -84,7 +84,7 @@ class UnresolvedDebugPrinter(
     # --Statements--
     def visit_block(self, node: UnresolvedBlockNode) -> str:
         output = ["StmtBlock"]
-        if _output := self.visit_sequence(node):
+        if _output := super().visit_block(node):
             output.append(_output)
         return '\n'.join(output)
 
@@ -165,24 +165,7 @@ class UnresolvedDebugPrinter(
     def visit_identifier(self, node: UnresolvedIdentifierNode) -> str:
         return f"Identifier({node.name})"
 
-    # -Instance Methods: Helpers
-    def get_tree_indent(self) -> str:
-        indent: list[str] = []
-        for i in range(self._depth):
-            _indent = '|' if i in self._markers else ' '
-            indent.append(_indent)
-        return ' '.join(indent)
-
-    def push_tree_marker(self) -> int:
-        marker = self._depth + 1
-        self._markers.add(marker)
-        return marker
-
-    def pop_tree_marker(self, value: int) -> None:
-        if value not in self._markers:
-            return
-        self._markers.remove(value)
-
+    # --Extensions--
     def visit_sequence(self, node: UnresolvedSequenceNode) -> str:
         output: list[str] = []
         marker = self.push_tree_marker()
@@ -201,6 +184,24 @@ class UnresolvedDebugPrinter(
 
     def visit_literal(self, node: UnresolvedLiteralNode) -> str:
         return f"Literal({node.value})"
+
+    # -Instance Methods: Helpers
+    def push_tree_marker(self) -> int:
+        marker = self._depth + 1
+        self._markers.add(marker)
+        return marker
+
+    def pop_tree_marker(self, value: int) -> None:
+        if value not in self._markers:
+            return
+        self._markers.remove(value)
+
+    def get_tree_indent(self) -> str:
+        indent: list[str] = []
+        for i in range(self._depth):
+            _indent = '|' if i in self._markers else ' '
+            indent.append(_indent)
+        return ' '.join(indent)
 
     # -Static Methods
     @staticmethod
