@@ -62,6 +62,9 @@ class Diagnostic:
         E2101 = ("';' expected", False)
         E2102 = ("')' expected", False)
         E2103 = ("'}' expected", False)
+        # -Binding
+        E3001 = ("Name '{0}' already declared in current scope", True)
+        E3002 = ("Name '{0}' used before declaration", True)
 
     class Level(IntEnum):
         Error = auto()
