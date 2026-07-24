@@ -23,6 +23,9 @@ class UnresolvedSequenceNode(UnresolvedNode):
     def __iter__(self) -> Iterator[UnresolvedNode]:
         yield from self.nodes
 
+    def __len__(self) -> int:
+        return len(self.nodes)
+
     # -Properties
     nodes: MutableSequence[UnresolvedNode]
 

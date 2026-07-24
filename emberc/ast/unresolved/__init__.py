@@ -24,6 +24,7 @@ from .literal import (
 )
 from .node import UnresolvedNode
 from .sequence import (
+    UnresolvedSequenceNode,
     UnresolvedUnitNode,
     UnresolvedBlockNode,
 )
@@ -37,6 +38,8 @@ from .variable import (
 ## Constants
 __all__ = (
     "UnresolvedNode",
+    "UnresolvedSequenceNode",
+    "UnresolvedLiteralNode",
     # -Types
     "UnresolvedTypeNode",
     # -Declarations
@@ -51,12 +54,12 @@ __all__ = (
     "UnresolvedAssignNode",
     "UnresolvedBinaryNode",
     "UnresolvedUnaryPrefixNode",
-    "UnresolvedLiteralNode",
     "UnresolvedBooleanNode",
     "UnresolvedIntegerNode",
     "UnresolvedIdentifierNode",
     # -Visitor
     "UnresolvedNodeVisitor",
+    "UnresolvedSequenceRouterMixin",
     "UnresolvedLiteralRouterMixin",
 )
 
@@ -95,3 +98,16 @@ class UnresolvedLiteralRouterMixin[R](UnresolvedNodeVisitor[R], ABC):
 
     def visit_integer(self, node: UnresolvedIntegerNode) -> R:
         return self.visit_literal(node)
+
+
+class UnresolvedSequenceRouterMixin[R](UnresolvedNodeVisitor[R], ABC):
+    """Unresolved visitor mixin for delegating all sequence node calls to a single entry."""
+    # -Instance Methods
+    @abstractmethod
+    def visit_sequence(self, node: UnresolvedSequenceNode) -> R: ...
+
+    def visit_unit(self, node: UnresolvedUnitNode) -> R:
+        return self.visit_sequence(node)
+
+    def visit_block(self, node: UnresolvedBlockNode) -> R:
+        return self.visit_sequence(node)

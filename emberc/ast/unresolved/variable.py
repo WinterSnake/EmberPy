@@ -47,6 +47,9 @@ class UnresolvedVariableNode(UnresolvedNode):
     def __iter__(self) -> Iterator[UnresolvedVariableNode.Entry]:
         yield from self.entries
 
+    def __len__(self) -> int:
+        return len(self.entries)
+
     # -Instance Methods
     def accept[R](self, visitor: UnresolvedNodeVisitor[R]) -> R:
         return visitor.visit_variable(self)

@@ -80,7 +80,7 @@ BINARY_OPERATORS = {
     # -Math
     Token.Kind.SymbolPlus: (BinaryOperator.Add, 3),
     Token.Kind.SymbolMinus: (BinaryOperator.Sub, 3),
-    Token.Kind.SymbolStar: (BinaryOperator.Mod, 4),
+    Token.Kind.SymbolStar: (BinaryOperator.Mul, 4),
     Token.Kind.SymbolFSlash: (BinaryOperator.Div, 4),
     Token.Kind.SymbolPercent: (BinaryOperator.Mod, 4),
 }
